@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build FrontEnd
+    name: FrontEnd
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -22,20 +22,9 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
-      - name: Cache node modules
-        id: cache-nodemodules
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: ./src/frontEnd/node_modules
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
       - name: Install dependencies
-        if:
-          steps.cache-nodemodules.outputs.cache-hit != 'true'
         run: npm ci
+        working-directory: ./src/frontEnd
+      - name: Build
+        run: npm run build
         working-directory: ./src/frontEnd
