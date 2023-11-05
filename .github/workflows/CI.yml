@@ -33,5 +33,10 @@ jobs:
           install -m 600 -D /dev/null ~/.ssh/id_rsa
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
-      - name: Connect
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+      - name: Stop frontend
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo systemctl stop myCV.service && exit"
+      - name: Update frontend
+        run: scp -r dist/* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/myCV
+        working-directory: ./src/frontEnd
+      - name: Start frontend
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo systemctl start myCV.service && exit"
