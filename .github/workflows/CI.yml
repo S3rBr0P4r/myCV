@@ -10,6 +10,14 @@ jobs:
     name: FrontEnd
     runs-on: ubuntu-latest
     steps:
+      - name: Enter password to connect through SSH
+        uses: step-security/wait-for-secrets@v1
+        id: wait-for-secrets
+        with:
+          secrets: |
+            PASSWORD: 
+              name: 'Password to connect through SSH'
+              description: 'Necessary password to connect through SSH'
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -34,7 +42,7 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
       - name: Stop frontend
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo systemctl stop myCV.service && exit"
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "$echo ${{ steps.wait-for-secrets.outputs.PASSWORD }} | sudo -S systemctl stop myCV.service && exit"
       - name: Update frontend
         run: scp -r dist/* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/myCV
         working-directory: ./src/frontEnd
