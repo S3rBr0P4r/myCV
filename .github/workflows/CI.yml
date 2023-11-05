@@ -48,7 +48,7 @@ jobs:
               name: 'Password to connect through SSH'
               description: 'Necessary password to connect through SSH'
       - name: Stop frontend
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "$echo ${{ steps.wait-for-secrets.outputs.PASSWORD }} | sudo -S service myCV stop && exit"
+        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} '$echo ${{ steps.wait-for-secrets.outputs.PASSWORD }} | sudo -S service myCV stop && exit'
       - name: Update frontend
         run: scp -r dist/* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/myCV
         working-directory: ./src/frontEnd
