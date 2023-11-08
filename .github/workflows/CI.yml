@@ -46,7 +46,7 @@ jobs:
         uses: garygrossgarten/github-action-ssh@release
         with:
           command: |
-            echo ${{ steps.wait-for-secrets.outputs.PASSWORD }} | sudo -S service myCV stop
+            ls /opt/
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ steps.wait-for-secrets.outputs.PASSWORD }}
