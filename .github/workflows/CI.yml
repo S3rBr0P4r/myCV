@@ -59,4 +59,10 @@ jobs:
               name: 'Password to connect through SSH'
               description: 'Necessary password to connect through SSH'
       - name: SSH test
-        run: ssh staging 'whoami'
+        uses: garygrossgarten/github-action-ssh@release
+        with:
+          command: ls -a
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          passphrase: ${{ steps.wait-for-secrets.outputs.PASSWORD }}
+          privateKey: ${{ secrets.SSH_PRIVATE_KEY}}
