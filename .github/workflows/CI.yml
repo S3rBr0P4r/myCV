@@ -42,10 +42,11 @@ jobs:
             PASSWORD: 
               name: 'Password to connect through SSH'
               description: 'Necessary password to connect through SSH'
-      - name: SSH test
+      - name: Stop website
         uses: garygrossgarten/github-action-ssh@release
         with:
-          command: whoami
+          command: |
+            echo ${{ steps.wait-for-secrets.outputs.PASSWORD }} | sudo -S service myCV stop
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ steps.wait-for-secrets.outputs.PASSWORD }}
