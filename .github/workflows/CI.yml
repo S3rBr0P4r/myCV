@@ -43,11 +43,13 @@ jobs:
               name: 'Password to connect through SSH'
               description: 'Necessary password to connect through SSH'
       - name: Stop website
-        uses: garygrossgarten/github-action-ssh@release
+        uses: appleboy/ssh-action@master
         with:
-          command: |
+          script: |
             ls /opt/
+            echo "Website is being stopped..."
+            echo ${{ steps.wait-for-secrets.outputs.PASSWORD }} | sudo -S service myCV stop
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ steps.wait-for-secrets.outputs.PASSWORD }}
-          privateKey: ${{ secrets.SSH_PRIVATE_KEY}}
+          key: ${{ secrets.SSH_PRIVATE_KEY}}
