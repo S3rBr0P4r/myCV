@@ -36,9 +36,20 @@ jobs:
         working-directory: ./src/frontEnd
       - name: Install SSH keys
         run: |
-          install -m 600 -D /dev/null ~/.ssh/id_rsa
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} > ~/.ssh/known_hosts
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/staging.key
+          chmod 600 ~/.ssh/staging.key
+          cat >>~/.ssh/config <<END
+          Host staging
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/staging.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
       - name: Enter password to connect through SSH
         uses: step-security/wait-for-secrets@v1
         id: wait-for-secrets
@@ -47,11 +58,5 @@ jobs:
             PASSWORD: 
               name: 'Password to connect through SSH'
               description: 'Necessary password to connect through SSH'
-      - name: executing remote ssh commands using password
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ steps.wait-for-secrets.outputs.PASSWORD }}
-          port: ${{ secrets.SSH_PORT }}
-          script: whoami
+      - name: SSH test
+        run: ssh staging 'whoami'
