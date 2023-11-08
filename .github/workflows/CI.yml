@@ -52,4 +52,3 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ steps.wait-for-secrets.outputs.PASSWORD }}
-          key: ${{ secrets.SSH_PRIVATE_KEY}}
