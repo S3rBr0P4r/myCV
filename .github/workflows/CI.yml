@@ -34,14 +34,6 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: ./src/frontEnd
-      - name: Enter password to connect through SSH
-        uses: step-security/wait-for-secrets@v1
-        id: wait-for-secrets
-        with:
-          secrets: |
-            PASSWORD: 
-              name: 'Password to connect through SSH'
-              description: 'Necessary password to connect through SSH'
       - name: Stop website
         uses: appleboy/ssh-action@master
         with:
@@ -51,4 +43,4 @@ jobs:
             echo ${{ steps.wait-for-secrets.outputs.PASSWORD }} | sudo -S service myCV stop
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          password: ${{ steps.wait-for-secrets.outputs.PASSWORD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY}}
