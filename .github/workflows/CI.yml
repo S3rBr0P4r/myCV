@@ -34,22 +34,6 @@ jobs:
       - name: Build
         run: npm run build
         working-directory: ./src/frontEnd
-      - name: Install SSH keys
-        run: |
-          mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/staging.key
-          chmod 600 ~/.ssh/staging.key
-          cat >>~/.ssh/config <<END
-          Host staging
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/staging.key
-            StrictHostKeyChecking no
-          END
-        env:
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_HOST: ${{ secrets.SSH_HOST }}
       - name: Enter password to connect through SSH
         uses: step-security/wait-for-secrets@v1
         id: wait-for-secrets
@@ -64,5 +48,5 @@ jobs:
           command: ls -a
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          passphrase: ${{ steps.wait-for-secrets.outputs.PASSWORD }}
+          password: ${{ steps.wait-for-secrets.outputs.PASSWORD }}
           privateKey: ${{ secrets.SSH_PRIVATE_KEY}}
