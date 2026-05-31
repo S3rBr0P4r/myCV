@@ -1,4 +1,4 @@
-import { CV } from '../domain/entities/CV';
+import { type CV } from '../domain/entities/CV';
 import { t } from '../core/TranslationService';
 import { renderNavbar } from './components/CVNavbar';
 import { renderHero } from './components/CVHero';
@@ -11,6 +11,8 @@ export class CVRenderer {
     const appRoot = document.getElementById('app');
     if (!appRoot) return;
 
+    appRoot.textContent = '';
+
     const sections = [
       { id: 'hero', label: t('nav.dotHero') },
       { id: 'experience', label: t('nav.dotExperience') },
@@ -18,23 +20,29 @@ export class CVRenderer {
       { id: 'contact', label: t('nav.dotContact') },
     ];
 
-    appRoot.innerHTML = `
-      ${renderNavbar()}
+    appRoot.appendChild(renderNavbar());
 
-      <div class="painted-bg" id="bg"></div>
+    const bg = document.createElement('div');
+    bg.className = 'painted-bg';
+    bg.id = 'bg';
+    appRoot.appendChild(bg);
 
-      ${renderHero(cv)}
-      ${renderExperience(cv)}
-      ${renderSkills(cv)}
-      ${renderContact()}
+    appRoot.appendChild(renderHero(cv));
+    appRoot.appendChild(renderExperience(cv));
+    appRoot.appendChild(renderSkills(cv));
+    appRoot.appendChild(renderContact());
+    appRoot.appendChild(renderFooter(cv.name, cv.lastName));
 
-      ${renderFooter(cv.name, cv.lastName)}
-
-      <nav class="scroll-progress" aria-label="${t('nav.dotAria')}">
-        ${sections.map(s => `
-          <a href="#${s.id}" aria-label="${s.label}" data-section="${s.id}"></a>
-        `).join('')}
-      </nav>
-    `;
+    const progressNav = document.createElement('nav');
+    progressNav.className = 'scroll-progress';
+    progressNav.ariaLabel = t('nav.dotAria');
+    for (const s of sections) {
+      const link = document.createElement('a');
+      link.href = `#${s.id}`;
+      link.ariaLabel = s.label;
+      link.dataset.section = s.id;
+      progressNav.appendChild(link);
+    }
+    appRoot.appendChild(progressNav);
   }
 }

@@ -1,0 +1,6 @@
+**/.git
+**/bin
+**/obj
+**/*.local.json
+**/.env
+**/node_modules

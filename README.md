@@ -8,7 +8,7 @@ Personal CV/resume web application with a bilingual (English/Spanish) frontend a
 |-------|-----------|
 | Frontend | TypeScript, Vite, Clean Architecture |
 | Backend | .NET 10, Clean Architecture, Controllers, Swagger |
-| Database | None — CV data is embedded as structured source |
+| Database | None — CV data is parsed from an external `.docx` file at runtime |
 
 ## Quick start
 

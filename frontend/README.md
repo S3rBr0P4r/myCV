@@ -24,4 +24,4 @@ src/
 └── index.html       # Shell
 ```
 
-No framework — manual DI in `main.ts`. API hardcoded to `http://localhost:60355/api/cv`.
+No framework — manual DI in `main.ts`. API URL configured via `VITE_API_URL` env var (defaults to `/api/v1/cv` in dev — Vite proxy forwards to the backend).

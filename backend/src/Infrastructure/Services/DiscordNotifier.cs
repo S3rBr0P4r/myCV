@@ -28,6 +28,12 @@ public sealed class DiscordNotifier
             return Task.CompletedTask;
         }
 
+        if (!Uri.TryCreate(_options.WebhookUrl, UriKind.Absolute, out var uri)
+            || uri.Scheme is not ("http" or "https"))
+        {
+            return Task.CompletedTask;
+        }
+
         bool shouldSend;
         lock (_alertLock)
         {
@@ -50,6 +56,8 @@ public sealed class DiscordNotifier
 
     private async Task SendAsync(string title, string message)
     {
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_options.TimeoutSeconds));
+
         var payload = new
         {
             embeds = new[]
@@ -64,6 +72,20 @@ public sealed class DiscordNotifier
             }
         };
 
-        await _httpClient.PostAsJsonAsync(_options.WebhookUrl, payload);
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync(_options.WebhookUrl, payload, cts.Token);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var body = await response.Content.ReadAsStringAsync(cts.Token);
+                System.Diagnostics.Debug.WriteLine(
+                    $"Discord webhook returned {(int)response.StatusCode}: {body}");
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            System.Diagnostics.Debug.WriteLine("Discord webhook request timed out.");
+        }
     }
 }

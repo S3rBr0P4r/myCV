@@ -8,36 +8,78 @@ const locales = [
   { code: 'es', flag: esFlag, labelKey: 'nav.localeEs' },
 ];
 
-export function renderNavbar(): string {
+export function renderNavbar(): HTMLElement {
   const current = getLocale();
   const active = locales.find(l => l.code === current)!;
 
-  return `
-    <nav class="navbar">
-      <div class="logo">${t('nav.logo')}<span>${t('nav.logoSuffix')}</span></div>
-      <div class="navbar-actions">
-        <div class="locale-dropdown">
-          <button class="locale-trigger" id="localeTrigger" type="button"
-            aria-label="${t('nav.localeLabel')}"
-            title="${t('nav.localeLabel')}">
-            ${active.flag}
-            <span class="locale-caret" aria-hidden="true">▾</span>
-          </button>
-          <ul class="locale-menu" id="localeMenu">
-            ${locales.map(l => `
-              <li><button class="locale-option" data-locale="${l.code}" type="button"
-                aria-label="${t(l.labelKey)}"
-                title="${t(l.labelKey)}">${l.flag} ${t(l.labelKey)}</button></li>
-            `).join('')}
-          </ul>
-        </div>
-        <button class="theme-toggle" id="themeToggle" type="button"
-          aria-label="${t('nav.themeLabel')}"
-          title="${t('nav.themeLabel')}">
-          <span class="icon-sun" aria-hidden="true">☀️</span>
-          <span class="icon-moon" aria-hidden="true">🌙</span>
-        </button>
-      </div>
-    </nav>
-  `;
+  const nav = document.createElement('nav');
+  nav.className = 'navbar';
+
+  const logo = document.createElement('div');
+  logo.className = 'logo';
+  logo.appendChild(document.createTextNode(t('nav.logo')));
+  const logoSuffix = document.createElement('span');
+  logoSuffix.appendChild(document.createTextNode(t('nav.logoSuffix')));
+  logo.appendChild(logoSuffix);
+  nav.appendChild(logo);
+
+  const actions = document.createElement('div');
+  actions.className = 'navbar-actions';
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'locale-dropdown';
+
+  const trigger = document.createElement('button');
+  trigger.className = 'locale-trigger';
+  trigger.id = 'localeTrigger';
+  trigger.type = 'button';
+  trigger.ariaLabel = t('nav.localeLabel');
+  trigger.title = t('nav.localeLabel');
+  trigger.innerHTML = active.flag;
+  const caret = document.createElement('span');
+  caret.className = 'locale-caret';
+  caret.ariaHidden = 'true';
+  caret.appendChild(document.createTextNode('▾'));
+  trigger.appendChild(caret);
+  dropdown.appendChild(trigger);
+
+  const menu = document.createElement('ul');
+  menu.className = 'locale-menu';
+  menu.id = 'localeMenu';
+  for (const l of locales) {
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.className = 'locale-option';
+    btn.dataset.locale = l.code;
+    btn.type = 'button';
+    btn.ariaLabel = t(l.labelKey);
+    btn.title = t(l.labelKey);
+    btn.innerHTML = l.flag;
+    btn.appendChild(document.createTextNode('\u00A0' + t(l.labelKey)));
+    li.appendChild(btn);
+    menu.appendChild(li);
+  }
+  dropdown.appendChild(menu);
+  actions.appendChild(dropdown);
+
+  const themeBtn = document.createElement('button');
+  themeBtn.className = 'theme-toggle';
+  themeBtn.id = 'themeToggle';
+  themeBtn.type = 'button';
+  themeBtn.ariaLabel = t('nav.themeLabel');
+  themeBtn.title = t('nav.themeLabel');
+  const sun = document.createElement('span');
+  sun.className = 'icon-sun';
+  sun.ariaHidden = 'true';
+  sun.appendChild(document.createTextNode('☀️'));
+  const moon = document.createElement('span');
+  moon.className = 'icon-moon';
+  moon.ariaHidden = 'true';
+  moon.appendChild(document.createTextNode('🌙'));
+  themeBtn.appendChild(sun);
+  themeBtn.appendChild(moon);
+  actions.appendChild(themeBtn);
+
+  nav.appendChild(actions);
+  return nav;
 }

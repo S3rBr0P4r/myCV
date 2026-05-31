@@ -11,6 +11,8 @@ namespace Backend.Infrastructure.Sources;
 
 public sealed class WordCvSource : ICvSource
 {
+    private const long MaxFileSize = 5 * 1024 * 1024;
+
     private readonly string _filePath;
     private readonly ILogger<WordCvSource> _logger;
     private readonly DiscordNotifier _discordNotifier;
@@ -60,7 +62,20 @@ public sealed class WordCvSource : ICvSource
             _discordNotifier.SendAlertAsync(
                 "CV Source Error",
                 "CvSource:FilePath is not configured. The CV endpoint will return 500.");
-            throw new CvSourceException("CvSource:FilePath is not configured.");
+            throw new CvSourceClientException();
+        }
+
+        if (_filePath.StartsWith(@"\\", StringComparison.Ordinal))
+        {
+            if (_logger.IsEnabled(LogLevel.Error))
+            {
+                _logger.LogError("CV Source file path is a UNC path; rejecting for security: {FilePath}", _filePath);
+            }
+
+            _discordNotifier.SendAlertAsync(
+                "CV Source Security",
+                $"CV Source file path is a UNC path. Rejected for security.");
+            throw new CvSourceClientException();
         }
 
         if (!File.Exists(_filePath))
@@ -73,7 +88,21 @@ public sealed class WordCvSource : ICvSource
             _discordNotifier.SendAlertAsync(
                 "CV File Not Found",
                 $"The CV Word document was not found at:\n`{_filePath}`\n\nThe CV endpoint will return 500.");
-            throw new CvSourceException($"CV Word document not found at: {_filePath}");
+            throw new CvSourceClientException();
+        }
+
+        var fileInfo = new FileInfo(_filePath);
+        if (fileInfo.Length > MaxFileSize)
+        {
+            if (_logger.IsEnabled(LogLevel.Error))
+            {
+                _logger.LogError("CV Word document exceeds maximum size ({Size} bytes > {Max} bytes)", fileInfo.Length, MaxFileSize);
+            }
+
+            _discordNotifier.SendAlertAsync(
+                "CV File Too Large",
+                $"The CV Word document at `{_filePath}` exceeds the maximum file size of {MaxFileSize / 1024 / 1024} MB.");
+            throw new CvSourceClientException();
         }
 
         try
@@ -87,7 +116,7 @@ public sealed class WordCvSource : ICvSource
                 _logger.LogInformation("Successfully parsed CV from {FilePath}", _filePath);
             }
         }
-        catch (CvSourceException)
+        catch (CvSourceClientException)
         {
             throw;
         }
@@ -101,7 +130,7 @@ public sealed class WordCvSource : ICvSource
             _discordNotifier.SendAlertAsync(
                 "CV Parse Error",
                 $"Failed to parse the CV Word document at:\n`{_filePath}`\n\n**Error:** {ex.Message}\n\nThe CV endpoint will return 500.");
-            throw new CvSourceException($"Failed to parse CV Word document: {ex.Message}", ex);
+            throw new CvSourceClientException();
         }
     }
 
@@ -127,7 +156,7 @@ public sealed class WordCvSource : ICvSource
 
         if (body is null)
         {
-            throw new CvSourceException("The Word document contains no body content.");
+            throw new CvSourceClientException();
         }
 
         foreach (var paragraph in body.Elements<Paragraph>())

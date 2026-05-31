@@ -96,7 +96,7 @@ public sealed class WordCvSourceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetCvAsync_EmptyFilePath_ShouldThrowCvSourceException()
+    public async Task GetCvAsync_EmptyFilePath_ShouldThrowCvSourceClientException()
     {
         var options = Options.Create(new CvSourceOptions { FilePath = string.Empty });
         var notifier = CreateNoopNotifier();
@@ -104,24 +104,22 @@ public sealed class WordCvSourceTests : IDisposable
 
         var act = () => sut.GetCvAsync();
 
-        await act.Should().ThrowAsync<CvSourceException>()
-            .WithMessage("CvSource:FilePath is not configured.");
+        await act.Should().ThrowAsync<CvSourceClientException>();
     }
 
     [Fact]
-    public async Task GetCvAsync_FileNotFound_ShouldThrowCvSourceException()
+    public async Task GetCvAsync_FileNotFound_ShouldThrowCvSourceClientException()
     {
         var filePath = Path.Combine(_tempDir, "nonexistent.docx");
         var sut = CreateSut(filePath);
 
         var act = () => sut.GetCvAsync();
 
-        await act.Should().ThrowAsync<CvSourceException>()
-            .WithMessage($"CV Word document not found at: {filePath}");
+        await act.Should().ThrowAsync<CvSourceClientException>();
     }
 
     [Fact]
-    public async Task GetCvAsync_InvalidFile_ShouldThrowCvSourceException()
+    public async Task GetCvAsync_InvalidFile_ShouldThrowCvSourceClientException()
     {
         var filePath = Path.Combine(_tempDir, "invalid.docx");
         await File.WriteAllTextAsync(filePath, "This is not a valid .docx file.");
@@ -129,8 +127,7 @@ public sealed class WordCvSourceTests : IDisposable
 
         var act = () => sut.GetCvAsync();
 
-        (await act.Should().ThrowAsync<CvSourceException>())
-            .Which.Message.Should().StartWith("Failed to parse CV Word document:");
+        await act.Should().ThrowAsync<CvSourceClientException>();
     }
 
     [Fact]

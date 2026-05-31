@@ -33,12 +33,12 @@ public sealed class GlobalExceptionHandlerTests
     }
 
     [Fact]
-    public async Task InvokeAsync_CvSourceException_ShouldReturn500()
+    public async Task InvokeAsync_CvSourceClientException_ShouldReturn500()
     {
         var context = new DefaultHttpContext();
         context.Response.Body = new MemoryStream();
 
-        var act = () => _handler.InvokeAsync(context, _ => throw new CvSourceException("CV source failed"));
+        var act = () => _handler.InvokeAsync(context, _ => throw new CvSourceClientException());
 
         await act.Should().NotThrowAsync();
         context.Response.StatusCode.Should().Be((int)HttpStatusCode.InternalServerError);
@@ -46,8 +46,7 @@ public sealed class GlobalExceptionHandlerTests
         context.Response.Body.Seek(0, SeekOrigin.Begin);
         var body = await new StreamReader(context.Response.Body).ReadToEndAsync();
         body.Should().Contain("CV Source Error");
-        body.Should().Contain("CV source failed");
-        _logMessages.Should().Contain(m => m.Contains("CV source error"));
+        body.Should().Contain("CV data source is currently unavailable");
     }
 
     [Fact]

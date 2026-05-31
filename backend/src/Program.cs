@@ -1,8 +1,11 @@
 using System.Globalization;
+using System.Threading.RateLimiting;
 using Backend.Api;
 using Backend.Api.Middleware;
 using Backend.Application;
 using Backend.Infrastructure;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Serilog;
 using Serilog.Events;
 
@@ -22,7 +25,24 @@ try
     builder.Services
         .AddApplication()
         .AddInfrastructure(builder.Configuration)
-        .AddApiServices(builder.Configuration);
+        .AddApiServices(builder.Configuration)
+        .AddRateLimiter(options =>
+        {
+            options.AddFixedWindowLimiter("Api", opts =>
+            {
+                opts.PermitLimit = 100;
+                opts.Window = TimeSpan.FromMinutes(1);
+                opts.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                opts.QueueLimit = 0;
+            });
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+        })
+        .AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
 
     var app = builder.Build();
 
@@ -34,6 +54,20 @@ try
             options.SwaggerEndpoint("/swagger/v1/swagger.json", "MyCV API v1");
         });
     }
+
+    app.Use(async (context, next) =>
+    {
+        if (context.Request.Path == "/health")
+        {
+            context.Response.StatusCode = 200;
+            context.Response.ContentType = "text/plain";
+            await context.Response.WriteAsync("Healthy");
+            return;
+        }
+        await next();
+    });
+
+    app.UseResponseCompression();
 
     app.Use(async (context, next) =>
     {
@@ -63,10 +97,21 @@ try
                     : LogEventLevel.Information;
     });
     app.UseMiddleware<GlobalExceptionHandler>();
+
     if (!app.Environment.IsDevelopment())
     {
-        app.UseHttpsRedirection();
+        app.UseHsts();
     }
+
+    app.Use(async (context, next) =>
+    {
+        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        context.Response.Headers["X-Frame-Options"] = "DENY";
+        context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+        await next();
+    });
+
+    app.UseRateLimiter();
     app.UseCors("AllowFrontend");
     app.MapControllers();
 
