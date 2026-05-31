@@ -1,0 +1,19 @@
+{
+  "name": "my-cv-typescript",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "npx kill-port 5173 60354 60355",
+    "dev": "concurrently -n FE,BE -c cyan,green \"npm run dev:fe\" \"npm run dev:be\"",
+    "dev:fe": "vite",
+    "dev:be": "cd ../backend && dotnet run --project src/Backend.csproj",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.0.0",
+    "vite": "^6.0.0"
+  }
+}

@@ -1,0 +1,198 @@
+/* ─── Scroll Reveal ─── */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px) scale(0.97);
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+              filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: blur(6px);
+  will-change: transform, opacity, filter;
+}
+
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+/* Alternating reveal from opposite sides */
+section:nth-child(even).reveal {
+  transform: translateX(-30px) scale(0.97);
+}
+
+section:nth-child(even).reveal.active {
+  transform: translateX(0) scale(1);
+}
+
+section:nth-child(odd):not(#hero).reveal {
+  transform: translateX(30px) scale(0.97);
+}
+
+section:nth-child(odd):not(#hero).reveal.active {
+  transform: translateX(0) scale(1);
+}
+
+/* ─── Staggered Children ─── */
+
+.stagger-item {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.active .stagger-item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.stagger-item:nth-child(1) { transition-delay: 0.05s; }
+.stagger-item:nth-child(2) { transition-delay: 0.12s; }
+.stagger-item:nth-child(3) { transition-delay: 0.2s; }
+.stagger-item:nth-child(4) { transition-delay: 0.28s; }
+.stagger-item:nth-child(5) { transition-delay: 0.35s; }
+.stagger-item:nth-child(6) { transition-delay: 0.42s; }
+.stagger-item:nth-child(7) { transition-delay: 0.49s; }
+.stagger-item:nth-child(8) { transition-delay: 0.56s; }
+
+/* ─── Hero Entrance ─── */
+
+@keyframes hero-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+#hero .sub-title {
+  animation: hero-reveal 0.8s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+#hero .main-title {
+  animation: hero-reveal 0.8s 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+#hero .hero-description {
+  animation: hero-reveal 0.8s 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+#hero .cta-buttons {
+  animation: hero-reveal 0.8s 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ─── Background Float ─── */
+
+@keyframes float-bg {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  33% {
+    transform: translate(2%, -3%) rotate(2deg) scale(1.02);
+  }
+  66% {
+    transform: translate(-1%, 2%) rotate(-1deg) scale(0.98);
+  }
+  100% {
+    transform: translate(1%, -1%) rotate(1deg) scale(1.01);
+  }
+}
+
+/* ─── Navbar Scroll Effect ─── */
+
+@keyframes navbar-in {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.navbar {
+  animation: navbar-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ─── Skill Hover Pulse ─── */
+
+@keyframes skill-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.2); }
+  100% { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
+}
+
+.skill-item:hover {
+  animation: skill-pulse 0.6s ease-out;
+}
+
+/* ─── Smooth Experience Card Entry ─── */
+
+.experience-card {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─── Section Fade Transition ─── */
+
+@keyframes section-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* ─── Theme Toggle Rotate ─── */
+
+/* ─── Progress Dot Pulse ─── */
+
+@keyframes dot-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  100% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+}
+
+.scroll-progress a.active {
+  animation: dot-pulse 2s ease-out infinite;
+}
+
+/* ─── Navbar Theme Switch ─── */
+
+.navbar {
+  transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+/* ─── Section Background Transition ─── */
+
+section:not(#hero) {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .stagger-item,
+  #hero .sub-title,
+  #hero .main-title,
+  #hero .hero-description,
+  #hero .cta-buttons,
+  .navbar,
+  .skill-item:hover,
+  .experience-card,
+  .theme-toggle,
+  .scroll-progress a,
+  section {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
