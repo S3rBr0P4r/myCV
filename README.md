@@ -16,7 +16,7 @@ Built under human supervision using [opencode](https://opencode.ai) with `openco
 ## Quick start
 
 ```bash
-npm run dev          # from root — starts both services concurrently
+cd frontend && npm run dev   # starts both services concurrently
 ```
 
 Launches frontend (port 5173) and backend (ports 60354/60355). Vite proxies `/api` to the backend in dev mode — no CORS issues.
@@ -37,23 +37,26 @@ dotnet test Backend.slnx      # 36 tests, 0 warnings
 myCV/
 ├── frontend/              TypeScript + Vite
 │   ├── domain/            Entities, repository interfaces
-│   ├── application/       Use cases (CQRS-lite)
+│   ├── application/       Use cases
 │   ├── infrastructure/    API repository, translations (en/es), circuit breaker + retry
-│   ├── ui/                DOM API components, renderer, styles
-│   ├── core/              Animation helpers, utilities
+│   ├── ui/                DOM API components, renderer
+│   ├── core/              Translation service, theme manager, animations
+│   ├── public/            Static assets (favicon, etc.)
 │   ├── main.ts            Entry point, manual DI wiring
 │   └── index.html         Shell with CSP meta tag
 │
 ├── backend/               .NET 10 (single project, folder layers)
 │   └── src/
-│       ├── Domain/        Entities: CV, Experience
-│       ├── Application/   DTOs, GetCV use case, mappings
-│       ├── Infrastructure/ WordCvSource (.docx parser), DiscordNotifier,
-│       │                   DeepLTranslationService, options, DI
-│       ├── Api/           CvController, GlobalExceptionHandler, versioning, Swagger
-│       └── Program.cs     Middleware pipeline (rate limiter, CORS, security headers, HSTS, Serilog)
+│       ├── Domain/        Entities, exceptions, repository & service interfaces
+│       ├── Application/   DTOs, GetCV use case, mappings, DI registration
+│       ├── Infrastructure/ WordCvSource (.docx parser), DeepLTranslationService,
+│       │                   DiscordNotifier, CVRepository, options, DI registration
+│       ├── Api/           CvController, GlobalExceptionHandler, API versioning,
+│       │                   CORS, Swagger, DI registration, launch settings
+│       ├── Program.cs     Middleware pipeline (rate limiter, CORS, security headers, HSTS, Serilog)
+│       └── Dockerfile     Multi-stage container build
 │
-└── .github/workflows/     CI (automatic build + test) + CD (manual deploy via SSH)
+└── .github/workflows/      CI (automatic build + test) + CD (manual deploy via SSH)
 ```
 
 ## How it works
@@ -84,7 +87,9 @@ myCV/
 | `CvSource:FilePath` | Absolute path to the `.docx` CV file |
 | `DeepL:AuthKey` | DeepL API authentication key (optional — English-only when empty) |
 | `Discord:WebhookUrl` | Discord webhook for CV source error alerts (optional) |
-| `Cors:AllowedOrigins` | Allowed CORS origins |
+| `AllowedHosts` | Production host filter (`cv-api.s3rbr0p4r.com`); overridden to `*` in development |
+| `Cors:AllowedOrigins` | CORS allowed origin URLs |
+| `Cors:FrontendUrl` | Additional frontend URL appended to CORS origins (optional) |
 
 ## License
 

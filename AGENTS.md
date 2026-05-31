@@ -5,7 +5,7 @@
 Two independent projects at the root:
 
 ```
-frontend/    TypeScript + Vite (NOT Angular — stale README says Angular CLI)
+frontend/    TypeScript + Vite
 backend/     .NET 10 Clean Architecture
 ```
 
@@ -23,9 +23,9 @@ No linter/formatter beyond `.editorconfig` (2-space indent, single quotes for TS
 
 **Architecture:** Clean Architecture layers — `domain/` → `application/` → `infrastructure/` → `ui/` (components + renderer). Manual DI in `main.ts`.
 
-**API:** Hardcoded to `http://localhost:60355/api/v1/cv` in `infrastructure/repositories/ApiCVRepository.ts`. Has offline fallback if backend is unreachable.
+**API:** Configured via `VITE_API_URL` env var (`/api/v1/cv` in dev via Vite proxy, `https://cv-api.s3rbr0p4r.com/api/v1/cv` in production). Has offline fallback if backend is unreachable.
 
-**Root-level dev command:** `npm run dev` starts both services (via `concurrently`). Pre-kills ports 5173/60354/60355.
+**Root-level dev command:** `cd frontend && npm run dev` starts both services (via `concurrently`). Pre-kills ports 5173/60354/60355.
 
 ## Backend (`backend/`)
 
@@ -91,3 +91,4 @@ Triggers on push to `main`. Two independent jobs:
 - Backend `global.json` requires `rollForward: latestMajor` (not `latestPatch`) to work on SDK versions newer than 10.0.203.
 - Backend tests use **Moq** (not NSubstitute). Test projects: Domain.Tests (4), Application.Tests (32).
 - Namespace root is `Backend.*` — no `MyCV` prefix anywhere in the backend.
+- **README must be kept in sync** — every change that adds, removes, or modifies a feature, directory, dependency, configuration key, or command must also update `README.md` (stack table, architecture tree, config table, quick start, how it works). This is enforced in code review.
