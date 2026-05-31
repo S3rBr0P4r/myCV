@@ -1,46 +1,68 @@
-name: Continuous Integration
+name: CI
 
 on:
   push:
-    branches:
-      - 'main'
-      
+    branches: [main]
+
 permissions:
   contents: read
+  packages: write
 
 jobs:
-  build:
-    permissions:
-      contents: read
-      id-token: write
-    name: FrontEnd
+  frontend:
+    name: Frontend
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-          sparse-checkout: |
-            .github
-            src
-      - name: Use Node 20.x
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-      - name: Install dependencies
-        run: npm ci
-        working-directory: ./src/frontEnd
-      - name: Build
-        run: npm run build
-        working-directory: ./src/frontEnd
-      - name: Stop website
-        uses: appleboy/ssh-action@master
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: ./frontend
+      - run: npm run build
+        working-directory: ./frontend
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
         with:
-          script: |
-            ls /opt/
-            echo "Website is being stopped..."
-            echo ${{ steps.wait-for-secrets.outputs.PASSWORD }} | sudo -S service myCV stop
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY}}
+          dotnet-version-file: './backend/global.json'
+          cache: true
+      - run: dotnet restore Backend.slnx
+        working-directory: ./backend
+      - run: dotnet build Backend.slnx --no-restore --configuration Release
+        working-directory: ./backend
+      - run: dotnet test Backend.slnx --no-build --configuration Release
+        working-directory: ./backend
+
+  docker:
+    name: Docker
+    needs: [frontend, backend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ghcr.io/${{ github.repository }}/mycv-api
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+      - uses: docker/build-push-action@v6
+        with:
+          context: backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
