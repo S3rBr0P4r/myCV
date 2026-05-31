@@ -89,6 +89,5 @@ Triggers on push to `main`. Two independent jobs:
 - `NoWarn` suppresses CS1591 (missing XML docs) and CA1707 (test naming underscores).
 - Frontend `index.html` lives in `src/`, so `vite.config.ts` needs `root: 'src'`, `envDir: '..'`, and HTML paths are relative to `src/` (e.g. `./main.ts`, not `./src/main.ts`).
 - Backend `global.json` requires `rollForward: latestMajor` (not `latestPatch`) to work on SDK versions newer than 10.0.203.
-- Backend tests use **Moq** (not NSubstitute). Test projects: Domain.Tests (4), Application.Tests (5), Infrastructure.Tests (4).
-- Infrastructure.Tests may not run locally if Windows Defender Application Control (WDAC) blocks the test DLL — not a code issue.
+- Backend tests use **Moq** (not NSubstitute). Test projects: Domain.Tests (4), Application.Tests (6).
 - Namespace root is `Backend.*` — no `MyCV` prefix anywhere in the backend.
