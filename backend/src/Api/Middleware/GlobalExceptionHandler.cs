@@ -23,6 +23,11 @@ public sealed class GlobalExceptionHandler : IMiddleware
             _logger.LogWarning(ex, "Resource not found: {EntityName} with key {Key}", ex.EntityName, ex.Key);
             await WriteProblemDetailsAsync(context, HttpStatusCode.NotFound, "Resource Not Found", ex.Message);
         }
+        catch (CvSourceException ex)
+        {
+            _logger.LogError(ex, "CV source error: {Message}", ex.Message);
+            await WriteProblemDetailsAsync(context, HttpStatusCode.InternalServerError, "CV Source Error", ex.Message);
+        }
         catch (DomainException ex)
         {
             _logger.LogWarning(ex, "Domain error: {Message}", ex.Message);

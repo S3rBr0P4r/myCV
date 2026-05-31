@@ -21,7 +21,7 @@ try
 
     builder.Services
         .AddApplication()
-        .AddInfrastructure()
+        .AddInfrastructure(builder.Configuration)
         .AddApiServices(builder.Configuration);
 
     var app = builder.Build();

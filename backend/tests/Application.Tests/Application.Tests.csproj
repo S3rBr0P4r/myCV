@@ -9,6 +9,11 @@
     <PackageReference Include="coverlet.collector" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <!-- CA1873: Logger argument evaluation cost - false positives in mock setups -->
+    <NoWarn>$(NoWarn);CA1873</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\src\Backend.csproj" />
   </ItemGroup>
