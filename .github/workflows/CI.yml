@@ -33,6 +33,7 @@ jobs:
         with:
           global-json-file: './backend/global.json'
           cache: true
+          cache-dependency-path: 'backend/Directory.Packages.props'
       - run: dotnet restore Backend.slnx
         working-directory: ./backend
       - run: dotnet build Backend.slnx --no-restore --configuration Release
