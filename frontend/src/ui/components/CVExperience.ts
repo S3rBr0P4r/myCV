@@ -29,11 +29,11 @@ export function renderExperience(cv: CV): HTMLElement {
 
     const date = document.createElement('span');
     date.className = 'date';
-    date.appendChild(document.createTextNode(t(exp.period)));
+    date.appendChild(document.createTextNode(exp.period));
     expContent.appendChild(date);
 
     const role = document.createElement('h3');
-    role.appendChild(document.createTextNode(t(exp.role)));
+    role.appendChild(document.createTextNode(exp.role));
     expContent.appendChild(role);
 
     const company = document.createElement('p');
@@ -43,7 +43,7 @@ export function renderExperience(cv: CV): HTMLElement {
     expContent.appendChild(company);
 
     const desc = document.createElement('p');
-    desc.appendChild(document.createTextNode(t(exp.description)));
+    desc.appendChild(document.createTextNode(exp.description));
     expContent.appendChild(desc);
 
     card.appendChild(expContent);

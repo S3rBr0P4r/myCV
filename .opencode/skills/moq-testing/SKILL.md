@@ -757,6 +757,169 @@ public sealed class GlobalExceptionHandlerTests
 
 ---
 
+## 8. HTTP Client Service Tests (DeepLTranslationService)
+
+### Pattern: Testing Services with HttpClient and IMemoryCache
+
+Use `Mock<HttpMessageHandler>` with `Protected().Setup()` to mock HTTP responses. Use a real `MemoryCache` instance instead of mocking `IMemoryCache` — it's lightweight and behaves correctly. Implement `IDisposable` to clean up `HttpClient` and `MemoryCache`.
+
+```csharp
+using System.Net;
+using System.Text.Json;
+using Backend.Domain.Entities;
+using Backend.Infrastructure.Options;
+using Backend.Infrastructure.Services;
+using FluentAssertions;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Moq;
+using Moq.Protected;
+using Xunit;
+
+namespace Backend.Tests.Application.Services;
+
+public sealed class DeepLTranslationServiceTests : IDisposable
+{
+    private readonly Mock<HttpMessageHandler> _handlerMock;
+    private readonly HttpClient _httpClient;
+    private readonly IMemoryCache _cache;
+    private readonly DeepLTranslationService _sut;
+
+    public DeepLTranslationServiceTests()
+    {
+        _handlerMock = new Mock<HttpMessageHandler>();
+
+        _handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(new
+                {
+                    translations = new[]
+                    {
+                        new { detected_source_language = "EN", text = "Translated summary" },
+                        new { detected_source_language = "EN", text = "Translated title" }
+                    }
+                }))
+            });
+
+        _httpClient = new HttpClient(_handlerMock.Object);
+        _cache = new MemoryCache(new MemoryCacheOptions());
+        var options = Options.Create(new DeepLOptions
+        {
+            AuthKey = "test-key",
+            CacheDurationMinutes = 1440
+        });
+        _sut = new DeepLTranslationService(
+            _httpClient, options, _cache,
+            Mock.Of<ILogger<DeepLTranslationService>>());
+    }
+
+    public void Dispose()
+    {
+        _httpClient.Dispose();
+        (_cache as IDisposable)?.Dispose();
+    }
+
+    [Fact]
+    public async Task TranslateAsync_ApiSuccess_ShouldReturnTranslatedCV()
+    {
+        var cv = new CV
+        {
+            Name = "John", LastName = "Doe",
+            Title = "Developer", Summary = "Summary",
+            Experiences = [], Skills = ["C#"]
+        };
+
+        var result = await _sut.TranslateAsync(cv, "ES");
+
+        result.Should().NotBeNull();
+        result!.Title.Should().Be("Translated title");
+    }
+
+    [Fact]
+    public async Task TranslateAsync_AuthKeyEmpty_ShouldReturnNull()
+    {
+        var options = Options.Create(new DeepLOptions { AuthKey = string.Empty });
+        var sut = new DeepLTranslationService(
+            _httpClient, options, _cache,
+            Mock.Of<ILogger<DeepLTranslationService>>());
+
+        var result = await sut.TranslateAsync(new CV
+        {
+            Name = "John", LastName = "Doe",
+            Title = "Dev", Summary = "Sum",
+            Experiences = [], Skills = []
+        }, "ES");
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task TranslateAsync_CacheHit_ShouldReturnCachedResult()
+    {
+        var cached = new CV
+        {
+            Name = "John", LastName = "Doe",
+            Title = "Dev", Summary = "Sum",
+            Experiences = [], Skills = []
+        };
+        _cache.Set("translated_cv_ES", cached, TimeSpan.FromMinutes(1440));
+
+        var result = await _sut.TranslateAsync(cached, "ES");
+
+        result.Should().BeSameAs(cached);
+        _handlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Never(),
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task TranslateAsync_ApiError_ShouldReturnNull()
+    {
+        var handlerMock = new Mock<HttpMessageHandler>();
+        handlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Network error"));
+
+        var httpClient = new HttpClient(handlerMock.Object);
+        var options = Options.Create(new DeepLOptions { AuthKey = "test-key" });
+        var sut = new DeepLTranslationService(
+            httpClient, options, _cache,
+            Mock.Of<ILogger<DeepLTranslationService>>());
+
+        var cv = new CV
+        {
+            Name = "John", LastName = "Doe",
+            Title = "Dev", Summary = "Sum",
+            Experiences = [], Skills = []
+        };
+        var result = await sut.TranslateAsync(cv, "ES");
+        result.Should().BeNull();
+    }
+}
+```
+
+### Key points for HttpClient service tests:
+- **Real MemoryCache**: Use `new MemoryCache(new MemoryCacheOptions())` instead of mocking — simpler and correctly handles `TryGetValue`/`Set` lifecycle.
+- **IDisposable**: Dispose `HttpClient` and `MemoryCache` in test class. Cast `_cache as IDisposable` — `MemoryCache` implements `IDisposable` but field type `IMemoryCache` does not expose it in some frameworks.
+- **HttpMessageHandler**: Use `Mock<HttpMessageHandler>` with `Protected().Setup("SendAsync", ...)`. Use Loose behavior to avoid `Dispose()` invocation failures.
+- **Request capture**: Use a callback in `ReturnsAsync((HttpRequestMessage request, CancellationToken ct) => ...)` to capture and inspect the outgoing request.
+- **Small CV fixtures**: Minimize test data. Skip fields that don't affect the scenario (e.g., omit Experiences when testing summary translation).
+- **Cache prefix**: Cache key is `$"translated_cv_{lang}"` — prefix is set by the implementation.
+- **Verify no call**: Use `_handlerMock.Protected().Verify("SendAsync", Times.Never(), ...)` for cache-hit scenarios.
+
+---
+
 ## Best Practices
 
 1. **Tests cover only public APIs** - Never write tests that target `private` or `internal` methods directly. All test scenarios must exercise the SUT exclusively through its public methods. Private methods are implementation details — if they need testing, refactor them into separate public types. Never expose `internal` members (`InternalsVisibleTo`, test-only methods) solely for testing purposes.
@@ -770,3 +933,4 @@ public sealed class GlobalExceptionHandlerTests
 9. **Dispose DbContext** - Implement `IDisposable` in repository test classes
 10. **Test failures too** - Test missing entities, validation errors, edge cases
 11. **`MockBehavior.Strict` sparingly** - Use only when you need to ensure no extra calls
+12. **Tests for every new class** - Every new public class added to the codebase must have a corresponding test class covering its public API. Before committing a new feature or service, verify that test coverage exists for: all branch paths (happy path, error path, edge cases), configuration-dependent behavior (empty/null config), cache/state behavior (first call vs subsequent calls), and external dependency failures (HTTP errors, timeouts). This is enforced in code review.

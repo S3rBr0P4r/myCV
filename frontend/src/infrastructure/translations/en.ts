@@ -33,16 +33,6 @@ export const en: Record<string, string> = {
   'nav.dotContact': 'Contact',
   'nav.dotAria': 'Quick navigation',
 
-  /* CV content (English pass-through) */
-  '2024 - PRESENT': '2024 - PRESENT',
-  '2021 - 2023': '2021 - 2023',
-  'Senior Developer': 'Senior Developer',
-  'Full Stack Engineer': 'Full Stack Engineer',
-  'Redefining the web with handcrafted, fluid architecture.': 'Redefining the web with handcrafted, fluid architecture.',
-  'Creating immersive worlds with attention to detail.': 'Creating immersive worlds with attention to detail.',
-  'Building digital experiences with the softness of a sunset and the precision of a craftsman.': 'Building digital experiences with the softness of a sunset and the precision of a craftsman.',
-  'Creative Developer & Architect': 'Creative Developer & Architect',
-
   /* Offline fallback */
   'offline.surnameSuffix': ' (Offline)',
   'offline.summary': 'The backend is not responding, but here is your local data.',

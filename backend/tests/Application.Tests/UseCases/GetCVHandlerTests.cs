@@ -10,12 +10,17 @@ namespace Backend.Tests.Application.UseCases;
 public sealed class GetCVHandlerTests
 {
     private readonly Mock<ICVRepository> _repositoryMock;
+    private readonly Mock<ITranslationService> _translationMock;
     private readonly GetCVHandler _handler;
 
     public GetCVHandlerTests()
     {
         _repositoryMock = new Mock<ICVRepository>();
-        _handler = new GetCVHandler(_repositoryMock.Object);
+        _translationMock = new Mock<ITranslationService>();
+        _translationMock
+            .Setup(t => t.TranslateAsync(It.IsAny<CV>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CV?)null);
+        _handler = new GetCVHandler(_repositoryMock.Object, _translationMock.Object);
     }
 
     [Fact]
@@ -79,10 +84,19 @@ public sealed class GetCVHandlerTests
     [Fact]
     public void Constructor_ShouldThrow_WhenRepositoryIsNull()
     {
-        var act = () => new GetCVHandler(null!);
+        var act = () => new GetCVHandler(null!, Mock.Of<ITranslationService>());
 
         act.Should().Throw<ArgumentNullException>()
             .WithParameterName("cvRepository");
+    }
+
+    [Fact]
+    public void Constructor_ShouldThrow_WhenTranslationServiceIsNull()
+    {
+        var act = () => new GetCVHandler(Mock.Of<ICVRepository>(), null!);
+
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("translationService");
     }
 
     [Fact]

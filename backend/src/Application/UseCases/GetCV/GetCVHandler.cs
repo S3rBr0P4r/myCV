@@ -6,10 +6,12 @@ namespace Backend.Application.UseCases.GetCV;
 public sealed class GetCVHandler
 {
     private readonly ICVRepository _cvRepository;
+    private readonly ITranslationService _translationService;
 
-    public GetCVHandler(ICVRepository cvRepository)
+    public GetCVHandler(ICVRepository cvRepository, ITranslationService translationService)
     {
         _cvRepository = cvRepository ?? throw new ArgumentNullException(nameof(cvRepository));
+        _translationService = translationService ?? throw new ArgumentNullException(nameof(translationService));
     }
 
     public async Task<GetCVResult> HandleAsync(GetCVQuery query, CancellationToken cancellationToken = default)
@@ -17,7 +19,11 @@ public sealed class GetCVHandler
         ArgumentNullException.ThrowIfNull(query);
 
         var cv = await _cvRepository.GetCVAsync(query.Culture, cancellationToken);
-        var dto = cv.ToDto();
+
+        var translated = await _translationService.TranslateAsync(cv, query.Culture ?? string.Empty, cancellationToken);
+        var result = translated ?? cv;
+
+        var dto = result.ToDto();
 
         return new GetCVResult(dto);
     }

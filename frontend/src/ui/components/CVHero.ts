@@ -26,7 +26,7 @@ export function renderHero(cv: CV): HTMLElement {
 
   const description = document.createElement('p');
   description.className = 'hero-description';
-  description.appendChild(document.createTextNode(t(cv.summary)));
+  description.appendChild(document.createTextNode(cv.summary));
   content.appendChild(description);
 
   const cta = document.createElement('div');

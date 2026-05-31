@@ -14,10 +14,15 @@ public static class DependencyInjection
 
         services.Configure<CvSourceOptions>(configuration.GetSection(CvSourceOptions.SectionName));
         services.Configure<DiscordOptions>(configuration.GetSection(DiscordOptions.SectionName));
+        services.Configure<DeepLOptions>(configuration.GetSection(DeepLOptions.SectionName));
 
         services.AddHttpClient<DiscordNotifier>();
+        services.AddHttpClient<DeepLTranslationService>();
+
+        services.AddMemoryCache();
 
         services.AddScoped<ICvSource, WordCvSource>();
+        services.AddScoped<ITranslationService, DeepLTranslationService>();
 
         services.AddScoped<ICVRepository, CVRepository>();
         return services;

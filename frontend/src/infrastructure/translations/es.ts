@@ -31,16 +31,6 @@ export const es: Record<string, string> = {
   'nav.dotContact': 'Contacto',
   'nav.dotAria': 'Navegaci\u00F3n r\u00E1pida',
 
-  /* CV content (English → Spanish) */
-  '2024 - PRESENT': '2024 - ACTUALIDAD',
-  '2021 - 2023': '2021 - 2023',
-  'Senior Developer': 'Senior Developer',
-  'Full Stack Engineer': 'Full Stack Engineer',
-  'Redefining the web with handcrafted, fluid architecture.': 'Redefiniendo la web con arquitectura artesanal y fluida.',
-  'Creating immersive worlds with attention to detail.': 'Creando mundos inmersivos con atenci\u00F3n al detalle.',
-  'Building digital experiences with the softness of a sunset and the precision of a craftsman.': 'Construyendo experiencias digitales con la suavidad de un atardecer y la precisi\u00F3n de un artesano.',
-  'Creative Developer & Architect': 'Creative Developer & Architect',
-
   /* Offline fallback */
   'offline.surnameSuffix': ' (Sin conexi\u00F3n)',
   'offline.summary': 'El backend no est\u00E1 respondiendo, pero aqu\u00ED tienes los datos locales.',

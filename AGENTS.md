@@ -37,7 +37,7 @@ No linter/formatter beyond `.editorconfig` (2-space indent, single quotes for TS
 | `dotnet build Backend.slnx --no-restore` | Build all projects |
 | `dotnet test Backend.slnx --no-build` | Run tests (xUnit + FluentAssertions + Moq) |
 
-**Build hardens:** `TreatWarningsAsErrors`, `AnalysisLevel: latest-recommended`, `EnforceCodeStyleInBuild` — fix all analyzer warnings to build.
+**Build hardens:** `TreatWarningsAsErrors`, `AnalysisLevel: latest-recommended`, `EnforceCodeStyleInBuild` — fix all analyzer warnings to build. Every new public class must have corresponding test coverage.
 
 **Folder structure (one project, layers as folders):**
 
@@ -89,5 +89,5 @@ Triggers on push to `main`. Two independent jobs:
 - `NoWarn` suppresses CS1591 (missing XML docs) and CA1707 (test naming underscores).
 - Frontend `index.html` lives in `src/`, so `vite.config.ts` needs `root: 'src'`, `envDir: '..'`, and HTML paths are relative to `src/` (e.g. `./main.ts`, not `./src/main.ts`).
 - Backend `global.json` requires `rollForward: latestMajor` (not `latestPatch`) to work on SDK versions newer than 10.0.203.
-- Backend tests use **Moq** (not NSubstitute). Test projects: Domain.Tests (4), Application.Tests (21).
+- Backend tests use **Moq** (not NSubstitute). Test projects: Domain.Tests (4), Application.Tests (32).
 - Namespace root is `Backend.*` — no `MyCV` prefix anywhere in the backend.
