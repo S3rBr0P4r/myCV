@@ -1,0 +1,16 @@
+services:
+  mycv-api:
+    image: ghcr.io/<owner>/<repo>/mycv-api:latest
+    restart: unless-stopped
+    ports:
+      - "60355:60355"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - AllowedHosts=cv-api.s3rbr0p4r.com
+      - CvSource__FilePath=/data/cv.docx
+      - DeepL__AuthKey=${DEEPL_AUTH_KEY}
+      - DeepL__CacheDurationMinutes=1440
+      - Discord__WebhookUrl=${DISCORD_WEBHOOK_URL}
+      - Cors__FrontendUrl=https://cv.s3rbr0p4r.com
+    volumes:
+      - /path/to/cv.docx:/data/cv.docx:ro

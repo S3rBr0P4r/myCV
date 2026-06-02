@@ -81,15 +81,17 @@ myCV/
 
 ## Configuration
 
-| Setting | Description |
-|---------|-------------|
-| `VITE_API_URL` | Frontend API URL (`.env.development` = `/api/v1/cv`, `.env.production` = `https://cv-api.s3rbr0p4r.com/api/v1/cv`) |
-| `CvSource:FilePath` | Absolute path to the `.docx` CV file |
-| `DeepL:AuthKey` | DeepL API authentication key (optional — English-only when empty) |
-| `Discord:WebhookUrl` | Discord webhook for CV source error alerts (optional) |
-| `AllowedHosts` | Production host filter (`cv-api.s3rbr0p4r.com`); overridden to `*` in development |
-| `Cors:AllowedOrigins` | CORS allowed origin URLs |
-| `Cors:FrontendUrl` | Additional frontend URL appended to CORS origins (optional) |
+| Setting | Description | Source |
+|---------|-------------|--------|
+| `VITE_API_URL` | Frontend API URL (`.env.development` = `/api/v1/cv`, `.env.production` = `https://cv-api.s3rbr0p4r.com/api/v1/cv`) | `.env` file |
+| `AllowedHosts` | Production host filter — `cv-api.s3rbr0p4r.com` (dev overrides to `*`) | Environment variable only |
+| `CvSource__FilePath` | Absolute path to the `.docx` CV file | Environment variable only |
+| `DeepL__AuthKey` | DeepL API authentication key (optional — English-only when empty) | Environment variable only (secret) |
+| `Discord__WebhookUrl` | Discord webhook for CV source error alerts (optional) | Environment variable only (secret) |
+| `Cors__AllowedOrigins` | CORS allowed origin URLs | Environment variable only |
+| `Cors__FrontendUrl` | Additional frontend URL appended to CORS origins (optional) | Environment variable only |
+
+> Use .NET's `__` (double underscore) separator for nested keys when setting environment variables. These override the defaults from `appsettings.json` automatically.
 
 ## License
 
