@@ -75,7 +75,7 @@ Triggers on push to `main`. Two independent jobs:
 | Skill | Purpose |
 |-------|---------|
 | `vite` | Vite config, build, plugins |
-| `ui-ux-pro-max` | UI/UX design system, 50+ styles, accessibility |
+| `frontend-design` | Production-grade frontend design, aesthetic direction, design systems |
 | `typescript-code-review` | TypeScript code review best practices |
 | `dotnet-clean-architecture` | Clean Architecture project structure |
 | `dotnet-domain-entity-generator` | DDD entity patterns |

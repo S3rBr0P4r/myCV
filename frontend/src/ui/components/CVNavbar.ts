@@ -1,7 +1,10 @@
 import { t, getLocale } from '../../core/TranslationService';
 
-const ukFlag = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40" width="18" height="12"><rect width="60" height="40" fill="#012169" stroke="#fff" stroke-width="0.5"/><path d="M0,0L60,40M60,0L0,40" stroke="#FFF" stroke-width="6"/><path d="M0,0L60,40M60,0L0,40" stroke="#C8102E" stroke-width="3"/><path d="M0,20L60,20M30,0L30,40" stroke="#FFF" stroke-width="6"/><path d="M0,20L60,20M30,0L30,40" stroke="#C8102E" stroke-width="3"/></svg>';
-const esFlag = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40" width="18" height="12"><rect width="60" height="40" fill="#C60B1E" stroke="#fff" stroke-width="0.5"/><rect y="10" width="60" height="20" fill="#FFC400"/></svg>';
+const sunSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+const moonSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+
+const ukFlag = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40" width="20" height="14"><rect width="60" height="40" fill="#012169" stroke="#fff" stroke-width="0.5"/><path d="M0,0L60,40M60,0L0,40" stroke="#FFF" stroke-width="6"/><path d="M0,0L60,40M60,0L0,40" stroke="#C8102E" stroke-width="3"/><path d="M0,20L60,20M30,0L30,40" stroke="#FFF" stroke-width="6"/><path d="M0,20L60,20M30,0L30,40" stroke="#C8102E" stroke-width="3"/></svg>';
+const esFlag = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 40" width="20" height="14"><rect width="60" height="40" fill="#C60B1E" stroke="#fff" stroke-width="0.5"/><rect y="10" width="60" height="20" fill="#FFC400"/></svg>';
 
 const locales = [
   { code: 'en', flag: ukFlag, labelKey: 'nav.localeEn' },
@@ -68,16 +71,7 @@ export function renderNavbar(): HTMLElement {
   themeBtn.type = 'button';
   themeBtn.ariaLabel = t('nav.themeLabel');
   themeBtn.title = t('nav.themeLabel');
-  const sun = document.createElement('span');
-  sun.className = 'icon-sun';
-  sun.ariaHidden = 'true';
-  sun.appendChild(document.createTextNode('☀️'));
-  const moon = document.createElement('span');
-  moon.className = 'icon-moon';
-  moon.ariaHidden = 'true';
-  moon.appendChild(document.createTextNode('🌙'));
-  themeBtn.appendChild(sun);
-  themeBtn.appendChild(moon);
+  themeBtn.innerHTML = sunSvg + moonSvg;
   actions.appendChild(themeBtn);
 
   nav.appendChild(actions);

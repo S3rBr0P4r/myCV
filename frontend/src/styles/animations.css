@@ -3,9 +3,9 @@
 .reveal {
   opacity: 0;
   transform: translateY(40px) scale(0.97);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-              filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.9s cubic-bezier(0.22, 1, 0.36, 1);
   filter: blur(6px);
   will-change: transform, opacity, filter;
 }
@@ -38,8 +38,8 @@ section:nth-child(odd):not(#hero).reveal.active {
 .stagger-item {
   opacity: 0;
   transform: translateY(16px);
-  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .active .stagger-item {
@@ -72,39 +72,53 @@ section:nth-child(odd):not(#hero).reveal.active {
 }
 
 #hero .sub-title {
-  animation: hero-reveal 0.8s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hero-reveal 0.8s 0.1s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 #hero .main-title {
-  animation: hero-reveal 0.8s 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hero-reveal 0.8s 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 #hero .hero-description {
-  animation: hero-reveal 0.8s 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hero-reveal 0.8s 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 #hero .cta-buttons {
-  animation: hero-reveal 0.8s 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: hero-reveal 0.8s 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* ─── Background Float ─── */
+/* ─── Ghibli-inspired gentle float ─── */
 
 @keyframes float-bg {
   0% {
     transform: translate(0, 0) rotate(0deg) scale(1);
   }
-  33% {
-    transform: translate(2%, -3%) rotate(2deg) scale(1.02);
+  25% {
+    transform: translate(1.5%, -2%) rotate(1.5deg) scale(1.02);
   }
-  66% {
-    transform: translate(-1%, 2%) rotate(-1deg) scale(0.98);
+  50% {
+    transform: translate(-0.5%, 1.5%) rotate(-0.5deg) scale(0.99);
+  }
+  75% {
+    transform: translate(1%, -0.5%) rotate(0.8deg) scale(1.01);
   }
   100% {
-    transform: translate(1%, -1%) rotate(1deg) scale(1.01);
+    transform: translate(-0.5%, 0.5%) rotate(-0.3deg) scale(1);
   }
 }
 
-/* ─── Navbar Scroll Effect ─── */
+/* ─── Gentle drift for decorative elements ─── */
+
+@keyframes gentle-drift {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* ─── Navbar Entrance ─── */
 
 @keyframes navbar-in {
   from {
@@ -118,27 +132,27 @@ section:nth-child(odd):not(#hero).reveal.active {
 }
 
 .navbar {
-  animation: navbar-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: navbar-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ─── Skill Hover Pulse ─── */
 
 @keyframes skill-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.2); }
-  100% { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(74, 124, 89, 0.2); }
+  100% { box-shadow: 0 0 0 14px rgba(74, 124, 89, 0); }
 }
 
 .skill-item:hover {
-  animation: skill-pulse 0.6s ease-out;
+  animation: skill-pulse 0.5s ease-out;
 }
 
-/* ─── Smooth Experience Card Entry ─── */
+/* ─── Experience Card Entry ─── */
 
 .experience-card {
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* ─── Section Fade Transition ─── */
+/* ─── Section Fade ─── */
 
 @keyframes section-in {
   from {
@@ -151,30 +165,33 @@ section:nth-child(odd):not(#hero).reveal.active {
   }
 }
 
-/* ─── Theme Toggle Rotate ─── */
-
 /* ─── Progress Dot Pulse ─── */
 
 @keyframes dot-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-  100% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(74, 124, 89, 0.3); }
+  100% { box-shadow: 0 0 0 10px rgba(74, 124, 89, 0); }
 }
 
 .scroll-progress a.active {
-  animation: dot-pulse 2s ease-out infinite;
+  animation: dot-pulse 2.5s ease-out infinite;
 }
 
-/* ─── Navbar Theme Switch ─── */
+/* ─── Button Glow ─── */
 
-.navbar {
-  transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+@keyframes btn-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(212, 165, 75, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(212, 165, 75, 0.2);
+  }
 }
 
-/* ─── Section Background Transition ─── */
-
-section:not(#hero) {
-  transition: opacity 0.6s ease, transform 0.6s ease;
+.btn.primary {
+  animation: btn-glow 4s ease-in-out infinite;
 }
+
+/* ─── Disable motion for reduced motion preference ─── */
 
 @media (prefers-reduced-motion: reduce) {
   .reveal,
@@ -186,8 +203,8 @@ section:not(#hero) {
   .navbar,
   .skill-item:hover,
   .experience-card,
-  .theme-toggle,
   .scroll-progress a,
+  .btn.primary,
   section {
     animation: none !important;
     transition: none !important;
