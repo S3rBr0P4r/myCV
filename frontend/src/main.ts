@@ -6,6 +6,8 @@ import { ThemeManager } from './core/ThemeManager';
 import { getLocale, setLocale } from './core/TranslationService';
 import { CVRenderer } from './ui/CVRenderer';
 
+setCSP();
+
 class App {
   private getCVUseCase: GetCVUseCase;
   private themeManager: ThemeManager;
@@ -99,6 +101,23 @@ class App {
       console.error('Re-fetch failed:', error);
     }
   }
+}
+
+function setCSP(): void {
+  const apiUrl = import.meta.env.VITE_API_URL || '';
+  let connectSrc = "'self'";
+  if (apiUrl) {
+    try {
+      const origin = new URL(apiUrl, window.location.origin).origin;
+      if (origin !== window.location.origin) {
+        connectSrc += ` ${origin}`;
+      }
+    } catch { /* relative URL — same origin */ }
+  }
+  const meta = document.createElement('meta');
+  meta.httpEquiv = 'Content-Security-Policy';
+  meta.content = `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src ${connectSrc}; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`;
+  document.head.appendChild(meta);
 }
 
 document.addEventListener('DOMContentLoaded', () => new App());

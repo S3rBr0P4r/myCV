@@ -34,4 +34,4 @@ jobs:
         run: |
           sleep 5
           curl --retry 5 --retry-delay 3 --retry-connrefused \
-            https://cv-api.s3rbr0p4r.com/api/v1/cv
+            https://${{ vars.API_HOST }}/api/v1/cv

@@ -23,7 +23,7 @@ No linter/formatter beyond `.editorconfig` (2-space indent, single quotes for TS
 
 **Architecture:** Clean Architecture layers — `domain/` → `application/` → `infrastructure/` → `ui/` (components + renderer). Manual DI in `main.ts`.
 
-**API:** Configured via `VITE_API_URL` env var (`/api/v1/cv` in dev via Vite proxy, `https://cv-api.s3rbr0p4r.com/api/v1/cv` in production). Has offline fallback if backend is unreachable.
+**API:** Configured via `VITE_API_URL` env var (dev = `/api/v1/cv` via Vite proxy, production = set via CI variable `VITE_API_URL`). Has offline fallback if backend is unreachable.
 
 **Root-level dev command:** `cd frontend && npm run dev` starts both services (via `concurrently`). Pre-kills ports 5173/60354/60355.
 

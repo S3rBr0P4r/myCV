@@ -83,8 +83,8 @@ myCV/
 
 | Setting | Description | Source |
 |---------|-------------|--------|
-| `VITE_API_URL` | Frontend API URL (`.env.development` = `/api/v1/cv`, `.env.production` = `https://cv-api.s3rbr0p4r.com/api/v1/cv`) | `.env` file |
-| `AllowedHosts` | Production host filter — `cv-api.s3rbr0p4r.com` (dev overrides to `*`) | Environment variable only |
+| `VITE_API_URL` | Frontend API URL (dev = `/api/v1/cv`, production = set via CI variable `VITE_API_URL`) | CI/CD variable |
+| `AllowedHosts` | Production host filter (dev overrides to `*`) | Environment variable only |
 | `CvSource__FilePath` | Absolute path to the `.docx` CV file | Environment variable only |
 | `DeepL__AuthKey` | DeepL API authentication key (optional — English-only when empty) | Environment variable only (secret) |
 | `Discord__WebhookUrl` | Discord webhook for CV source error alerts (optional) | Environment variable only (secret) |
