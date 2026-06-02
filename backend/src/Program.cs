@@ -71,19 +71,17 @@ try
 
     app.Use(async (context, next) =>
     {
-        Log.Information("{Method} {Path}{QueryString} — start",
+        Log.Information("{Method} {Path} — start",
             context.Request.Method,
-            context.Request.Path,
-            context.Request.QueryString);
+            context.Request.Path);
         await next();
     });
 
     app.UseSerilogRequestLogging(options =>
     {
-        options.MessageTemplate = "{RequestMethod} {RequestPath}{QueryString} — ended {StatusText} in {Elapsed:0.0}ms";
+        options.MessageTemplate = "{RequestMethod} {RequestPath} — ended {StatusText} in {Elapsed:0.0}ms";
         options.EnrichDiagnosticContext = (diagnosticContext, httpContext) =>
         {
-            diagnosticContext.Set("QueryString", httpContext.Request.QueryString.Value ?? "");
             var statusText = Enum.IsDefined(typeof(System.Net.HttpStatusCode), httpContext.Response.StatusCode)
                 ? ((System.Net.HttpStatusCode)httpContext.Response.StatusCode).ToString()
                 : httpContext.Response.StatusCode.ToString(CultureInfo.InvariantCulture);
@@ -108,6 +106,7 @@ try
         context.Response.Headers["X-Content-Type-Options"] = "nosniff";
         context.Response.Headers["X-Frame-Options"] = "DENY";
         context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+        context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), interest-cohort=()";
         await next();
     });
 

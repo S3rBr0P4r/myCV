@@ -5,20 +5,30 @@ namespace Backend.Infrastructure.Services;
 
 public sealed class DiscordNotifier
 {
+    private static readonly TimeSpan AlertCooldown = TimeSpan.FromHours(1);
+    private static readonly object _alertLock = new();
+    private static DateTime _lastAlertTime = DateTime.MinValue;
+
+    public static void ResetCooldown()
+    {
+        _lastAlertTime = DateTime.MinValue;
+    }
+
     private readonly HttpClient _httpClient;
     private readonly DiscordOptions _options;
-    private static readonly object _alertLock = new();
-    private static bool _alertSent;
+    private readonly ILogger<DiscordNotifier> _logger;
 
-    public DiscordNotifier(HttpClient httpClient, IOptions<DiscordOptions> options)
+    public DiscordNotifier(HttpClient httpClient, IOptions<DiscordOptions> options, ILogger<DiscordNotifier> logger)
     {
         _httpClient = httpClient;
         _options = options.Value;
+        _logger = logger;
     }
 
     public Task SendAlertAsync(string title, string message)
     {
-        if (_alertSent)
+        var now = DateTime.UtcNow;
+        if (now - _lastAlertTime < AlertCooldown)
         {
             return Task.CompletedTask;
         }
@@ -37,12 +47,12 @@ public sealed class DiscordNotifier
         bool shouldSend;
         lock (_alertLock)
         {
-            if (_alertSent)
+            if (now - _lastAlertTime < AlertCooldown)
             {
                 return Task.CompletedTask;
             }
 
-            _alertSent = true;
+            _lastAlertTime = now;
             shouldSend = true;
         }
 
@@ -79,13 +89,12 @@ public sealed class DiscordNotifier
             if (!response.IsSuccessStatusCode)
             {
                 var body = await response.Content.ReadAsStringAsync(cts.Token);
-                System.Diagnostics.Debug.WriteLine(
-                    $"Discord webhook returned {(int)response.StatusCode}: {body}");
+                _logger.LogWarning("Discord webhook returned {StatusCode}: {Body}", (int)response.StatusCode, body);
             }
         }
         catch (OperationCanceledException)
         {
-            System.Diagnostics.Debug.WriteLine("Discord webhook request timed out.");
+            _logger.LogWarning("Discord webhook request timed out.");
         }
     }
 }

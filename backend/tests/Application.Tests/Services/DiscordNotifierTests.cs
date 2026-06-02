@@ -1,8 +1,8 @@
 using System.Net;
-using System.Reflection;
 using Backend.Infrastructure.Options;
 using Backend.Infrastructure.Services;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
@@ -14,8 +14,7 @@ public sealed class DiscordNotifierTests
 {
     public DiscordNotifierTests()
     {
-        var field = typeof(DiscordNotifier).GetField("_alertSent", BindingFlags.Static | BindingFlags.NonPublic);
-        field!.SetValue(null, false);
+        DiscordNotifier.ResetCooldown();
     }
     [Fact]
     public async Task SendAlertAsync_EmptyWebhookUrl_ShouldNotCallHttpClient()
@@ -23,7 +22,8 @@ public sealed class DiscordNotifierTests
         var handlerMock = new Mock<HttpMessageHandler>();
         var httpClient = new HttpClient(handlerMock.Object);
         var options = Options.Create(new DiscordOptions { WebhookUrl = string.Empty });
-        var notifier = new DiscordNotifier(httpClient, options);
+        var loggerMock = new Mock<ILogger<DiscordNotifier>>();
+        var notifier = new DiscordNotifier(httpClient, options, loggerMock.Object);
 
         await notifier.SendAlertAsync("title", "message");
 
@@ -50,7 +50,8 @@ public sealed class DiscordNotifierTests
         {
             WebhookUrl = "https://discord.com/api/webhooks/test"
         });
-        var notifier = new DiscordNotifier(httpClient, options);
+        var loggerMock = new Mock<ILogger<DiscordNotifier>>();
+        var notifier = new DiscordNotifier(httpClient, options, loggerMock.Object);
 
         await notifier.SendAlertAsync("First", "First message");
         await notifier.SendAlertAsync("Second", "Second message");
@@ -82,7 +83,8 @@ public sealed class DiscordNotifierTests
         var httpClient = new HttpClient(handlerMock.Object);
         var webhookUrl = "https://discord.com/api/webhooks/test";
         var options = Options.Create(new DiscordOptions { WebhookUrl = webhookUrl });
-        var notifier = new DiscordNotifier(httpClient, options);
+        var loggerMock = new Mock<ILogger<DiscordNotifier>>();
+        var notifier = new DiscordNotifier(httpClient, options, loggerMock.Object);
 
         await notifier.SendAlertAsync("Test Title", "Test description");
 

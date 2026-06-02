@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import obfuscator from 'vite-plugin-javascript-obfuscator';
 
 export default defineConfig({
   root: 'src',
@@ -16,20 +15,4 @@ export default defineConfig({
       },
     },
   },
-  plugins: [
-    {
-      ...obfuscator({
-        options: {
-          compact: true,
-          controlFlowFlattening: true,
-          deadCodeInjection: true,
-          stringArray: true,
-          rotateStringArray: true,
-          selfDefending: false,
-          disableConsoleOutput: false,
-        },
-      }),
-      apply: 'build',
-    },
-  ],
 });

@@ -21,7 +21,7 @@ public sealed class GlobalExceptionHandler : IMiddleware
         catch (NotFoundException ex)
         {
             _logger.LogWarning(ex, "Resource not found: {EntityName} with key {Key}", ex.EntityName, ex.Key);
-            await WriteProblemDetailsAsync(context, HttpStatusCode.NotFound, "Resource Not Found", ex.Message);
+            await WriteProblemDetailsAsync(context, HttpStatusCode.NotFound, "Resource Not Found", "The requested resource was not found.");
         }
         catch (CvSourceClientException)
         {

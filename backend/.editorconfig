@@ -216,7 +216,7 @@ dotnet_diagnostic.CA1062.severity = suggestion
 dotnet_diagnostic.CA1816.severity = warning
 
 # CA2007: Do not directly await a Task (configure await)
-dotnet_diagnostic.CA2007.severity = silent
+dotnet_diagnostic.CA2007.severity = suggestion
 
 # CA1848: Use the LoggerMessage delegates
 dotnet_diagnostic.CA1848.severity = suggestion

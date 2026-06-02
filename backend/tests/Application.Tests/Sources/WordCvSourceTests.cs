@@ -152,7 +152,7 @@ public sealed class WordCvSourceTests : IDisposable
     private static DiscordNotifier CreateNoopNotifier()
     {
         var options = Options.Create(new DiscordOptions { WebhookUrl = string.Empty });
-        return new DiscordNotifier(new HttpClient(), options);
+        return new DiscordNotifier(new HttpClient(), options, Mock.Of<ILogger<DiscordNotifier>>());
     }
 
     private string CreateValidDocument()

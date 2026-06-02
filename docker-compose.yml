@@ -1,3 +1,9 @@
+secrets:
+  deepl_auth_key:
+    file: ./secrets/deepl_auth_key.txt
+  discord_webhook_url:
+    file: ./secrets/discord_webhook_url.txt
+
 services:
   mycv-api:
     image: ghcr.io/<owner>/<repo>/mycv-api:latest
@@ -8,9 +14,12 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - AllowedHosts=${ALLOWED_HOSTS}
       - CvSource__FilePath=/data/cv.docx
-      - DeepL__AuthKey=${DEEPL_AUTH_KEY}
+      - DeepL__AuthKey_FILE=/run/secrets/deepl_auth_key
       - DeepL__CacheDurationMinutes=1440
-      - Discord__WebhookUrl=${DISCORD_WEBHOOK_URL}
+      - Discord__WebhookUrl_FILE=/run/secrets/discord_webhook_url
       - Cors__FrontendUrl=${CORS_FRONTEND_URL}
+    secrets:
+      - deepl_auth_key
+      - discord_webhook_url
     volumes:
       - /path/to/cv.docx:/data/cv.docx:ro

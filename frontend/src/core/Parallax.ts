@@ -8,6 +8,6 @@ export class ParallaxEffect {
     window.addEventListener('scroll', () => {
       const scroll = window.pageYOffset;
       element.style.transform = `translateY(${scroll * this.speed}px)`;
-    });
+    }, { passive: true });
   }
 }

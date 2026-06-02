@@ -2,6 +2,7 @@ import { type CV } from '../../domain/entities/CV';
 import { type ICVRepository } from '../../domain/repositories/ICVRepository';
 import { t } from '../../core/TranslationService';
 
+const FETCH_TIMEOUT_MS = 10_000;
 const THRESHOLD = 3;
 const RESET_TIMEOUT_MS = 30_000;
 const MAX_RETRIES = 2;
@@ -34,6 +35,19 @@ function onFailure(): void {
   }
 }
 
+function isValidCV(data: unknown): data is CV {
+  if (!data || typeof data !== 'object') return false;
+  const cv = data as Record<string, unknown>;
+  return (
+    typeof cv.name === 'string' &&
+    typeof cv.lastName === 'string' &&
+    typeof cv.title === 'string' &&
+    typeof cv.summary === 'string' &&
+    Array.isArray(cv.experiences) &&
+    Array.isArray(cv.skills)
+  );
+}
+
 function buildFallback(): CV {
   return {
     name: 'John',
@@ -63,16 +77,24 @@ export class ApiCVRepository implements ICVRepository {
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
         const headers: Record<string, string> = {};
         if (locale) headers['Accept-Language'] = locale;
-        const response = await fetch(this.API_URL, { headers });
+        const response = await fetch(this.API_URL, { headers, signal: controller.signal });
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
-        const cv: CV = await response.json();
-        cachedCv = cv;
+        const parsed: unknown = await response.json();
+        if (!isValidCV(parsed)) {
+          throw new Error('Invalid CV data received from API');
+        }
+        cachedCv = parsed;
         onSuccess();
-        return cv;
+        return parsed;
       } catch (error) {
         console.error('API Error:', error);
         if (attempt < MAX_RETRIES) {

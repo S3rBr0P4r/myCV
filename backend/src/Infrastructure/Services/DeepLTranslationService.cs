@@ -11,6 +11,7 @@ namespace Backend.Infrastructure.Services;
 public sealed class DeepLTranslationService : ITranslationService
 {
     private const string DeepLApiUrl = "https://api-free.deepl.com/v2/translate";
+    private const int MaxFieldLength = 10_000;
 
     private readonly HttpClient _httpClient;
     private readonly DeepLOptions _options;
@@ -124,7 +125,7 @@ public sealed class DeepLTranslationService : ITranslationService
         {
             Content = JsonContent.Create(request)
         };
-        httpRequest.Headers.TryAddWithoutValidation("Authorization", $"DeepL-Auth-Key {_options.AuthKey}");
+        httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("DeepL-Auth-Key", _options.AuthKey);
 
         var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
         response.EnsureSuccessStatusCode();
@@ -141,7 +142,7 @@ public sealed class DeepLTranslationService : ITranslationService
             return null;
         }
 
-        var translatedTexts = result.Translations.Select(t => t.Text).ToArray();
+        var translatedTexts = result.Translations.Select(t => t.Text.Length > MaxFieldLength ? t.Text[..MaxFieldLength] : t.Text).ToArray();
         int idx = 0;
 
         string? translatedSummary = null;
@@ -188,16 +189,17 @@ public sealed class DeepLTranslationService : ITranslationService
             return null;
         }
 
+        var primary = culture.Split(',')[0].Trim().Split(';')[0].Trim();
+
         try
         {
-            var ci = CultureInfo.GetCultureInfo(culture);
+            var ci = CultureInfo.GetCultureInfo(primary);
             var lang = ci.TwoLetterISOLanguageName.ToUpperInvariant();
             return lang;
         }
         catch (CultureNotFoundException)
         {
-            var fallback = culture.Split('-', ',', ';')[0].Trim().ToUpperInvariant();
-            return fallback.Length == 2 ? fallback : null;
+            return null;
         }
     }
 

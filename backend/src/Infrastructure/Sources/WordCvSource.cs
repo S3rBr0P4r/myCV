@@ -14,6 +14,7 @@ public sealed class WordCvSource : ICvSource
     private const long MaxFileSize = 5 * 1024 * 1024;
 
     private readonly string _filePath;
+    private readonly string _allowedDirectory;
     private readonly ILogger<WordCvSource> _logger;
     private readonly DiscordNotifier _discordNotifier;
     private CV? _cv;
@@ -25,7 +26,8 @@ public sealed class WordCvSource : ICvSource
         ILogger<WordCvSource> logger,
         DiscordNotifier discordNotifier)
     {
-        _filePath = options.Value.FilePath;
+        _filePath = options.Value.FilePath ?? string.Empty;
+        _allowedDirectory = options.Value.AllowedDirectory ?? string.Empty;
         _logger = logger;
         _discordNotifier = discordNotifier;
     }
@@ -78,7 +80,21 @@ public sealed class WordCvSource : ICvSource
             throw new CvSourceClientException();
         }
 
-        if (!File.Exists(_filePath))
+        var fullPath = Path.GetFullPath(_filePath);
+        if (!string.IsNullOrEmpty(_allowedDirectory) && !fullPath.StartsWith(_allowedDirectory, StringComparison.Ordinal))
+        {
+            if (_logger.IsEnabled(LogLevel.Error))
+            {
+                _logger.LogError("CV Source file path is outside the allowed directory");
+            }
+
+            _discordNotifier.SendAlertAsync(
+                "CV Source Security",
+                "CV Source file path is outside the allowed directory.");
+            throw new CvSourceClientException();
+        }
+
+        if (!File.Exists(fullPath))
         {
             if (_logger.IsEnabled(LogLevel.Error))
             {
@@ -91,7 +107,7 @@ public sealed class WordCvSource : ICvSource
             throw new CvSourceClientException();
         }
 
-        var fileInfo = new FileInfo(_filePath);
+        var fileInfo = new FileInfo(fullPath);
         if (fileInfo.Length > MaxFileSize)
         {
             if (_logger.IsEnabled(LogLevel.Error))
@@ -101,13 +117,13 @@ public sealed class WordCvSource : ICvSource
 
             _discordNotifier.SendAlertAsync(
                 "CV File Too Large",
-                $"The CV Word document at `{_filePath}` exceeds the maximum file size of {MaxFileSize / 1024 / 1024} MB.");
+                                    $"The CV Word document exceeds the maximum file size of {MaxFileSize / 1024 / 1024} MB.");
             throw new CvSourceClientException();
         }
 
         try
         {
-            var cv = ParseDocument();
+            var cv = ParseDocument(fullPath);
             _cv = cv;
             _parsed = true;
 
@@ -134,7 +150,7 @@ public sealed class WordCvSource : ICvSource
         }
     }
 
-    private CV ParseDocument()
+    private static CV ParseDocument(string filePath)
     {
         string name = string.Empty;
         string lastName = string.Empty;
@@ -151,7 +167,7 @@ public sealed class WordCvSource : ICvSource
         string expBackground = string.Empty;
         bool hasCurrentExperience = false;
 
-        using var document = WordprocessingDocument.Open(_filePath, false);
+        using var document = WordprocessingDocument.Open(filePath, false);
         var body = document.MainDocumentPart?.Document?.Body;
 
         if (body is null)

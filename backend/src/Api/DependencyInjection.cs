@@ -46,8 +46,8 @@ public static class DependencyInjection
                 }
                 policy.WithOrigins(allowedOrigins)
                       .AllowCredentials()
-                      .AllowAnyHeader()
-                      .AllowAnyMethod();
+                      .WithHeaders("Accept", "Accept-Language", "Content-Type", "Authorization")
+                      .WithMethods("GET", "OPTIONS");
             });
         });
 
