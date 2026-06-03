@@ -16,7 +16,9 @@ public static class CVMappingExtensions
             Experiences: cv.Experiences.Select(e => e.ToDto()).ToList(),
             SkillCategories: cv.SkillCategories.Select(sc => sc.ToDto()).ToList(),
             Education: cv.Education.Select(e => e.ToDto()).ToList(),
-            Certifications: cv.Certifications.Select(c => c.ToDto()).ToList());
+            Certifications: cv.Certifications.Select(c => c.ToDto()).ToList(),
+            LinkedInUrl: null,
+            GitHubUrl: null);
     }
 
     public static ExperienceDto ToDto(this Experience experience)

@@ -48,4 +48,6 @@ export interface CV {
   skillCategories: SkillCategory[];
   education: Education[];
   certifications: Certification[];
+  linkedInUrl?: string;
+  gitHubUrl?: string;
 }

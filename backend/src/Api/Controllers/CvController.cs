@@ -11,10 +11,12 @@ namespace Backend.Api.Controllers;
 public sealed class CvController : ControllerBase
 {
     private readonly GetCVHandler _handler;
+    private readonly IConfiguration _configuration;
 
-    public CvController(GetCVHandler handler)
+    public CvController(GetCVHandler handler, IConfiguration configuration)
     {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     [HttpGet]
@@ -26,6 +28,13 @@ public sealed class CvController : ControllerBase
         var culture = HttpContext.Request.Headers.AcceptLanguage.FirstOrDefault();
         var query = new GetCVQuery(culture);
         var result = await _handler.HandleAsync(query, cancellationToken);
-        return Ok(result.CV);
+
+        var dto = result.CV with
+        {
+            LinkedInUrl = _configuration["SocialLinks:LinkedIn"] ?? "",
+            GitHubUrl = _configuration["SocialLinks:GitHub"] ?? ""
+        };
+
+        return Ok(dto);
     }
 }
