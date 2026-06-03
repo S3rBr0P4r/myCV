@@ -53,6 +53,10 @@ TestResult.xml
 .localhistory/
 .vshistory/
 
+# Office documents (CV data)
+*.doc
+*.docx
+
 # Secrets
 *.local.json
 *.local.config

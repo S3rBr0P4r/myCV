@@ -25,7 +25,7 @@ No linter/formatter beyond `.editorconfig` (2-space indent, single quotes for TS
 
 **API:** Configured via `VITE_API_URL` env var (dev = `/api/v1/cv` via Vite proxy, production = set via CI variable `VITE_API_URL`). Has offline fallback if backend is unreachable.
 
-**Root-level dev command:** `cd frontend && npm run dev` starts both services (via `concurrently`). Pre-kills ports 5173/60354/60355.
+**Root-level dev command:** `cd frontend && npm run dev` starts both services (via `concurrently`). Pre-kills port 60355.
 
 ## Backend (`backend/`)
 
@@ -56,7 +56,7 @@ src/Backend.csproj
 - Namespace root: `Backend.*` (not `MyCV.*`).
 - API uses `[ApiController]` + `[Route("api/v{version:apiVersion}/[controller]")]` with URL segment versioning. Current version: `v1`. Add `[ApiVersion("X.Y")]` to controllers. Swagger via `Swashbuckle.AspNetCore` (no `Microsoft.AspNetCore.OpenApi`).
 
-**Backend launch URLs:** `https://localhost:60354;http://localhost:60355` (from `Properties/launchSettings.json`). HTTPS redirection is **disabled** in development to avoid CORS cross-scheme redirect issues.
+**Backend launch URL:** `http://localhost:60355` (from `Properties/launchSettings.json`). Only HTTP in development — firewall-friendly and matches Vite proxy scheme.
 
 **CORS:** Allows `http://localhost:5173`, `http://127.0.0.1:5173`, `https://localhost:5173` with `AllowCredentials()`.
 
@@ -84,6 +84,7 @@ Triggers on push to `main`. Two independent jobs:
 
 ## Gotchas
 
+- **Clean Architecture discipline:** The Domain layer must have ZERO awareness of external concerns — no file paths, no env vars, no DB contexts, no HTTP. Infrastructure handles all external data access. Application orchestrates use cases. API presents results. Before placing any code or file, ask: *which layer does this belong to?*
 - Always run commands from the specific subdirectory (`frontend/` or `backend/`).
 - Backend uses centralized package management (`Directory.Packages.props`). All packages must be stable (no preview versions).
 - `NoWarn` suppresses CS1591 (missing XML docs) and CA1707 (test naming underscores).
@@ -92,3 +93,4 @@ Triggers on push to `main`. Two independent jobs:
 - Backend tests use **Moq** (not NSubstitute). Test projects: Domain.Tests (4), Application.Tests (32).
 - Namespace root is `Backend.*` — no `MyCV` prefix anywhere in the backend.
 - **README must be kept in sync** — every change that adds, removes, or modifies a feature, directory, dependency, configuration key, or command must also update `README.md` (stack table, architecture tree, config table, quick start, how it works). This is enforced in code review.
+- **DOCX file is immutable** — the `cv.docx` file must never be modified. All derived data (company URLs, logos, etc.) must be provided via hardcoded frontend maps (`CompanyUrl.ts`, `CompanyImage.ts`, `CompanyLogoFile.ts`). The DOCX parser must remain backward-compatible with the old 2-line format (`Company | Location` → `Role | Period`). Company URLs are mapped in `CompanyUrl.ts`, logos via local PNG files in `frontend/src/public/logos/` (downloaded from `icon.horse`, initials SVG fallback if missing), background images in `CompanyImage.ts`.

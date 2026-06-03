@@ -16,7 +16,9 @@ public sealed class CVTests
             Title = "Developer",
             Summary = "A great developer",
             Experiences = [],
-            Skills = ["C#"]
+            SkillCategories = [],
+            Education = [],
+            Certifications = []
         };
 
         cv.Name.Should().Be("John");
@@ -24,7 +26,7 @@ public sealed class CVTests
         cv.Title.Should().Be("Developer");
         cv.Summary.Should().Be("A great developer");
         cv.Experiences.Should().BeEmpty();
-        cv.Skills.Should().ContainSingle().Which.Should().Be("C#");
+        cv.SkillCategories.Should().BeEmpty();
     }
 
     [Fact]
@@ -46,12 +48,48 @@ public sealed class CVTests
                     Description = "Leading the platform team"
                 }
             ],
-            Skills = ["Architecture", "C#"]
+            SkillCategories = [],
+            Education = [],
+            Certifications = []
         };
 
         cv.Experiences.Should().HaveCount(1);
         cv.Experiences[0].Role.Should().Be("Tech Lead");
         cv.Experiences[0].Company.Should().Be("Acme Corp");
-        cv.Skills.Should().HaveCount(2);
+    }
+
+    [Fact]
+    public void CV_ShouldSupportHierarchicalSkills()
+    {
+        var cv = new CV
+        {
+            Name = "Jane",
+            LastName = "Smith",
+            Title = "Architect",
+            Summary = "Senior architect",
+            Experiences = [],
+            SkillCategories =
+            [
+                new SkillCategory
+                {
+                    Name = "Languages",
+                    SubCategories = new List<SkillSubCategory>
+                    {
+                        new SkillSubCategory
+                        {
+                            Name = "Advanced",
+                            Items = new List<string> { "C#", "TypeScript" }.AsReadOnly()
+                        }
+                    }.AsReadOnly()
+                }
+            ],
+            Education = [],
+            Certifications = []
+        };
+
+        cv.SkillCategories.Should().HaveCount(1);
+        cv.SkillCategories[0].Name.Should().Be("Languages");
+        cv.SkillCategories[0].SubCategories.Should().HaveCount(1);
+        cv.SkillCategories[0].SubCategories[0].Items.Should().Contain("C#");
     }
 }

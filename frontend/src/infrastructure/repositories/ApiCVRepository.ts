@@ -44,7 +44,9 @@ function isValidCV(data: unknown): data is CV {
     typeof cv.title === 'string' &&
     typeof cv.summary === 'string' &&
     Array.isArray(cv.experiences) &&
-    Array.isArray(cv.skills)
+    Array.isArray(cv.skillCategories) &&
+    Array.isArray(cv.education) &&
+    Array.isArray(cv.certifications)
   );
 }
 
@@ -55,7 +57,9 @@ function buildFallback(): CV {
     title: 'Creative Developer',
     summary: t('offline.summary'),
     experiences: [],
-    skills: [t('offline.connectionError')],
+    skillCategories: [],
+    education: [],
+    certifications: [],
   };
 }
 

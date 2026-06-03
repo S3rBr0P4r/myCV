@@ -89,7 +89,11 @@ public sealed class DeepLTranslationService : ITranslationService
         var periods = source.Experiences.Select(e => e.Period).ToList();
         var roles = source.Experiences.Select(e => e.Role).ToList();
         var descriptions = source.Experiences.Select(e => e.Description).ToList();
-        var skills = source.Skills.ToList();
+
+        var skillItems = source.SkillCategories
+            .SelectMany(c => c.SubCategories)
+            .SelectMany(s => s.Items)
+            .ToList();
 
         var allTexts = new List<string>();
 
@@ -106,7 +110,7 @@ public sealed class DeepLTranslationService : ITranslationService
         allTexts.AddRange(periods.Where(t => !string.IsNullOrEmpty(t)));
         allTexts.AddRange(roles.Where(t => !string.IsNullOrEmpty(t)));
         allTexts.AddRange(descriptions.Where(t => !string.IsNullOrEmpty(t)));
-        allTexts.AddRange(skills.Where(t => !string.IsNullOrEmpty(t)));
+        allTexts.AddRange(skillItems.Where(t => !string.IsNullOrEmpty(t)));
 
         if (allTexts.Count == 0)
         {
@@ -160,7 +164,7 @@ public sealed class DeepLTranslationService : ITranslationService
         var translatedPeriods = periods.Select(p => !string.IsNullOrEmpty(p) ? translatedTexts[idx++] : p).ToList();
         var translatedRoles = roles.Select(r => !string.IsNullOrEmpty(r) ? translatedTexts[idx++] : r).ToList();
         var translatedDescriptions = descriptions.Select(d => !string.IsNullOrEmpty(d) ? translatedTexts[idx++] : d).ToList();
-        var translatedSkills = skills.Select(s => !string.IsNullOrEmpty(s) ? translatedTexts[idx++] : s).ToList();
+        var translatedSkillItems = skillItems.Select(s => !string.IsNullOrEmpty(s) ? translatedTexts[idx++] : s).ToList();
 
         var translatedExperiences = source.Experiences.Select((e, i) => new Experience
         {
@@ -171,15 +175,53 @@ public sealed class DeepLTranslationService : ITranslationService
             Background = e.Background
         }).ToList();
 
+        var translatedCategories = RebuildSkillCategories(source.SkillCategories, translatedSkillItems);
+
         return new CV
         {
             Name = source.Name,
             LastName = source.LastName,
             Title = translatedTitle ?? source.Title,
             Summary = translatedSummary ?? source.Summary,
+            ContactInfo = source.ContactInfo,
             Experiences = translatedExperiences.AsReadOnly(),
-            Skills = translatedSkills.AsReadOnly()
+            SkillCategories = translatedCategories.AsReadOnly(),
+            Education = source.Education,
+            Certifications = source.Certifications
         };
+    }
+
+    private static List<SkillCategory> RebuildSkillCategories(
+        IReadOnlyList<SkillCategory> sourceCategories, List<string> translatedItems)
+    {
+        int itemIdx = 0;
+        var result = new List<SkillCategory>();
+
+        foreach (var category in sourceCategories)
+        {
+            var subCategories = new List<SkillSubCategory>();
+            foreach (var sub in category.SubCategories)
+            {
+                var translated = sub.Items.Select(item =>
+                    !string.IsNullOrEmpty(item) && itemIdx < translatedItems.Count
+                        ? translatedItems[itemIdx++]
+                        : item).ToList();
+
+                subCategories.Add(new SkillSubCategory
+                {
+                    Name = sub.Name,
+                    Items = translated.AsReadOnly()
+                });
+            }
+
+            result.Add(new SkillCategory
+            {
+                Name = category.Name,
+                SubCategories = subCategories.AsReadOnly()
+            });
+        }
+
+        return result;
     }
 
     private static string? NormalizeLanguage(string? culture)

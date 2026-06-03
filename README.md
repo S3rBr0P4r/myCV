@@ -19,7 +19,7 @@ Built under human supervision using [opencode](https://opencode.ai) with `openco
 cd frontend && npm run dev   # starts both services concurrently
 ```
 
-Launches frontend (port 5173) and backend (ports 60354/60355). Vite proxies `/api` to the backend in dev mode — no CORS issues.
+Launches frontend (port 5173) and backend (port 60355). Vite proxies `/api` to the backend in dev mode — no CORS issues.
 
 ```bash
 cd frontend
@@ -28,7 +28,7 @@ npm run preview      # preview production build
 
 cd backend
 dotnet build Backend.slnx
-dotnet test Backend.slnx      # 36 tests, 0 warnings
+dotnet test Backend.slnx      # 39 tests, 0 warnings
 ```
 
 ## Architecture
@@ -39,9 +39,9 @@ myCV/
 │   ├── domain/            Entities, repository interfaces
 │   ├── application/       Use cases
 │   ├── infrastructure/    API repository, translations (en/es), circuit breaker + retry
-│   ├── ui/                DOM API components, renderer
+│   ├── ui/                DOM API components, renderer, CompanyImage, CompanyLogoFile
 │   ├── core/              Translation service, theme manager, animations
-│   ├── public/            Static assets (favicon, etc.)
+│   ├── public/            Static assets (favicon, backgrounds/, logos/)
 │   ├── main.ts            Entry point, manual DI wiring
 │   └── index.html         Shell with CSP meta tag
 │
@@ -62,12 +62,13 @@ myCV/
 ## How it works
 
 1. **Data source**: CV content lives in a password-protected `.docx` file outside the repo. The path is configured via `CvSource:FilePath` in `appsettings.json` or an environment variable.
-2. **Parsing**: `WordCvSource` reads the `.docx` using `DocumentFormat.OpenXml` and extracts labeled sections (Name, Summary, Experiences, Skills, etc.).
+2. **Parsing**: `WordCvSource` reads the `.docx` using `DocumentFormat.OpenXml` and extracts labeled sections (Name, Summary, Experiences with company URL/location/work mode, Skills, etc.).
 3. **Serving**: `CvController` returns the CV as JSON via `GET /api/v1/cv`. Responses are cached for 1 hour.
 4. **Translation**: When the `Accept-Language` header is non-English and a DeepL API key is configured, the backend translates all CV fields into the target language and caches the result per language (default 24h TTL).
 5. **Frontend**: Static TypeScript app with manual DI. Fetches CV from the API on load, re-fetches on locale switch. UI chrome (nav, labels, footer) uses `t()` from a minimal translation service. CV data fields are displayed directly from the API response — no client-side CV translation.
 6. **Resilience**: Frontend has a circuit breaker (3 failures → 30s open → half-open), retry with exponential backoff (2 attempts), and in-memory cache. Offline fallback shows a localized message.
-7. **Security**: Rate limiter (100 req/min), file size cap (5 MB), UNC path rejection, HSTS, security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`), CSP in `index.html`. Production bundle is obfuscated.
+7. **Security**: Rate limiter (100 req/min), file size cap (5 MB), UNC path rejection, HSTS, security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`), CSP in `index.html`.
+ 8. **Career cards**: Company logos via local PNG files (downloaded from `icon.horse`, initials SVG fallback for missing ones), Pexels background images, location/work mode badges, paginated (3 per page).
 
 ## Key features
 
@@ -77,7 +78,7 @@ myCV/
 - **API versioning**: URL segment versioning (`api/v1/…`), Swagger UI at `/swagger`
 - **Observability**: Serilog request logging, health endpoint (`GET /health`), Discord alerts on CV source errors
 - **Dockerized**: Multi-stage `Dockerfile`, non-root user, published to GitHub Container Registry
-- **CI/CD**: GitHub Actions — CI on every push (build + test), CD manually triggered with SSH password
+- **CI/CD**: GitHub Actions — CI on every push (build + test), CD manually triggered with SSH key
 
 ## Configuration
 

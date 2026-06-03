@@ -119,3 +119,4 @@ This skill generates a complete .NET solution following Clean Architecture (also
 8. **Repositories are per aggregate root** - not per entity
 9. **Domain events are raised in domain**, handled in application layer
 10. **Always use CancellationToken** in async operations
+11. **External data files (`.docx`, `.json`, `.xml`) belong in Infrastructure** — the Domain layer must be unaware of file formats, paths, or persistence concerns. Data files consumed by Infrastructure (e.g., parsers in `Infrastructure/Sources/`) go in `Infrastructure/Data/`. Never reference file paths, environment variables, or any external concern from Domain.

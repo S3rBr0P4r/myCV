@@ -1,10 +1,11 @@
 import { type CV } from '../domain/entities/CV';
 import { t } from '../core/TranslationService';
 import { renderNavbar } from './components/CVNavbar';
-import { renderHero } from './components/CVHero';
+import { renderIntro } from './components/CVIntro';
 import { renderExperience } from './components/CVExperience';
 import { renderSkills } from './components/CVSkills';
 import { renderContact, renderFooter } from './components/CVContact';
+import { renderEducation } from './components/CVEducation';
 
 export class CVRenderer {
   public static render(cv: CV): void {
@@ -14,24 +15,40 @@ export class CVRenderer {
     appRoot.textContent = '';
 
     const sections = [
-      { id: 'hero', label: t('nav.dotHero') },
+      { id: 'intro', label: t('nav.dotIntro') },
       { id: 'experience', label: t('nav.dotExperience') },
-      { id: 'skills', label: t('nav.dotSkills') },
-      { id: 'contact', label: t('nav.dotContact') },
     ];
 
-    appRoot.appendChild(renderNavbar());
+    if (cv.skillCategories.length > 0) {
+      sections.push({ id: 'skills', label: t('nav.dotSkills') });
+    }
+
+    if (cv.education.length > 0 || cv.certifications.length > 0) {
+      sections.push({ id: 'education', label: 'Education' });
+    }
+
+    sections.push({ id: 'contact', label: t('nav.dotContact') });
+
+    appRoot.appendChild(renderNavbar(cv));
 
     const bg = document.createElement('div');
     bg.className = 'painted-bg';
     bg.id = 'bg';
     appRoot.appendChild(bg);
 
-    appRoot.appendChild(renderHero(cv));
+    appRoot.appendChild(renderIntro(cv));
     appRoot.appendChild(renderExperience(cv));
-    appRoot.appendChild(renderSkills(cv));
-    appRoot.appendChild(renderContact());
-    appRoot.appendChild(renderFooter(cv.name, cv.lastName));
+
+    if (cv.skillCategories.length > 0) {
+      appRoot.appendChild(renderSkills(cv));
+    }
+
+    if (cv.education.length > 0 || cv.certifications.length > 0) {
+      appRoot.appendChild(renderEducation(cv));
+    }
+
+    appRoot.appendChild(renderContact(cv));
+    appRoot.appendChild(renderFooter(cv.name));
 
     const progressNav = document.createElement('nav');
     progressNav.className = 'scroll-progress';

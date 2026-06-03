@@ -10,9 +10,8 @@ export const en: Record<string, string> = {
   'nav.localeEs': 'Spanish',
 
   /* Hero */
-  'hero.subtitle': 'Creative Developer & Architect',
-  'hero.ctaJourney': 'The Journey',
-  'hero.ctaContact': 'Contact',
+  'intro.ctaJourney': 'The Journey',
+  'intro.ctaContact': 'Contact',
 
   /* Experience section */
   'experience.title': 'Career',
@@ -22,12 +21,21 @@ export const en: Record<string, string> = {
 
   /* Contact section */
   'contact.heading': "Let's Talk?",
+  'contact.email': 'Email',
+  'contact.phone': 'Phone',
+  'contact.location': 'Location',
+  'contact.travel': 'Willingness to travel',
+
+  /* Education & Certifications */
+  'education.title': 'Education',
+  'education.certifications': 'Certifications',
+  'education.notes': 'Notes',
 
   /* Footer */
-  'footer.copyright': '\u00A9 {year} {name} {lastName}. Clean Architecture Edition.',
+  'footer.copyright': '\u00A9 {year} {name}.',
 
   /* Scroll progress */
-  'nav.dotHero': 'Home',
+  'nav.dotIntro': 'Home',
   'nav.dotExperience': 'Career',
   'nav.dotSkills': 'Mastery',
   'nav.dotContact': 'Contact',

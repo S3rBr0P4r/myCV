@@ -21,6 +21,12 @@ public sealed class WordCvSource : ICvSource
     private bool _parsed;
     private readonly object _parseLock = new();
 
+    private static readonly HashSet<string> SectionHeaders =
+    [
+        "summary", "experience", "technical skills",
+        "education", "certifications & relevant training"
+    ];
+
     public WordCvSource(
         IOptions<CvSourceOptions> options,
         ILogger<WordCvSource> logger,
@@ -117,7 +123,7 @@ public sealed class WordCvSource : ICvSource
 
             _discordNotifier.SendAlertAsync(
                 "CV File Too Large",
-                                    $"The CV Word document exceeds the maximum file size of {MaxFileSize / 1024 / 1024} MB.");
+                $"The CV Word document exceeds the maximum file size of {MaxFileSize / 1024 / 1024} MB.");
             throw new CvSourceClientException();
         }
 
@@ -152,21 +158,6 @@ public sealed class WordCvSource : ICvSource
 
     private static CV ParseDocument(string filePath)
     {
-        string name = string.Empty;
-        string lastName = string.Empty;
-        string title = string.Empty;
-        var summaryLines = new List<string>();
-        var experiences = new List<Experience>();
-        var skills = new List<string>();
-        bool collectingSummary = false;
-
-        string expPeriod = string.Empty;
-        string expRole = string.Empty;
-        string expCompany = string.Empty;
-        string expDescription = string.Empty;
-        string expBackground = string.Empty;
-        bool hasCurrentExperience = false;
-
         using var document = WordprocessingDocument.Open(filePath, false);
         var body = document.MainDocumentPart?.Document?.Body;
 
@@ -175,122 +166,540 @@ public sealed class WordCvSource : ICvSource
             throw new CvSourceClientException();
         }
 
-        foreach (var paragraph in body.Elements<Paragraph>())
+        var paragraphs = body.Elements<Paragraph>().ToList();
+        var lines = paragraphs
+            .Select(GetFormattedText)
+            .Where(t => t.Length > 0)
+            .ToList();
+
+        if (lines.Count < 3)
         {
-            var text = paragraph.InnerText.Trim();
-
-            if (text.Length == 0)
-            {
-                continue;
-            }
-
-            if (TryMatchLabel(text, "Name: ", out var value))
-            {
-                name = value;
-                collectingSummary = false;
-            }
-            else if (TryMatchLabel(text, "LastName: ", out value))
-            {
-                lastName = value;
-                collectingSummary = false;
-            }
-            else if (TryMatchLabel(text, "Title: ", out value))
-            {
-                title = value;
-                collectingSummary = false;
-            }
-            else if (TryMatchLabel(text, "Summary: ", out value))
-            {
-                summaryLines.Add(value);
-                collectingSummary = true;
-            }
-            else if (TryMatchLabel(text, "Period: ", out value))
-            {
-                if (hasCurrentExperience)
-                {
-                    experiences.Add(new Experience
-                    {
-                        Period = expPeriod,
-                        Role = expRole,
-                        Company = expCompany,
-                        Description = expDescription,
-                        Background = expBackground
-                    });
-                }
-
-                expPeriod = value;
-                expRole = string.Empty;
-                expCompany = string.Empty;
-                expDescription = string.Empty;
-                expBackground = string.Empty;
-                hasCurrentExperience = true;
-                collectingSummary = false;
-            }
-            else if (TryMatchLabel(text, "Role: ", out value))
-            {
-                expRole = value;
-                collectingSummary = false;
-            }
-            else if (TryMatchLabel(text, "Company: ", out value))
-            {
-                expCompany = value;
-                collectingSummary = false;
-            }
-            else if (TryMatchLabel(text, "Description: ", out value))
-            {
-                expDescription = value;
-                collectingSummary = false;
-            }
-            else if (TryMatchLabel(text, "Background: ", out value))
-            {
-                expBackground = value;
-                collectingSummary = false;
-            }
-            else if (TryMatchLabel(text, "Skills: ", out value))
-            {
-                skills = value
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                    .ToList();
-                collectingSummary = false;
-            }
-            else if (collectingSummary)
-            {
-                summaryLines.Add(text);
-            }
+            throw new CvSourceClientException();
         }
 
-        if (hasCurrentExperience)
-        {
-            experiences.Add(new Experience
-            {
-                Period = expPeriod,
-                Role = expRole,
-                Company = expCompany,
-                Description = expDescription,
-                Background = expBackground
-            });
-        }
+        var name = lines[0];
+        var lastName = ExtractLastName(name);
+        var title = lines[1];
+
+        var contactInfo = ParseContactInfo(lines, 2);
+
+        var sectionMap = BuildSectionMap(lines);
+        var summary = string.Join("\n", GetSectionLines(lines, sectionMap, "summary"));
+        var experiences = ParseExperiences(lines, sectionMap);
+        var skillCategories = ParseSkills(lines, sectionMap);
+        var education = ParseEducation(lines, sectionMap);
+        var certifications = ParseCertifications(lines, sectionMap);
 
         return new CV
         {
             Name = name,
             LastName = lastName,
             Title = title,
-            Summary = string.Join("\n", summaryLines),
+            Summary = summary,
+            ContactInfo = contactInfo,
             Experiences = experiences.AsReadOnly(),
-            Skills = skills.AsReadOnly()
+            SkillCategories = skillCategories.AsReadOnly(),
+            Education = education.AsReadOnly(),
+            Certifications = certifications.AsReadOnly()
         };
     }
 
-    private static bool TryMatchLabel(string text, string label, out string value)
+    private static string GetFormattedText(Paragraph paragraph)
     {
-        if (text.StartsWith(label, StringComparison.OrdinalIgnoreCase))
+        var raw = paragraph.InnerText.Trim();
+        if (raw.Length == 0)
         {
-            value = text[label.Length..];
-            return true;
+            return raw;
         }
 
-        value = string.Empty;
+        var lower = raw.ToLowerInvariant();
+        if (SectionHeaders.Contains(lower))
+        {
+            return raw;
+        }
+
+        var parts = paragraph.Elements<Run>()
+            .Select(r =>
+            {
+                var text = r.InnerText;
+                if (text.Length == 0)
+                {
+                    return text;
+                }
+
+                var isBold = r.RunProperties?.Bold is not null;
+                return isBold ? $"**{text}**" : text;
+            });
+
+        return string.Concat(parts).Trim();
+    }
+
+    private static string ExtractLastName(string fullName)
+    {
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return parts.Length > 1 ? parts[^1] : string.Empty;
+    }
+
+    private static ContactInfo? ParseContactInfo(List<string> lines, int startIndex)
+    {
+        if (startIndex >= lines.Count)
+        {
+            return null;
+        }
+
+        string email = string.Empty;
+        string phone = string.Empty;
+        string location = string.Empty;
+        string willingness = string.Empty;
+
+        for (int i = startIndex; i < lines.Count; i++)
+        {
+            var line = lines[i];
+            if (IsSectionHeader(line))
+            {
+                break;
+            }
+
+            var value = StripIconPrefix(line);
+
+            if (value.Contains('@'))
+            {
+                email = value;
+            }
+            else if (value.StartsWith('+') || value.Any(char.IsDigit))
+            {
+                phone = value;
+            }
+            else if (value.Contains("Remote", StringComparison.OrdinalIgnoreCase) ||
+                     value.Contains("Hybrid", StringComparison.OrdinalIgnoreCase) ||
+                     value.Contains("Onsite", StringComparison.OrdinalIgnoreCase))
+            {
+                location = value;
+            }
+            else if (value.Contains("Willingness", StringComparison.OrdinalIgnoreCase) ||
+                     value.Contains("travel", StringComparison.OrdinalIgnoreCase))
+            {
+                willingness = value;
+            }
+        }
+
+        if (string.IsNullOrEmpty(email) && string.IsNullOrEmpty(phone) &&
+            string.IsNullOrEmpty(location) && string.IsNullOrEmpty(willingness))
+        {
+            return null;
+        }
+
+        return new ContactInfo
+        {
+            Email = email,
+            Phone = phone,
+            Location = location,
+            WillingnessToTravel = willingness
+        };
+    }
+
+    private static string StripIconPrefix(string text)
+    {
+        if (text.Length == 0)
+        {
+            return text;
+        }
+
+        if (!char.IsLetterOrDigit(text[0]) && text[0] != ' ')
+        {
+            var afterIcon = text[1..].TrimStart();
+            return afterIcon.Length > 0 ? afterIcon : text;
+        }
+
+        return text;
+    }
+
+    private static bool IsSectionHeader(string line)
+    {
+        return SectionHeaders.Contains(line.ToLowerInvariant().Trim());
+    }
+
+    private static Dictionary<string, int> BuildSectionMap(List<string> lines)
+    {
+        var map = new Dictionary<string, int>();
+
+        for (int i = 0; i < lines.Count; i++)
+        {
+            var key = lines[i].ToLowerInvariant().Trim();
+            if (SectionHeaders.Contains(key) && !map.ContainsKey(key))
+            {
+                map[key] = i;
+            }
+        }
+
+        return map;
+    }
+
+    private static List<string> GetSectionLines(List<string> lines, Dictionary<string, int> sectionMap, string sectionName)
+    {
+        if (!sectionMap.TryGetValue(sectionName, out var start))
+        {
+            return [];
+        }
+
+        var result = new List<string>();
+
+        for (int i = start + 1; i < lines.Count; i++)
+        {
+            var key = lines[i].ToLowerInvariant().Trim();
+            if (SectionHeaders.Contains(key))
+            {
+                break;
+            }
+
+            result.Add(lines[i]);
+        }
+
+        return result;
+    }
+
+    private static readonly HashSet<string> KnownWorkModes =
+        ["Remote", "Onsite", "Hybrid", "Both", "Remote/Hybrid", "Hybrid/Remote", "On-site", "On Site"];
+
+    private static bool IsKnownWorkMode(string value) =>
+        KnownWorkModes.Contains(value.Trim(), StringComparer.OrdinalIgnoreCase);
+
+    private static (string location, string workMode) ParseLegacyLocation(string raw)
+    {
+        var parenStart = raw.LastIndexOf('(');
+        var parenEnd = raw.LastIndexOf(')');
+        if (parenStart >= 0 && parenEnd > parenStart)
+        {
+            return (raw[..parenStart].Trim(), raw[(parenStart + 1)..parenEnd].Trim());
+        }
+        return (raw.Trim(), string.Empty);
+    }
+
+    private static List<Experience> ParseExperiences(List<string> lines, Dictionary<string, int> sectionMap)
+    {
+        if (!sectionMap.TryGetValue("experience", out var start))
+        {
+            return [];
+        }
+
+        var sectionLines = GetSectionLines(lines, sectionMap, "experience");
+        var experiences = new List<Experience>();
+        int idx = 0;
+
+        while (idx < sectionLines.Count)
+        {
+            var companyLine = sectionLines[idx];
+            var pipeIdx = companyLine.IndexOf(" | ", StringComparison.Ordinal);
+            if (pipeIdx < 0)
+            {
+                idx++;
+                continue;
+            }
+
+            var companyName = companyLine[..pipeIdx].Trim();
+            var afterPipe = companyLine[(pipeIdx + 3)..].Trim();
+            idx++;
+
+            if (idx >= sectionLines.Count)
+            {
+                break;
+            }
+
+            string companyUrl;
+            string location;
+            string workMode;
+
+            var nextLine = sectionLines[idx];
+            var nextPipeIdx = nextLine.IndexOf(" | ", StringComparison.Ordinal);
+
+            if (nextPipeIdx >= 0 && IsKnownWorkMode(nextLine[(nextPipeIdx + 3)..].Trim()))
+            {
+                // New format: Company | URL
+                //             Location | WorkMode
+                //             Role | Period
+                companyUrl = afterPipe;
+                location = nextLine[..nextPipeIdx].Trim();
+                workMode = nextLine[(nextPipeIdx + 3)..].Trim();
+                idx++;
+            }
+            else
+            {
+                // Old format: Company | Location (WorkMode)
+                //             Role | Period
+                companyUrl = string.Empty;
+                (location, workMode) = ParseLegacyLocation(afterPipe);
+            }
+
+            if (idx >= sectionLines.Count)
+            {
+                break;
+            }
+
+            var roleLine = sectionLines[idx];
+            var rolePipeIdx = roleLine.IndexOf(" | ", StringComparison.Ordinal);
+            if (rolePipeIdx < 0)
+            {
+                idx++;
+                continue;
+            }
+
+            var role = roleLine[..rolePipeIdx].Trim();
+            var period = roleLine[(rolePipeIdx + 3)..].Trim();
+            idx++;
+
+            var descriptionLines = new List<string>();
+            while (idx < sectionLines.Count)
+            {
+                var nextDescLine = sectionLines[idx];
+
+                if (nextDescLine.Contains(" | ", StringComparison.Ordinal))
+                {
+                    break;
+                }
+
+                descriptionLines.Add(nextDescLine);
+                idx++;
+            }
+
+            experiences.Add(new Experience
+            {
+                Period = period,
+                Role = role,
+                Company = companyName,
+                CompanyUrl = companyUrl,
+                Location = location,
+                WorkMode = workMode,
+                Description = string.Join("\n", descriptionLines),
+                Background = string.Empty
+            });
+        }
+
+        return experiences;
+    }
+
+    private static List<SkillCategory> ParseSkills(List<string> lines, Dictionary<string, int> sectionMap)
+    {
+        if (!sectionMap.TryGetValue("technical skills", out var start))
+        {
+            return [];
+        }
+
+        var sectionLines = GetSectionLines(lines, sectionMap, "technical skills");
+        if (sectionLines.Count == 0)
+        {
+            return [];
+        }
+
+        var categories = new List<(string Name, List<(string SubName, List<string> Items)> Subs)>();
+        string? currentCategory = null;
+        string? currentSub = null;
+        var currentItems = new List<string>();
+
+        void FlushSub()
+        {
+            if (currentSub is not null)
+            {
+                AddSubItem(ref categories, currentCategory!, currentSub, currentItems);
+                currentSub = null;
+                currentItems = [];
+            }
+        }
+
+        void FlushCategory()
+        {
+            if (currentCategory is not null && !categories.Any(c => c.Name == currentCategory))
+            {
+                AddCategory(ref categories, currentCategory);
+            }
+        }
+
+        for (int i = 0; i < sectionLines.Count; i++)
+        {
+            var line = sectionLines[i];
+
+            if (IsSectionHeader(line))
+            {
+                break;
+            }
+
+            if (currentCategory is null)
+            {
+                currentCategory = line;
+                continue;
+            }
+
+            if (line.Contains(','))
+            {
+                currentSub ??= "General";
+                currentItems.AddRange(
+                    line.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
+                continue;
+            }
+
+            FlushSub();
+
+            if (NextLineHasItems(sectionLines, i))
+            {
+                currentSub = line;
+            }
+            else
+            {
+                FlushCategory();
+                currentCategory = line;
+            }
+        }
+
+        FlushSub();
+        FlushCategory();
+
+        return categories.Select(c => new SkillCategory
+        {
+            Name = c.Name,
+            SubCategories = c.Subs.Select(s => new SkillSubCategory
+            {
+                Name = s.SubName,
+                Items = s.Items.AsReadOnly()
+            }).ToList().AsReadOnly()
+        }).ToList();
+    }
+
+    private static bool NextLineHasItems(List<string> lines, int currentIndex)
+    {
+        for (int i = currentIndex + 1; i < lines.Count; i++)
+        {
+            var next = lines[i];
+
+            if (IsSectionHeader(next))
+            {
+                return false;
+            }
+
+            if (next.Contains(','))
+            {
+                return true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(next))
+            {
+                return false;
+            }
+        }
+
         return false;
+    }
+
+    private static void AddCategory(
+        ref List<(string Name, List<(string SubName, List<string> Items)> Subs)> categories,
+        string name)
+    {
+        categories.Add((name, []));
+    }
+
+    private static void AddSubItem(
+        ref List<(string Name, List<(string SubName, List<string> Items)> Subs)> categories,
+        string categoryName, string subName, List<string> items)
+    {
+        var catIdx = categories.FindIndex(c => c.Name == categoryName);
+        if (catIdx < 0)
+        {
+            categories.Add((categoryName, []));
+            catIdx = categories.Count - 1;
+        }
+
+        var cat = categories[catIdx];
+        var updatedSubs = cat.Subs.Append((subName, new List<string>(items))).ToList();
+        categories[catIdx] = (cat.Name, updatedSubs);
+    }
+
+    private static List<Education> ParseEducation(List<string> lines, Dictionary<string, int> sectionMap)
+    {
+        if (!sectionMap.TryGetValue("education", out var start))
+        {
+            return [];
+        }
+
+        var sectionLines = GetSectionLines(lines, sectionMap, "education");
+        var educationList = new List<Education>();
+        int idx = 0;
+
+        while (idx < sectionLines.Count)
+        {
+            var line = sectionLines[idx];
+
+            if (IsSectionHeader(line))
+            {
+                break;
+            }
+
+            var pipeIdx = line.IndexOf(" | ", StringComparison.Ordinal);
+            if (pipeIdx < 0)
+            {
+                idx++;
+                continue;
+            }
+
+            var degree = line[..pipeIdx].Trim();
+            var institution = line[(pipeIdx + 3)..].Trim();
+            string notes = string.Empty;
+
+            idx++;
+            if (idx < sectionLines.Count)
+            {
+                var nextLine = sectionLines[idx];
+                if (!IsSectionHeader(nextLine) && !nextLine.Contains(" | ", StringComparison.Ordinal))
+                {
+                    notes = nextLine;
+                    idx++;
+                }
+            }
+
+            educationList.Add(new Education
+            {
+                Degree = degree,
+                Institution = institution,
+                Notes = notes
+            });
+        }
+
+        return educationList;
+    }
+
+    private static List<Certification> ParseCertifications(List<string> lines, Dictionary<string, int> sectionMap)
+    {
+        if (!sectionMap.TryGetValue("certifications & relevant training", out var start))
+        {
+            return [];
+        }
+
+        var sectionLines = GetSectionLines(lines, sectionMap, "certifications & relevant training");
+        var certifications = new List<Certification>();
+        string currentCategory = string.Empty;
+
+        foreach (var line in sectionLines)
+        {
+            if (IsSectionHeader(line))
+            {
+                break;
+            }
+
+            var pipeIdx = line.IndexOf(" | ", StringComparison.Ordinal);
+            if (pipeIdx >= 0)
+            {
+                var title = line[..pipeIdx].Trim();
+                var issuer = line[(pipeIdx + 3)..].Trim();
+                certifications.Add(new Certification
+                {
+                    Category = currentCategory,
+                    Title = title,
+                    Issuer = issuer
+                });
+            }
+            else
+            {
+                currentCategory = line;
+            }
+        }
+
+        return certifications;
     }
 }

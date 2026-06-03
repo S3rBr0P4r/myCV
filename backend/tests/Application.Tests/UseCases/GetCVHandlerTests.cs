@@ -42,7 +42,19 @@ public sealed class GetCVHandlerTests
                     Description = "Building things"
                 }
             ],
-            Skills = ["C#", ".NET"]
+            SkillCategories =
+            [
+                new SkillCategory
+                {
+                    Name = "Languages",
+                    SubCategories = new List<SkillSubCategory>
+                    {
+                        new SkillSubCategory { Name = ".NET", Items = new List<string> { "C#", ".NET" }.AsReadOnly() }
+                    }.AsReadOnly()
+                }
+            ],
+            Education = [],
+            Certifications = []
         };
 
         _repositoryMock
@@ -56,7 +68,7 @@ public sealed class GetCVHandlerTests
         result.CV.LastName.Should().Be("Doe");
         result.CV.Experiences.Should().HaveCount(1);
         result.CV.Experiences[0].Role.Should().Be("Senior Dev");
-        result.CV.Skills.Should().HaveCount(2);
+        result.CV.SkillCategories.Should().HaveCount(1);
     }
 
     [Fact]
@@ -71,7 +83,9 @@ public sealed class GetCVHandlerTests
                 Title = "Title",
                 Summary = "Summary",
                 Experiences = [],
-                Skills = []
+                SkillCategories = [],
+                Education = [],
+                Certifications = []
             });
 
         await _handler.HandleAsync(new GetCVQuery());
@@ -133,7 +147,9 @@ public sealed class GetCVHandlerTests
                     Description = "Platform engineering"
                 }
             ],
-            Skills = ["Architecture", "C#", "Azure"]
+            SkillCategories = [],
+            Education = [],
+            Certifications = []
         };
 
         _repositoryMock
@@ -145,6 +161,6 @@ public sealed class GetCVHandlerTests
         result.CV.Experiences.Should().HaveCount(2);
         result.CV.Experiences[0].Company.Should().Be("StartupX");
         result.CV.Experiences[1].Company.Should().Be("BigCorp");
-        result.CV.Skills.Should().Contain("Azure");
+        result.CV.SkillCategories.Should().BeEmpty();
     }
 }

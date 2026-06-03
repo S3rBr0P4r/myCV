@@ -4,6 +4,9 @@ public sealed record ExperienceDto(
     string Period,
     string Role,
     string Company,
+    string CompanyUrl,
+    string Location,
+    string WorkMode,
     string Description,
     string Background);
 
@@ -12,5 +15,8 @@ public sealed record CVDto(
     string LastName,
     string Title,
     string Summary,
+    ContactInfoDto? ContactInfo,
     IReadOnlyList<ExperienceDto> Experiences,
-    IReadOnlyList<string> Skills);
+    IReadOnlyList<SkillCategoryDto> SkillCategories,
+    IReadOnlyList<EducationDto> Education,
+    IReadOnlyList<CertificationDto> Certifications);

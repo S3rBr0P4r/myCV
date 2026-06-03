@@ -83,7 +83,19 @@ public sealed class DeepLTranslationServiceTests : IDisposable
                     Description = "Building things"
                 }
             ],
-            Skills = ["C#", ".NET"]
+            SkillCategories =
+            [
+                new SkillCategory
+                {
+                    Name = "Languages",
+                    SubCategories = new List<SkillSubCategory>
+                    {
+                        new SkillSubCategory { Name = ".NET", Items = new List<string> { "C#", ".NET" }.AsReadOnly() }
+                    }.AsReadOnly()
+                }
+            ],
+            Education = [],
+            Certifications = []
         };
     }
 
@@ -152,7 +164,10 @@ public sealed class DeepLTranslationServiceTests : IDisposable
         result.Experiences[0].Company.Should().Be("Acme");
         result.Experiences[0].Description.Should().Be("Translated desc 1");
         result.Experiences[0].Background.Should().Be(string.Empty);
-        result.Skills.Should().BeEquivalentTo(["Translated skill 1", "Translated skill 2"]);
+        result.SkillCategories.Should().HaveCount(1);
+        result.SkillCategories[0].SubCategories.Should().HaveCount(1);
+        result.SkillCategories[0].SubCategories[0].Items.Should()
+            .BeEquivalentTo(["Translated skill 1", "Translated skill 2"]);
     }
 
     [Fact]

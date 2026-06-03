@@ -40,26 +40,37 @@ public sealed class WordCvSourceTests : IDisposable
         var cv = await sut.GetCvAsync();
 
         cv.Should().NotBeNull();
-        cv.Name.Should().Be("John");
+        cv.Name.Should().Be("John Doe");
         cv.LastName.Should().Be("Doe");
         cv.Title.Should().Be("Creative Developer");
-        cv.Summary.Should().Be("Building digital experiences.");
+        cv.Summary.Should().Be("Building digital experiences.\nPassionate about code.");
         cv.Experiences.Should().HaveCount(2);
         cv.Experiences[0].Period.Should().Be("2024 - PRESENT");
         cv.Experiences[0].Role.Should().Be("Senior Developer");
         cv.Experiences[0].Company.Should().Be("Acme Corp");
-        cv.Experiences[0].Description.Should().Be("Building things.");
-        cv.Experiences[0].Background.Should().Be("bg-1");
+        cv.Experiences[0].CompanyUrl.Should().Be("https://acme.com");
+        cv.Experiences[0].Location.Should().Be("Barcelona");
+        cv.Experiences[0].WorkMode.Should().Be("Remote");
+        cv.Experiences[0].Description.Should().Be("Building things.\nTech Stack: C#, .NET");
         cv.Experiences[1].Period.Should().Be("2021 - 2023");
         cv.Experiences[1].Role.Should().Be("Full Stack Engineer");
         cv.Experiences[1].Company.Should().Be("StartupX");
-        cv.Experiences[1].Description.Should().Be("Creating products.");
-        cv.Experiences[1].Background.Should().Be("bg-2");
-        cv.Skills.Should().BeEquivalentTo(["C#", ".NET", "TypeScript"]);
+        cv.Experiences[1].CompanyUrl.Should().Be("https://startupx.io");
+        cv.Experiences[1].Location.Should().Be("Madrid");
+        cv.Experiences[1].WorkMode.Should().Be("Remote");
+        cv.Experiences[1].Description.Should().Be("Creating products.\nTech Stack: TypeScript, React");
+        cv.SkillCategories.Should().HaveCount(1);
+        cv.SkillCategories[0].Name.Should().Be("Languages");
+        cv.SkillCategories[0].SubCategories.Should().HaveCount(1);
+        cv.SkillCategories[0].SubCategories[0].Name.Should().Be("General");
+        cv.SkillCategories[0].SubCategories[0].Items.Should().BeEquivalentTo(["C#", ".NET", "TypeScript"]);
+        cv.Education.Should().HaveCount(1);
+        cv.Education[0].Degree.Should().Be("Bachelor in CS");
+        cv.Education[0].Institution.Should().Be("University");
     }
 
     [Fact]
-    public async Task GetCvAsync_MultiLineSummary_ShouldCollectAllLinesUntilNextLabel()
+    public async Task GetCvAsync_MultiLineSummary_ShouldCollectAllLinesUntilNextSection()
     {
         var filePath = CreateDocumentWithMultiLineSummary();
         var sut = CreateSut(filePath);
@@ -70,29 +81,16 @@ public sealed class WordCvSourceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetCvAsync_MultipleExperienceSections_ShouldMapAll()
+    public async Task GetCvAsync_NoExperiences_ShouldReturnEmptyExperiences()
     {
-        var filePath = CreateValidDocument();
-        var sut = CreateSut(filePath);
-
-        var cv = await sut.GetCvAsync();
-
-        cv.Experiences.Should().HaveCount(2);
-        cv.Experiences[0].Company.Should().Be("Acme Corp");
-        cv.Experiences[1].Company.Should().Be("StartupX");
-    }
-
-    [Fact]
-    public async Task GetCvAsync_NoPeriodSections_ShouldReturnEmptyExperiences()
-    {
-        var filePath = CreateDocumentWithHeaderOnly();
+        var filePath = CreateDocumentWithNoExperiences();
         var sut = CreateSut(filePath);
 
         var cv = await sut.GetCvAsync();
 
         cv.Experiences.Should().BeEmpty();
-        cv.Name.Should().Be("Jane");
-        cv.Skills.Should().BeEquivalentTo(["C#"]);
+        cv.Name.Should().Be("Jane Smith");
+        cv.SkillCategories.Should().BeEmpty();
     }
 
     [Fact]
@@ -142,6 +140,106 @@ public sealed class WordCvSourceTests : IDisposable
         second.Should().BeSameAs(first);
     }
 
+    [Fact]
+    public async Task GetCvAsync_HierarchicalSkills_ShouldPreserveStructure()
+    {
+        var filePath = CreateDocumentWithHierarchicalSkills();
+        var sut = CreateSut(filePath);
+
+        var cv = await sut.GetCvAsync();
+
+        cv.SkillCategories.Should().HaveCount(2);
+        cv.SkillCategories[0].Name.Should().Be("Languages");
+        cv.SkillCategories[0].SubCategories.Should().HaveCount(2);
+        cv.SkillCategories[0].SubCategories[0].Name.Should().Be("Advanced");
+        cv.SkillCategories[0].SubCategories[0].Items.Should().BeEquivalentTo(["C#", ".NET"]);
+        cv.SkillCategories[0].SubCategories[1].Name.Should().Be("Working Knowledge");
+        cv.SkillCategories[0].SubCategories[1].Items.Should().BeEquivalentTo(["TypeScript", "JavaScript"]);
+        cv.SkillCategories[1].Name.Should().Be("Cloud");
+        cv.SkillCategories[1].SubCategories.Should().HaveCount(1);
+        cv.SkillCategories[1].SubCategories[0].Name.Should().Be("AWS");
+        cv.SkillCategories[1].SubCategories[0].Items.Should().BeEquivalentTo(["Lambda", "S3"]);
+    }
+
+    [Fact]
+    public async Task GetCvAsync_Certifications_ShouldParseByCategory()
+    {
+        var filePath = CreateDocumentWithCertifications();
+        var sut = CreateSut(filePath);
+
+        var cv = await sut.GetCvAsync();
+
+        cv.Certifications.Should().HaveCount(2);
+        cv.Certifications[0].Category.Should().Be("Agile");
+        cv.Certifications[0].Title.Should().Be("PSM I");
+        cv.Certifications[0].Issuer.Should().Be("Scrum.org");
+        cv.Certifications[1].Category.Should().Be("Cloud");
+        cv.Certifications[1].Title.Should().Be("AWS Practitioner");
+        cv.Certifications[1].Issuer.Should().Be("Amazon");
+    }
+
+    [Fact]
+    public async Task GetCvAsync_LegacyFormat_ShouldParseCorrectly()
+    {
+        var filePath = CreateLegacyFormatDocument();
+        var sut = CreateSut(filePath);
+
+        var cv = await sut.GetCvAsync();
+
+        cv.Experiences.Should().HaveCount(2);
+        cv.Experiences[0].Company.Should().Be("Acme Corp");
+        cv.Experiences[0].CompanyUrl.Should().BeEmpty();
+        cv.Experiences[0].Location.Should().Be("Barcelona");
+        cv.Experiences[0].WorkMode.Should().Be("Remote");
+        cv.Experiences[0].Role.Should().Be("Senior Developer");
+        cv.Experiences[0].Period.Should().Be("2024 - PRESENT");
+        cv.Experiences[0].Description.Should().Be("Building things.\nTech Stack: C#, .NET");
+        cv.Experiences[1].Company.Should().Be("StartupX");
+        cv.Experiences[1].CompanyUrl.Should().BeEmpty();
+        cv.Experiences[1].Location.Should().Be("Madrid");
+        cv.Experiences[1].WorkMode.Should().Be("Onsite");
+        cv.Experiences[1].Role.Should().Be("Full Stack Engineer");
+        cv.Experiences[1].Period.Should().Be("2021 - 2023");
+        cv.Experiences[1].Description.Should().Be("Creating products.\nTech Stack: TypeScript, React");
+    }
+
+    private string CreateLegacyFormatDocument()
+    {
+        var path = Path.Combine(_tempDir, "legacy.docx");
+
+        using var document = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+        var mainPart = document.AddMainDocumentPart();
+        mainPart.Document = new Document();
+        var body = mainPart.Document.AppendChild(new Body());
+
+        AddParagraph(body, "John Doe");
+        AddParagraph(body, "Creative Developer");
+        AddParagraph(body, "s3rbr0p4r@example.com");
+        AddParagraph(body, "+34 123 456 789");
+        AddParagraph(body, "Remote");
+        AddParagraph(body, "Willingness to travel");
+        AddParagraph(body, "SUMMARY");
+        AddParagraph(body, "Building digital experiences.");
+        AddParagraph(body, "Passionate about code.");
+        AddParagraph(body, "EXPERIENCE");
+        AddParagraph(body, "Acme Corp | Barcelona (Remote)");
+        AddParagraph(body, "Senior Developer | 2024 - PRESENT");
+        AddParagraph(body, "Building things.");
+        AddParagraph(body, "Tech Stack: C#, .NET");
+        AddParagraph(body, "StartupX | Madrid (Onsite)");
+        AddParagraph(body, "Full Stack Engineer | 2021 - 2023");
+        AddParagraph(body, "Creating products.");
+        AddParagraph(body, "Tech Stack: TypeScript, React");
+        AddParagraph(body, "TECHNICAL SKILLS");
+        AddParagraph(body, "Languages");
+        AddParagraph(body, "C#, .NET, TypeScript");
+        AddParagraph(body, "EDUCATION");
+        AddParagraph(body, "Bachelor in CS | University");
+        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
+
+        return path;
+    }
+
     private static WordCvSource CreateSut(string filePath)
     {
         var options = Options.Create(new CvSourceOptions { FilePath = filePath });
@@ -164,21 +262,32 @@ public sealed class WordCvSourceTests : IDisposable
         mainPart.Document = new Document();
         var body = mainPart.Document.AppendChild(new Body());
 
-        AddParagraph(body, "Name: John");
-        AddParagraph(body, "LastName: Doe");
-        AddParagraph(body, "Title: Creative Developer");
-        AddParagraph(body, "Summary: Building digital experiences.");
-        AddParagraph(body, "Period: 2024 - PRESENT");
-        AddParagraph(body, "Role: Senior Developer");
-        AddParagraph(body, "Company: Acme Corp");
-        AddParagraph(body, "Description: Building things.");
-        AddParagraph(body, "Background: bg-1");
-        AddParagraph(body, "Period: 2021 - 2023");
-        AddParagraph(body, "Role: Full Stack Engineer");
-        AddParagraph(body, "Company: StartupX");
-        AddParagraph(body, "Description: Creating products.");
-        AddParagraph(body, "Background: bg-2");
-        AddParagraph(body, "Skills: C#, .NET, TypeScript");
+        AddParagraph(body, "John Doe");
+        AddParagraph(body, "Creative Developer");
+        AddParagraph(body, "s3rbr0p4r@example.com");
+        AddParagraph(body, "+34 123 456 789");
+        AddParagraph(body, "Remote");
+        AddParagraph(body, "Willingness to travel");
+        AddParagraph(body, "SUMMARY");
+        AddParagraph(body, "Building digital experiences.");
+        AddParagraph(body, "Passionate about code.");
+        AddParagraph(body, "EXPERIENCE");
+        AddParagraph(body, "Acme Corp | https://acme.com");
+        AddParagraph(body, "Barcelona | Remote");
+        AddParagraph(body, "Senior Developer | 2024 - PRESENT");
+        AddParagraph(body, "Building things.");
+        AddParagraph(body, "Tech Stack: C#, .NET");
+        AddParagraph(body, "StartupX | https://startupx.io");
+        AddParagraph(body, "Madrid | Remote");
+        AddParagraph(body, "Full Stack Engineer | 2021 - 2023");
+        AddParagraph(body, "Creating products.");
+        AddParagraph(body, "Tech Stack: TypeScript, React");
+        AddParagraph(body, "TECHNICAL SKILLS");
+        AddParagraph(body, "Languages");
+        AddParagraph(body, "C#, .NET, TypeScript");
+        AddParagraph(body, "EDUCATION");
+        AddParagraph(body, "Bachelor in CS | University");
+        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
 
         return path;
     }
@@ -192,31 +301,90 @@ public sealed class WordCvSourceTests : IDisposable
         mainPart.Document = new Document();
         var body = mainPart.Document.AppendChild(new Body());
 
-        AddParagraph(body, "Name: Alice");
-        AddParagraph(body, "LastName: Wonder");
-        AddParagraph(body, "Title: Developer");
-        AddParagraph(body, "Summary: First line of summary.");
+        AddParagraph(body, "Alice Wonder");
+        AddParagraph(body, "Developer");
+        AddParagraph(body, "SUMMARY");
+        AddParagraph(body, "First line of summary.");
         AddParagraph(body, "Second line of summary.");
         AddParagraph(body, "Third line.");
-        AddParagraph(body, "Skills: C#");
+        AddParagraph(body, "TECHNICAL SKILLS");
+        AddParagraph(body, "EDUCATION");
+        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
 
         return path;
     }
 
-    private string CreateDocumentWithHeaderOnly()
+    private string CreateDocumentWithNoExperiences()
     {
-        var path = Path.Combine(_tempDir, "header_only.docx");
+        var path = Path.Combine(_tempDir, "no_experiences.docx");
 
         using var document = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
         var mainPart = document.AddMainDocumentPart();
         mainPart.Document = new Document();
         var body = mainPart.Document.AppendChild(new Body());
 
-        AddParagraph(body, "Name: Jane");
-        AddParagraph(body, "LastName: Smith");
-        AddParagraph(body, "Title: Architect");
-        AddParagraph(body, "Summary: Just a summary.");
-        AddParagraph(body, "Skills: C#");
+        AddParagraph(body, "Jane Smith");
+        AddParagraph(body, "Architect");
+        AddParagraph(body, "SUMMARY");
+        AddParagraph(body, "Just a summary.");
+        AddParagraph(body, "EXPERIENCE");
+        AddParagraph(body, "TECHNICAL SKILLS");
+        AddParagraph(body, "EDUCATION");
+        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
+
+        return path;
+    }
+
+    private string CreateDocumentWithHierarchicalSkills()
+    {
+        var path = Path.Combine(_tempDir, "hierarchical_skills.docx");
+
+        using var document = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+        var mainPart = document.AddMainDocumentPart();
+        mainPart.Document = new Document();
+        var body = mainPart.Document.AppendChild(new Body());
+
+        AddParagraph(body, "Test User");
+        AddParagraph(body, "Developer");
+        AddParagraph(body, "SUMMARY");
+        AddParagraph(body, "Summary text.");
+        AddParagraph(body, "EXPERIENCE");
+        AddParagraph(body, "TECHNICAL SKILLS");
+        AddParagraph(body, "Languages");
+        AddParagraph(body, "Advanced");
+        AddParagraph(body, "C#, .NET");
+        AddParagraph(body, "Working Knowledge");
+        AddParagraph(body, "TypeScript, JavaScript");
+        AddParagraph(body, "Cloud");
+        AddParagraph(body, "AWS");
+        AddParagraph(body, "Lambda, S3");
+        AddParagraph(body, "EDUCATION");
+        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
+
+        return path;
+    }
+
+    private string CreateDocumentWithCertifications()
+    {
+        var path = Path.Combine(_tempDir, "certifications.docx");
+
+        using var document = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
+        var mainPart = document.AddMainDocumentPart();
+        mainPart.Document = new Document();
+        var body = mainPart.Document.AppendChild(new Body());
+
+        AddParagraph(body, "Test User");
+        AddParagraph(body, "Developer");
+        AddParagraph(body, "SUMMARY");
+        AddParagraph(body, "Summary.");
+        AddParagraph(body, "EXPERIENCE");
+        AddParagraph(body, "TECHNICAL SKILLS");
+        AddParagraph(body, "EDUCATION");
+        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
+        AddParagraph(body, "Agile");
+        AddParagraph(body, "PSM I | Scrum.org");
+        AddParagraph(body, "Cloud");
+        AddParagraph(body, "AWS Practitioner | Amazon");
 
         return path;
     }
