@@ -1002,6 +1002,18 @@ section {
   width: 5px;
   height: 5px;
   border-radius: 50%;
+
+.exp-description li a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  transition: color var(--transition);
+}
+
+.exp-description li a:hover {
+  color: var(--accent-hover, var(--primary));
+}
   background: var(--primary);
   opacity: 0.5;
 }
@@ -1115,7 +1127,7 @@ section {
 
 .contact-card {
   display: inline-block;
-  padding: 56px 72px;
+  padding: 48px 60px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
@@ -1151,13 +1163,6 @@ section {
     border-color: var(--primary);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
-  }
-
-  .contact-detail {
-    margin-top: 12px;
-    font-family: 'Figtree', sans-serif;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
   }
 
 /* ─── Footer ─── */

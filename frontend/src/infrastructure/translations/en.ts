@@ -20,16 +20,7 @@ export const en: Record<string, string> = {
   'skills.title': 'Mastery',
 
   /* Contact section */
-  'contact.heading': "Let's Talk?",
-  'contact.email': 'Email',
-  'contact.phone': 'Phone',
-  'contact.location': 'Location',
-  'contact.travel': 'Willingness to travel',
-
-  /* Education & Certifications */
-  'education.title': 'Education',
-  'education.certifications': 'Certifications',
-  'education.notes': 'Notes',
+  'contact.heading': "Let's make things happen",
 
   /* Footer */
   'footer.copyright': '\u00A9 {year} {name}.',

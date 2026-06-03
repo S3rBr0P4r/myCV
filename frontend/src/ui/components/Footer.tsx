@@ -15,29 +15,10 @@ export function Footer({ name, contactInfo }: FooterProps) {
       <section id="contact" className="reveal" style={{ textAlign: 'center' }}>
         <div className="contact-card">
           <h2>{t('contact.heading')}</h2>
-          {contactInfo && (
-            <>
-              {contactInfo.email && (
-                <a className="email-link" href={`mailto:${contactInfo.email}`}>
-                  {contactInfo.email}
-                </a>
-              )}
-              {contactInfo.phone && (
-                <p className="contact-detail">
-                  {t('contact.phone')}: {renderFormattedText(contactInfo.phone)}
-                </p>
-              )}
-              {contactInfo.location && (
-                <p className="contact-detail">
-                  {t('contact.location')}: {renderFormattedText(contactInfo.location)}
-                </p>
-              )}
-              {contactInfo.willingnessToTravel && (
-                <p className="contact-detail">
-                  {t('contact.travel')}: {renderFormattedText(contactInfo.willingnessToTravel)}
-                </p>
-              )}
-            </>
+          {contactInfo?.email && (
+            <a className="email-link" href={`mailto:${contactInfo.email}`}>
+              {contactInfo.email}
+            </a>
           )}
         </div>
       </section>

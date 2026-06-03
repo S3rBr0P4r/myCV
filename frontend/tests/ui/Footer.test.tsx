@@ -6,25 +6,24 @@ import { TranslationProvider } from '../../src/ui/contexts/TranslationContext';
 describe('Footer', () => {
   it('renders heading', () => {
     render(<TranslationProvider><Footer name="John" /></TranslationProvider>);
-    expect(screen.getByText("Let's Talk?")).toBeInTheDocument();
+    expect(screen.getByText("Let's make things happen")).toBeInTheDocument();
   });
 
-  it('renders contact info when provided', () => {
+  it('renders email when provided', () => {
     render(
       <TranslationProvider>
         <Footer
           name="John"
           contactInfo={{
             email: 'john@example.com',
-            phone: '+1 555',
-            location: 'NYC',
-            willingnessToTravel: 'Yes',
+            phone: '',
+            location: '',
+            willingnessToTravel: '',
           }}
         />
       </TranslationProvider>,
     );
     expect(screen.getByText('john@example.com')).toBeInTheDocument();
-    expect(screen.getByText(/\+1 555/)).toBeInTheDocument();
   });
 
   it('renders footer with name', () => {
