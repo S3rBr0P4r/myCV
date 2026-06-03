@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VITE_API_URL: ${{ vars.VITE_API_URL }}
+      VITE_CSP_SCRIPT_SRC: ${{ vars.VITE_CSP_SCRIPT_SRC }}
+      VITE_CSP_STYLE_SRC: ${{ vars.VITE_CSP_STYLE_SRC }}
       VITE_CSP_CONNECT_SRC: ${{ vars.VITE_CSP_CONNECT_SRC }}
     steps:
       - uses: actions/checkout@v6
@@ -25,6 +27,8 @@ jobs:
       - run: npm ci
         working-directory: ./frontend
       - run: npm run build
+        working-directory: ./frontend
+      - run: npm run test
         working-directory: ./frontend
 
   backend:

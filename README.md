@@ -8,8 +8,8 @@ Built under human supervision using [opencode](https://opencode.ai) with `openco
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Vanilla TypeScript, Vite 6 |
-| Backend | .NET 10 |
+| Frontend | React 18 + TypeScript, Vite 6, Vitest |
+| Backend | .NET 10, xUnit + Moq + FluentAssertions |
 | Translation | DeepL API (server-side, memory-cached) |
 | Data | `.docx` file parsed at runtime — no database |
 
@@ -24,37 +24,49 @@ Launches frontend (port 5173) and backend (port 60355). Vite proxies `/api` to t
 ```bash
 cd frontend
 npm run build        # tsc + vite build
+npm run test         # vitest (unit + integration)
+npm run test:coverage
 npm run preview      # preview production build
 
 cd backend
 dotnet build Backend.slnx
-dotnet test Backend.slnx      # 39 tests, 0 warnings
+dotnet test Backend.slnx      # 53+ tests, 0 warnings
 ```
 
 ## Architecture
 
 ```
 myCV/
-├── frontend/              TypeScript + Vite
+├── frontend/              React 18 + TypeScript + Vite
 │   ├── domain/            Entities, repository interfaces
 │   ├── application/       Use cases
 │   ├── infrastructure/    API repository, translations (en/es), circuit breaker + retry
-│   ├── ui/                DOM API components, renderer, CompanyImage, CompanyLogoFile
-│   ├── core/              Translation service, theme manager, animations
+│   ├── ui/
+│   │   ├── components/    React components (Header, Intro, Experience, Skills, Education, Footer)
+│   │   ├── hooks/         Custom React hooks (useTheme, useTranslation, useCV, etc.)
+│   │   ├── contexts/      React contexts (Theme, Translation, CV)
+│   │   └── App.tsx        Root component
+│   │   ├── Company*       Pure functions (CompanyUrl, CompanyImage, CompanyLogoFile)
+│   │   └── format.ts      Text formatting helpers
+│   ├── core/              (legacy — replaced by React contexts)
 │   ├── public/            Static assets (favicon, backgrounds/, logos/)
-│   ├── main.ts            Entry point, manual DI wiring
+│   ├── main.tsx           Entry point with React root
 │   └── index.html         Shell with CSP meta tag
 │
 ├── backend/               .NET 10 (single project, folder layers)
-│   └── src/
-│       ├── Domain/        Entities, exceptions, repository & service interfaces
-│       ├── Application/   DTOs, GetCV use case, mappings, DI registration
-│       ├── Infrastructure/ WordCvSource (.docx parser), DeepLTranslationService,
-│       │                   DiscordNotifier, CVRepository, options, DI registration
-│       ├── Api/           CvController, GlobalExceptionHandler, API versioning,
-│       │                   CORS, Swagger, DI registration, launch settings
-│       ├── Program.cs     Middleware pipeline (rate limiter, CORS, security headers, HSTS, Serilog)
-│       └── Dockerfile     Multi-stage container build
+│   ├── src/
+│   │   ├── Domain/        Entities, exceptions, repository & service interfaces
+│   │   ├── Application/   DTOs, GetCV use case, mappings, DI registration
+│   │   ├── Infrastructure/ WordCvSource (.docx parser), DeepLTranslationService,
+│   │   │                   DiscordNotifier, CVRepository, options, DI registration
+│   │   ├── Api/           CvController, GlobalExceptionHandler, API versioning,
+│   │   │                   CORS, Swagger, DI registration, launch settings
+│   │   ├── Program.cs     Middleware pipeline (rate limiter, CORS, security headers, HSTS, Serilog)
+│   │   └── Dockerfile     Multi-stage container build
+│   └── tests/
+│       ├── Domain.Tests/       Entity + exception unit tests
+│       ├── Application.Tests/  Use case + service + middleware unit tests
+│       └── Integration.Tests/  Full HTTP pipeline via WebApplicationFactory
 │
 └── .github/workflows/      CI (automatic build + test) + CD (manual deploy via SSH)
 ```
@@ -65,10 +77,10 @@ myCV/
 2. **Parsing**: `WordCvSource` reads the `.docx` using `DocumentFormat.OpenXml` and extracts labeled sections (Name, Summary, Experiences with company URL/location/work mode, Skills, etc.).
 3. **Serving**: `CvController` returns the CV as JSON via `GET /api/v1/cv`. Responses are cached for 1 hour.
 4. **Translation**: When the `Accept-Language` header is non-English and a DeepL API key is configured, the backend translates all CV fields into the target language and caches the result per language (default 24h TTL).
-5. **Frontend**: Static TypeScript app with manual DI. Fetches CV from the API on load, re-fetches on locale switch. UI chrome (nav, labels, footer) uses `t()` from a minimal translation service. CV data fields are displayed directly from the API response — no client-side CV translation.
-6. **Resilience**: Frontend has a circuit breaker (3 failures → 30s open → half-open), retry with exponential backoff (2 attempts), and in-memory cache. Offline fallback shows a localized message.
+5. **Frontend**: React 18 app with contexts (Theme, Translation, CV) and custom hooks (`useTheme`, `useTranslation`, `useCV`). Components are functional-only, no classes. Fetches CV from the API on load, re-fetches on locale switch. UI chrome (nav, labels, footer) uses `t()` from a translation context. CV data fields are displayed directly from the API response — no client-side CV translation.
+6. **Resilience**: Frontend has a circuit breaker (3 failures → 30s open → half-open), retry with exponential backoff (2 attempts), and in-memory cache. Offline fallback shows a localized message. Tests via Vitest + @testing-library/react + happy-dom.
 7. **Security**: Rate limiter (100 req/min), file size cap (5 MB), UNC path rejection, HSTS, security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`), CSP in `index.html`.
- 8. **Career cards**: Company logos via local PNG files (downloaded from `icon.horse`, initials SVG fallback for missing ones), Pexels background images, location/work mode badges, paginated (3 per page).
+8. **Career cards**: Company logos via local WebP files (initials SVG fallback), Pexels background images, location/work mode badges, paginated (3 per page).
 
 ## Key features
 

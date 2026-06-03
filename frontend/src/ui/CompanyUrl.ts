@@ -1,3 +1,5 @@
+import { findBestMatch } from './CompanyMatch';
+
 const companyUrlMap: Record<string, string> = {
   ryanair: 'https://www.ryanair.com',
   docplanner: 'https://www.docplanner.com',
@@ -17,21 +19,6 @@ const companyUrlMap: Record<string, string> = {
 
 const keysByLength = Object.keys(companyUrlMap).sort((a, b) => b.length - a.length);
 
-function findBestMatch(input: string): string | null {
-  const normalized = input.toLowerCase().trim();
-
-  const exact = companyUrlMap[normalized];
-  if (exact) return exact;
-
-  for (const key of keysByLength) {
-    if (normalized.startsWith(key) || key.startsWith(normalized)) {
-      return companyUrlMap[key];
-    }
-  }
-
-  return null;
-}
-
 export function getCompanyUrl(company: string): string | null {
-  return findBestMatch(company);
+  return findBestMatch(company, companyUrlMap, keysByLength);
 }

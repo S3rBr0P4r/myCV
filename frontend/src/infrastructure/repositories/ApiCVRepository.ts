@@ -1,6 +1,5 @@
 import { type CV } from '../../domain/entities/CV';
 import { type ICVRepository } from '../../domain/repositories/ICVRepository';
-import { t } from '../../core/TranslationService';
 
 const FETCH_TIMEOUT_MS = 10_000;
 const THRESHOLD = 3;
@@ -53,9 +52,9 @@ function isValidCV(data: unknown): data is CV {
 function buildFallback(): CV {
   return {
     name: 'John',
-    lastName: `Doe${t('offline.surnameSuffix')}`,
+    lastName: 'Doe (Offline)',
     title: 'Creative Developer',
-    summary: t('offline.summary'),
+    summary: 'The backend is not responding, but here is your local data.',
     experiences: [],
     skillCategories: [],
     education: [],

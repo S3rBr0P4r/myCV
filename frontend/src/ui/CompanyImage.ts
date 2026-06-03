@@ -1,3 +1,5 @@
+import { findBestMatch } from './CompanyMatch';
+
 const cache = new Map<string, string | null>();
 
 const companyImageMap: Record<string, string> = {
@@ -19,26 +21,11 @@ const companyImageMap: Record<string, string> = {
 
 const keysByLength = Object.keys(companyImageMap).sort((a, b) => b.length - a.length);
 
-function findBestMatch(input: string): string | null {
-  const normalized = input.toLowerCase().trim();
-
-  const exact = companyImageMap[normalized];
-  if (exact) return exact;
-
-  for (const key of keysByLength) {
-    if (normalized.startsWith(key) || key.startsWith(normalized)) {
-      return companyImageMap[key];
-    }
-  }
-
-  return null;
-}
-
 export function loadCompanyImage(company: string): Promise<string | null> {
   const cached = cache.get(company);
   if (cached !== undefined) return Promise.resolve(cached);
 
-  const url = findBestMatch(company);
+  const url = findBestMatch(company, companyImageMap, keysByLength);
   cache.set(company, url);
   return Promise.resolve(url);
 }
