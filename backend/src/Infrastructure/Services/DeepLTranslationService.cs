@@ -185,9 +185,7 @@ public sealed class DeepLTranslationService : ITranslationService
             Summary = translatedSummary ?? source.Summary,
             ContactInfo = source.ContactInfo,
             Experiences = translatedExperiences.AsReadOnly(),
-            SkillCategories = translatedCategories.AsReadOnly(),
-            Education = source.Education,
-            Certifications = source.Certifications
+            SkillCategories = translatedCategories.AsReadOnly()
         };
     }
 

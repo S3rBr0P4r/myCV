@@ -16,9 +16,7 @@ public sealed class CVTests
             Title = "Developer",
             Summary = "A great developer",
             Experiences = [],
-            SkillCategories = [],
-            Education = [],
-            Certifications = []
+            SkillCategories = []
         };
 
         cv.Name.Should().Be("John");
@@ -48,9 +46,7 @@ public sealed class CVTests
                     Description = "Leading the platform team"
                 }
             ],
-            SkillCategories = [],
-            Education = [],
-            Certifications = []
+            SkillCategories = []
         };
 
         cv.Experiences.Should().HaveCount(1);
@@ -82,9 +78,7 @@ public sealed class CVTests
                         }
                     }.AsReadOnly()
                 }
-            ],
-            Education = [],
-            Certifications = []
+            ]
         };
 
         cv.SkillCategories.Should().HaveCount(1);

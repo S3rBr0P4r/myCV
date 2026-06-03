@@ -23,8 +23,7 @@ public sealed class WordCvSource : ICvSource
 
     private static readonly HashSet<string> SectionHeaders =
     [
-        "summary", "experience", "technical skills",
-        "education", "certifications & relevant training"
+        "summary", "experience", "technical skills"
     ];
 
     public WordCvSource(
@@ -187,8 +186,6 @@ public sealed class WordCvSource : ICvSource
         var summary = string.Join("\n", GetSectionLines(lines, sectionMap, "summary"));
         var experiences = ParseExperiences(lines, sectionMap);
         var skillCategories = ParseSkills(lines, sectionMap);
-        var education = ParseEducation(lines, sectionMap);
-        var certifications = ParseCertifications(lines, sectionMap);
 
         return new CV
         {
@@ -198,9 +195,7 @@ public sealed class WordCvSource : ICvSource
             Summary = summary,
             ContactInfo = contactInfo,
             Experiences = experiences.AsReadOnly(),
-            SkillCategories = skillCategories.AsReadOnly(),
-            Education = education.AsReadOnly(),
-            Certifications = certifications.AsReadOnly()
+            SkillCategories = skillCategories.AsReadOnly()
         };
     }
 
@@ -611,95 +606,4 @@ public sealed class WordCvSource : ICvSource
         categories[catIdx] = (cat.Name, updatedSubs);
     }
 
-    private static List<Education> ParseEducation(List<string> lines, Dictionary<string, int> sectionMap)
-    {
-        if (!sectionMap.TryGetValue("education", out var start))
-        {
-            return [];
-        }
-
-        var sectionLines = GetSectionLines(lines, sectionMap, "education");
-        var educationList = new List<Education>();
-        int idx = 0;
-
-        while (idx < sectionLines.Count)
-        {
-            var line = sectionLines[idx];
-
-            if (IsSectionHeader(line))
-            {
-                break;
-            }
-
-            var pipeIdx = line.IndexOf(" | ", StringComparison.Ordinal);
-            if (pipeIdx < 0)
-            {
-                idx++;
-                continue;
-            }
-
-            var degree = line[..pipeIdx].Trim();
-            var institution = line[(pipeIdx + 3)..].Trim();
-            string notes = string.Empty;
-
-            idx++;
-            if (idx < sectionLines.Count)
-            {
-                var nextLine = sectionLines[idx];
-                if (!IsSectionHeader(nextLine) && !nextLine.Contains(" | ", StringComparison.Ordinal))
-                {
-                    notes = nextLine;
-                    idx++;
-                }
-            }
-
-            educationList.Add(new Education
-            {
-                Degree = degree,
-                Institution = institution,
-                Notes = notes
-            });
-        }
-
-        return educationList;
-    }
-
-    private static List<Certification> ParseCertifications(List<string> lines, Dictionary<string, int> sectionMap)
-    {
-        if (!sectionMap.TryGetValue("certifications & relevant training", out var start))
-        {
-            return [];
-        }
-
-        var sectionLines = GetSectionLines(lines, sectionMap, "certifications & relevant training");
-        var certifications = new List<Certification>();
-        string currentCategory = string.Empty;
-
-        foreach (var line in sectionLines)
-        {
-            if (IsSectionHeader(line))
-            {
-                break;
-            }
-
-            var pipeIdx = line.IndexOf(" | ", StringComparison.Ordinal);
-            if (pipeIdx >= 0)
-            {
-                var title = line[..pipeIdx].Trim();
-                var issuer = line[(pipeIdx + 3)..].Trim();
-                certifications.Add(new Certification
-                {
-                    Category = currentCategory,
-                    Title = title,
-                    Issuer = issuer
-                });
-            }
-            else
-            {
-                currentCategory = line;
-            }
-        }
-
-        return certifications;
-    }
 }

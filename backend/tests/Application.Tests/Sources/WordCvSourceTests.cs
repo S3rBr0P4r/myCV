@@ -64,9 +64,6 @@ public sealed class WordCvSourceTests : IDisposable
         cv.SkillCategories[0].SubCategories.Should().HaveCount(1);
         cv.SkillCategories[0].SubCategories[0].Name.Should().Be("General");
         cv.SkillCategories[0].SubCategories[0].Items.Should().BeEquivalentTo(["C#", ".NET", "TypeScript"]);
-        cv.Education.Should().HaveCount(1);
-        cv.Education[0].Degree.Should().Be("Bachelor in CS");
-        cv.Education[0].Institution.Should().Be("University");
     }
 
     [Fact]
@@ -162,23 +159,6 @@ public sealed class WordCvSourceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetCvAsync_Certifications_ShouldParseByCategory()
-    {
-        var filePath = CreateDocumentWithCertifications();
-        var sut = CreateSut(filePath);
-
-        var cv = await sut.GetCvAsync();
-
-        cv.Certifications.Should().HaveCount(2);
-        cv.Certifications[0].Category.Should().Be("Agile");
-        cv.Certifications[0].Title.Should().Be("PSM I");
-        cv.Certifications[0].Issuer.Should().Be("Scrum.org");
-        cv.Certifications[1].Category.Should().Be("Cloud");
-        cv.Certifications[1].Title.Should().Be("AWS Practitioner");
-        cv.Certifications[1].Issuer.Should().Be("Amazon");
-    }
-
-    [Fact]
     public async Task GetCvAsync_LegacyFormat_ShouldParseCorrectly()
     {
         var filePath = CreateLegacyFormatDocument();
@@ -233,9 +213,6 @@ public sealed class WordCvSourceTests : IDisposable
         AddParagraph(body, "TECHNICAL SKILLS");
         AddParagraph(body, "Languages");
         AddParagraph(body, "C#, .NET, TypeScript");
-        AddParagraph(body, "EDUCATION");
-        AddParagraph(body, "Bachelor in CS | University");
-        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
 
         return path;
     }
@@ -285,9 +262,6 @@ public sealed class WordCvSourceTests : IDisposable
         AddParagraph(body, "TECHNICAL SKILLS");
         AddParagraph(body, "Languages");
         AddParagraph(body, "C#, .NET, TypeScript");
-        AddParagraph(body, "EDUCATION");
-        AddParagraph(body, "Bachelor in CS | University");
-        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
 
         return path;
     }
@@ -308,8 +282,6 @@ public sealed class WordCvSourceTests : IDisposable
         AddParagraph(body, "Second line of summary.");
         AddParagraph(body, "Third line.");
         AddParagraph(body, "TECHNICAL SKILLS");
-        AddParagraph(body, "EDUCATION");
-        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
 
         return path;
     }
@@ -329,8 +301,6 @@ public sealed class WordCvSourceTests : IDisposable
         AddParagraph(body, "Just a summary.");
         AddParagraph(body, "EXPERIENCE");
         AddParagraph(body, "TECHNICAL SKILLS");
-        AddParagraph(body, "EDUCATION");
-        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
 
         return path;
     }
@@ -358,33 +328,6 @@ public sealed class WordCvSourceTests : IDisposable
         AddParagraph(body, "Cloud");
         AddParagraph(body, "AWS");
         AddParagraph(body, "Lambda, S3");
-        AddParagraph(body, "EDUCATION");
-        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
-
-        return path;
-    }
-
-    private string CreateDocumentWithCertifications()
-    {
-        var path = Path.Combine(_tempDir, "certifications.docx");
-
-        using var document = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
-        var mainPart = document.AddMainDocumentPart();
-        mainPart.Document = new Document();
-        var body = mainPart.Document.AppendChild(new Body());
-
-        AddParagraph(body, "Test User");
-        AddParagraph(body, "Developer");
-        AddParagraph(body, "SUMMARY");
-        AddParagraph(body, "Summary.");
-        AddParagraph(body, "EXPERIENCE");
-        AddParagraph(body, "TECHNICAL SKILLS");
-        AddParagraph(body, "EDUCATION");
-        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
-        AddParagraph(body, "Agile");
-        AddParagraph(body, "PSM I | Scrum.org");
-        AddParagraph(body, "Cloud");
-        AddParagraph(body, "AWS Practitioner | Amazon");
 
         return path;
     }

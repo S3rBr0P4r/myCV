@@ -18,7 +18,5 @@ public sealed record CVDto(
     ContactInfoDto? ContactInfo,
     IReadOnlyList<ExperienceDto> Experiences,
     IReadOnlyList<SkillCategoryDto> SkillCategories,
-    IReadOnlyList<EducationDto> Education,
-    IReadOnlyList<CertificationDto> Certifications,
     string? LinkedInUrl,
     string? GitHubUrl);

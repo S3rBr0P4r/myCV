@@ -8,7 +8,6 @@ import { Header } from './components/Header';
 import { Intro } from './components/Intro';
 import { Experience } from './components/Experience';
 import { Skills } from './components/Skills';
-import { Education } from './components/Education';
 import { Footer } from './components/Footer';
 
 function useSectionTracker(cv: CV | null) {
@@ -53,16 +52,13 @@ function useLocaleDropdown() {
   }, []);
 }
 
-function buildSections(cv: { skillCategories: unknown[]; education: unknown[]; certifications: unknown[] }, t: (k: string) => string) {
+function buildSections(cv: { skillCategories: unknown[] }, t: (k: string) => string) {
   const sections: { id: string; label: string }[] = [
     { id: 'intro', label: t('nav.dotIntro') },
     { id: 'experience', label: t('nav.dotExperience') },
   ];
   if (cv.skillCategories.length > 0) {
     sections.push({ id: 'skills', label: t('nav.dotSkills') });
-  }
-  if (cv.education.length > 0 || cv.certifications.length > 0) {
-    sections.push({ id: 'education', label: 'Education' });
   }
   sections.push({ id: 'contact', label: t('nav.dotContact') });
   return sections;
@@ -115,7 +111,6 @@ export function App() {
       <Intro name={cv.name} summary={cv.summary} />
       <Experience experiences={cv.experiences} />
       <Skills skillCategories={cv.skillCategories} />
-      <Education education={cv.education} certifications={cv.certifications} />
       <Footer name={cv.name} contactInfo={cv.contactInfo} />
 
       <nav className="scroll-progress" aria-label={t('nav.dotAria')}>

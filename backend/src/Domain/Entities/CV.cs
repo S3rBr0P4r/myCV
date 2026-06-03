@@ -21,6 +21,4 @@ public sealed class CV
     public ContactInfo? ContactInfo { get; init; }
     public required IReadOnlyList<Experience> Experiences { get; init; }
     public required IReadOnlyList<SkillCategory> SkillCategories { get; init; }
-    public required IReadOnlyList<Education> Education { get; init; }
-    public required IReadOnlyList<Certification> Certifications { get; init; }
 }

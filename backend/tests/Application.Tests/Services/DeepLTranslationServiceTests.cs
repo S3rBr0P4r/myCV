@@ -94,8 +94,7 @@ public sealed class DeepLTranslationServiceTests : IDisposable
                     }.AsReadOnly()
                 }
             ],
-            Education = [],
-            Certifications = []
+
         };
     }
 

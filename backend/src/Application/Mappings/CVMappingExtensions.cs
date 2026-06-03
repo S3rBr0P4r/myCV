@@ -15,8 +15,6 @@ public static class CVMappingExtensions
             ContactInfo: cv.ContactInfo?.ToDto(),
             Experiences: cv.Experiences.Select(e => e.ToDto()).ToList(),
             SkillCategories: cv.SkillCategories.Select(sc => sc.ToDto()).ToList(),
-            Education: cv.Education.Select(e => e.ToDto()).ToList(),
-            Certifications: cv.Certifications.Select(c => c.ToDto()).ToList(),
             LinkedInUrl: null,
             GitHubUrl: null);
     }
@@ -55,21 +53,5 @@ public static class CVMappingExtensions
         return new SkillSubCategoryDto(
             Name: subCategory.Name,
             Items: subCategory.Items.ToList());
-    }
-
-    public static EducationDto ToDto(this Education education)
-    {
-        return new EducationDto(
-            Degree: education.Degree,
-            Institution: education.Institution,
-            Notes: education.Notes);
-    }
-
-    public static CertificationDto ToDto(this Certification certification)
-    {
-        return new CertificationDto(
-            Category: certification.Category,
-            Title: certification.Title,
-            Issuer: certification.Issuer);
     }
 }

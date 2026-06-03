@@ -53,8 +53,7 @@ public sealed class GetCVHandlerTests
                     }.AsReadOnly()
                 }
             ],
-            Education = [],
-            Certifications = []
+
         };
 
         _repositoryMock
@@ -83,9 +82,7 @@ public sealed class GetCVHandlerTests
                 Title = "Title",
                 Summary = "Summary",
                 Experiences = [],
-                SkillCategories = [],
-                Education = [],
-                Certifications = []
+                SkillCategories = []
             });
 
         await _handler.HandleAsync(new GetCVQuery());
@@ -148,8 +145,7 @@ public sealed class GetCVHandlerTests
                 }
             ],
             SkillCategories = [],
-            Education = [],
-            Certifications = []
+
         };
 
         _repositoryMock
