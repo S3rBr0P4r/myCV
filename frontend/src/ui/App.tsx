@@ -84,11 +84,7 @@ export function App() {
   if (loading) {
     return (
       <>
-        <nav className="navbar">
-          <div className="logo">
-            <span className="logo-name">Loading...</span>
-          </div>
-        </nav>
+        <Header />
         <div className="painted-bg" id="bg" />
         <section className="intro-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ opacity: 0.5 }}>Loading CV...</p>
@@ -100,11 +96,7 @@ export function App() {
   if (error || !cv) {
     return (
       <>
-        <nav className="navbar">
-          <div className="logo">
-            <span className="logo-name">Error</span>
-          </div>
-        </nav>
+        <Header />
         <div className="painted-bg" id="bg" />
         <section className="intro-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ color: 'var(--accent)' }}>{error || 'Failed to load CV'}</p>
@@ -117,7 +109,7 @@ export function App() {
 
   return (
     <>
-      <Header name={cv.name} title={cv.title} />
+      <Header />
       <div className="painted-bg" id="bg" />
       <Intro summary={cv.summary} />
       <Experience experiences={cv.experiences} />
