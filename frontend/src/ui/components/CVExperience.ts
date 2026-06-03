@@ -104,10 +104,13 @@ function createCard(exp: Experience): HTMLElement {
   meta.className = 'exp-meta';
 
   if (exp.location) {
-    const loc = document.createElement('span');
-    loc.className = 'exp-location';
-    loc.textContent = exp.location;
-    meta.appendChild(loc);
+    const locLink = document.createElement('a');
+    locLink.className = 'exp-location';
+    locLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(exp.location)}`;
+    locLink.target = '_blank';
+    locLink.rel = 'noopener noreferrer';
+    locLink.textContent = exp.location;
+    meta.appendChild(locLink);
   }
 
   if (exp.workMode) {
