@@ -582,7 +582,7 @@ p {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 140px 5% 120px;
+  padding: 140px 5% 10px;
   overflow: hidden;
 }
 
@@ -712,18 +712,6 @@ section {
   background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
   border-radius: 4px;
   margin-top: 14px;
-}
-
-.section-title::before {
-  content: '';
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: var(--accent);
-  margin-right: 10px;
-  transform: rotate(45deg);
-  vertical-align: middle;
 }
 
 /* ─── Experience Cards ─── */
@@ -1216,7 +1204,7 @@ footer p {
   }
 
   #intro {
-    padding: 120px 6% 80px;
+    padding: 120px 6% 10px;
   }
 
   .exp-content {
