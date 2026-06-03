@@ -159,18 +159,55 @@ public sealed class WordCvSource : ICvSource
     private static CV ParseDocument(string filePath)
     {
         using var document = WordprocessingDocument.Open(filePath, false);
-        var body = document.MainDocumentPart?.Document?.Body;
+        var mainPart = document.MainDocumentPart;
+        var body = mainPart?.Document?.Body;
 
         if (body is null)
         {
             throw new CvSourceClientException();
         }
 
-        var paragraphs = body.Elements<Paragraph>().ToList();
-        var lines = paragraphs
-            .Select(GetFormattedText)
-            .Where(t => t.Length > 0)
-            .ToList();
+        var hyperlinkRels = mainPart!.HyperlinkRelationships
+            .ToDictionary(r => r.Id, r => r.Uri, StringComparer.Ordinal);
+
+        var lines = new List<string>();
+        Table? skillsTable = null;
+
+        foreach (var element in body.ChildElements)
+        {
+            if (element is Paragraph paragraph)
+            {
+                var text = GetFormattedText(paragraph, hyperlinkRels);
+                if (text.Length > 0)
+                {
+                    lines.Add(text);
+                }
+            }
+            else if (element is Table table)
+            {
+                var hasSection = lines.Any(l => SectionHeaders.Contains(l.ToLowerInvariant().Trim()));
+                if (!hasSection)
+                {
+                    foreach (var row in table.Elements<TableRow>())
+                    {
+                        foreach (var cell in row.Elements<TableCell>())
+                        {
+                            var cellText = string.Join(" ", cell.Elements<Paragraph>()
+                                .Select(p => GetFormattedText(p, hyperlinkRels))
+                                .Where(t => t.Length > 0));
+                            if (cellText.Length > 0)
+                            {
+                                lines.Add(cellText);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    skillsTable = table;
+                }
+            }
+        }
 
         if (lines.Count < 3)
         {
@@ -186,7 +223,9 @@ public sealed class WordCvSource : ICvSource
         var sectionMap = BuildSectionMap(lines);
         var summary = string.Join("\n", GetSectionLines(lines, sectionMap, "summary"));
         var experiences = ParseExperiences(lines, sectionMap);
-        var skillCategories = ParseSkills(lines, sectionMap);
+        var skillCategories = skillsTable is not null
+            ? ParseSkillsFromTable(skillsTable)
+            : ParseSkills(lines, sectionMap);
 
         return new CV
         {
@@ -200,7 +239,7 @@ public sealed class WordCvSource : ICvSource
         };
     }
 
-    private static string GetFormattedText(Paragraph paragraph)
+    private static string GetFormattedText(Paragraph paragraph, Dictionary<string, Uri>? hyperlinkRels = null)
     {
         var raw = paragraph.InnerText.Trim();
         if (raw.Length == 0)
@@ -214,18 +253,49 @@ public sealed class WordCvSource : ICvSource
             return raw;
         }
 
-        var parts = paragraph.Elements<Run>()
-            .Select(r =>
+        var parts = new List<string>();
+
+        foreach (var child in paragraph.ChildElements)
+        {
+            if (child is Run run)
             {
-                var text = r.InnerText;
+                var text = run.InnerText;
                 if (text.Length == 0)
                 {
-                    return text;
+                    continue;
                 }
 
-                var isBold = r.RunProperties?.Bold is not null;
-                return isBold ? $"**{text}**" : text;
-            });
+                var isBold = run.RunProperties?.Bold is not null;
+                parts.Add(isBold ? $"**{text}**" : text);
+            }
+            else if (child is Hyperlink hyperlink && hyperlinkRels is not null)
+            {
+                var relId = hyperlink.Id?.Value;
+                if (relId is null || !hyperlinkRels.TryGetValue(relId, out var url))
+                {
+                    continue;
+                }
+
+                var linkParts = hyperlink.Elements<Run>()
+                    .Select(r =>
+                    {
+                        var text = r.InnerText;
+                        if (text.Length == 0)
+                        {
+                            return text;
+                        }
+
+                        var isBold = r.RunProperties?.Bold is not null;
+                        return isBold ? $"**{text}**" : text;
+                    });
+
+                var linkText = string.Concat(linkParts).Trim();
+                if (linkText.Length > 0)
+                {
+                    parts.Add($"[{linkText}]({url})");
+                }
+            }
+        }
 
         return string.Concat(parts).Trim();
     }
@@ -301,9 +371,23 @@ public sealed class WordCvSource : ICvSource
             return text;
         }
 
-        if (!char.IsLetterOrDigit(text[0]) && text[0] != ' ')
+        int skip = 0;
+        if (char.IsHighSurrogate(text[0]) && text.Length > 1)
         {
-            var afterIcon = text[1..].TrimStart();
+            skip = 2;
+        }
+        else if (!char.IsLetterOrDigit(text[0]) && text[0] != ' ')
+        {
+            skip = 1;
+        }
+
+        if (skip > 0)
+        {
+            var afterIcon = text[skip..].TrimStart();
+            while (afterIcon.Length > 0 && afterIcon[0] == '\uFE0F')
+            {
+                afterIcon = afterIcon[1..].TrimStart();
+            }
             return afterIcon.Length > 0 ? afterIcon : text;
         }
 
@@ -605,6 +689,61 @@ public sealed class WordCvSource : ICvSource
         var cat = categories[catIdx];
         var updatedSubs = cat.Subs.Append((subName, new List<string>(items))).ToList();
         categories[catIdx] = (cat.Name, updatedSubs);
+    }
+
+    private static List<SkillCategory> ParseSkillsFromTable(Table table)
+    {
+        var categories = new List<(string Name, List<(string SubName, List<string> Items)> Subs)>();
+        string? currentCategory = null;
+
+        foreach (var row in table.Elements<TableRow>())
+        {
+            var cells = row.Elements<TableCell>().ToList();
+            if (cells.Count < 2)
+            {
+                continue;
+            }
+
+            var nameCell = cells[0].InnerText.Trim();
+            var itemsCell = cells[1].InnerText.Trim();
+
+            if (nameCell.Length == 0)
+            {
+                continue;
+            }
+
+            if (itemsCell.Length == 0)
+            {
+                currentCategory = nameCell;
+                if (!categories.Any(c => c.Name == currentCategory))
+                {
+                    categories.Add((currentCategory, []));
+                }
+            }
+            else if (currentCategory is not null)
+            {
+                var items = itemsCell
+                    .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+                    .ToList();
+                var catIdx = categories.FindIndex(c => c.Name == currentCategory);
+                if (catIdx >= 0)
+                {
+                    var cat = categories[catIdx];
+                    var updatedSubs = cat.Subs.Append((nameCell, items)).ToList();
+                    categories[catIdx] = (cat.Name, updatedSubs);
+                }
+            }
+        }
+
+        return categories.Select(c => new SkillCategory
+        {
+            Name = c.Name,
+            SubCategories = c.Subs.Select(s => new SkillSubCategory
+            {
+                Name = s.SubName,
+                Items = s.Items.AsReadOnly()
+            }).ToList().AsReadOnly()
+        }).ToList();
     }
 
 }
