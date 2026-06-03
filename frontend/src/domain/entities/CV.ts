@@ -26,18 +26,6 @@ export interface SkillCategory {
   subCategories: SkillSubCategory[];
 }
 
-export interface Education {
-  degree: string;
-  institution: string;
-  notes: string;
-}
-
-export interface Certification {
-  category: string;
-  title: string;
-  issuer: string;
-}
-
 export interface CV {
   name: string;
   lastName: string;
@@ -46,8 +34,6 @@ export interface CV {
   contactInfo?: ContactInfo | null;
   experiences: Experience[];
   skillCategories: SkillCategory[];
-  education: Education[];
-  certifications: Certification[];
   linkedInUrl?: string;
   gitHubUrl?: string;
 }

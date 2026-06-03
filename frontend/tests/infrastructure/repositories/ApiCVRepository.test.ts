@@ -8,8 +8,6 @@ const validCV = {
   summary: 'A summary',
   experiences: [],
   skillCategories: [],
-  education: [],
-  certifications: [],
 };
 
 describe('ApiCVRepository', () => {

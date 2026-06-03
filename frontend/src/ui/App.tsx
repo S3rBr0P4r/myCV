@@ -65,18 +65,13 @@ function buildSections(cv: { skillCategories: unknown[] }, t: (k: string) => str
 }
 
 export function App() {
-  const { cv, loading, error, refetch } = useCV();
-  const { t, locale } = useTranslation();
+  const { cv, loading, error } = useCV();
+  const { t } = useTranslation();
 
   useScrollReveal('.reveal', 'active', 0.15, [cv]);
   useParallax('bg', 0.15);
   useSectionTracker(cv);
   useLocaleDropdown();
-
-  useEffect(() => {
-    if (cv) refetch();
-  }, [locale]); // eslint-disable-line react-hooks/exhaustive-deps
-
 
   if (loading) {
     return (

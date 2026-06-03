@@ -23,7 +23,8 @@ public sealed class WordCvSource : ICvSource
 
     private static readonly HashSet<string> SectionHeaders =
     [
-        "summary", "experience", "technical skills"
+        "summary", "experience", "technical skills",
+        "education", "certifications & relevant training"
     ];
 
     public WordCvSource(

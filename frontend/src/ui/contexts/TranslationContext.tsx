@@ -10,7 +10,7 @@ const translations: Record<Locale, Record<string, string>> = { en, es };
 function loadStored(): Locale {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === 'en' || stored === 'es') return stored;
-  return navigator.language.startsWith('es') ? 'es' : 'en';
+  return 'en';
 }
 
 interface TranslationContextValue {

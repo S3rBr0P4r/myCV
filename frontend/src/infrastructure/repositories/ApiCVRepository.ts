@@ -10,7 +10,7 @@ const BASE_DELAY_MS = 1000;
 let failures = 0;
 let lastFailureTime = 0;
 let isOpen = false;
-let cachedCv: CV | null = null;
+const cachedCvs = new Map<string, CV>();
 
 function isCircuitOpen(): boolean {
   if (!isOpen) return false;
@@ -43,9 +43,7 @@ function isValidCV(data: unknown): data is CV {
     typeof cv.title === 'string' &&
     typeof cv.summary === 'string' &&
     Array.isArray(cv.experiences) &&
-    Array.isArray(cv.skillCategories) &&
-    Array.isArray(cv.education) &&
-    Array.isArray(cv.certifications)
+    Array.isArray(cv.skillCategories)
   );
 }
 
@@ -57,8 +55,6 @@ function buildFallback(): CV {
     summary: 'The backend is not responding, but here is your local data.',
     experiences: [],
     skillCategories: [],
-    education: [],
-    certifications: [],
   };
 }
 
@@ -70,8 +66,10 @@ export class ApiCVRepository implements ICVRepository {
   private readonly API_URL = import.meta.env.VITE_API_URL;
 
   async getCV(locale?: string): Promise<CV> {
-    if (cachedCv) {
-      return cachedCv;
+    const cacheKey = locale ?? 'default';
+    const cached = cachedCvs.get(cacheKey);
+    if (cached) {
+      return cached;
     }
 
     if (isCircuitOpen()) {
@@ -95,7 +93,7 @@ export class ApiCVRepository implements ICVRepository {
         if (!isValidCV(parsed)) {
           throw new Error('Invalid CV data received from API');
         }
-        cachedCv = parsed;
+        cachedCvs.set(cacheKey, parsed);
         onSuccess();
         return parsed;
       } catch (error) {
