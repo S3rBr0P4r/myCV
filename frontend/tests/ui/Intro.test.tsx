@@ -4,13 +4,14 @@ import { Intro } from '../../src/ui/components/Intro';
 import { TranslationProvider } from '../../src/ui/contexts/TranslationContext';
 
 describe('Intro', () => {
-  it('renders summary text', () => {
-    render(<TranslationProvider><Intro summary="Hello **world**" /></TranslationProvider>);
+  it('renders name and summary', () => {
+    render(<TranslationProvider><Intro name="John **Doe**" summary="Hello **world**" /></TranslationProvider>);
+    expect(screen.getByText(/John/)).toBeInTheDocument();
     expect(screen.getByText(/Hello/)).toBeInTheDocument();
   });
 
   it('renders bold text in strong element', () => {
-    render(<TranslationProvider><Intro summary="Hello **world**" /></TranslationProvider>);
+    render(<TranslationProvider><Intro name="John **Doe**" summary="Hello **world**" /></TranslationProvider>);
     const strong = screen.getByText('world');
     expect(strong.tagName).toBe('STRONG');
   });

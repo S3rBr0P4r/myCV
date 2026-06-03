@@ -616,7 +616,7 @@ p {
 }
 
 .main-title {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
   font-size: clamp(3rem, 7vw, 5.5rem);
   font-weight: 700;
   line-height: 1.05;

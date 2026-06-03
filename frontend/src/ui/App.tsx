@@ -81,6 +81,7 @@ export function App() {
     if (cv) refetch();
   }, [locale]); // eslint-disable-line react-hooks/exhaustive-deps
 
+
   if (loading) {
     return (
       <>
@@ -111,7 +112,7 @@ export function App() {
     <>
       <Header />
       <div className="painted-bg" id="bg" />
-      <Intro summary={cv.summary} />
+      <Intro name={cv.name} summary={cv.summary} />
       <Experience experiences={cv.experiences} />
       <Skills skillCategories={cv.skillCategories} />
       <Education education={cv.education} certifications={cv.certifications} />
