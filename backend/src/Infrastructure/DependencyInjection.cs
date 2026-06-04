@@ -10,8 +10,6 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var cvSourceOptions = configuration.GetSection(CvSourceOptions.SectionName).Get<CvSourceOptions>() ?? new();
-
         services.Configure<CvSourceOptions>(configuration.GetSection(CvSourceOptions.SectionName));
         services.Configure<DiscordOptions>(configuration.GetSection(DiscordOptions.SectionName));
         services.Configure<DeepLOptions>(configuration.GetSection(DeepLOptions.SectionName));
