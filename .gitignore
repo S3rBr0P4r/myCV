@@ -56,6 +56,7 @@ TestResult.xml
 # Office documents (CV data)
 *.doc
 *.docx
+~$*
 
 # Secrets
 *.local.json
