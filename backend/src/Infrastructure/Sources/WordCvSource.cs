@@ -691,6 +691,42 @@ public sealed class WordCvSource : ICvSource
         categories[catIdx] = (cat.Name, updatedSubs);
     }
 
+    private static List<string> SplitRespectingParentheses(string text)
+    {
+        var result = new List<string>();
+        int depth = 0;
+        int start = 0;
+        for (int i = 0; i < text.Length; i++)
+        {
+            if (text[i] == '(')
+            {
+                depth++;
+            }
+            else if (text[i] == ')')
+            {
+                depth--;
+            }
+            else if (text[i] == ',' && depth == 0)
+            {
+                var part = text[start..i].Trim();
+                if (part.Length > 0)
+                {
+                    result.Add(part);
+                }
+
+                start = i + 1;
+            }
+        }
+
+        var lastPart = text[start..].Trim();
+        if (lastPart.Length > 0)
+        {
+            result.Add(lastPart);
+        }
+
+        return result;
+    }
+
     private static List<SkillCategory> ParseSkillsFromTable(Table table)
     {
         var categories = new List<(string Name, List<(string SubName, List<string> Items)> Subs)>();
@@ -722,9 +758,7 @@ public sealed class WordCvSource : ICvSource
             }
             else if (currentCategory is not null)
             {
-                var items = itemsCell
-                    .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
-                    .ToList();
+                var items = SplitRespectingParentheses(itemsCell);
                 var catIdx = categories.FindIndex(c => c.Name == currentCategory);
                 if (catIdx >= 0)
                 {
