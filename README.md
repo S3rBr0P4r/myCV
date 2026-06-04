@@ -42,13 +42,12 @@ myCV/
 │   ├── application/       Use cases
 │   ├── infrastructure/    API repository, translations (en/es), circuit breaker + retry
 │   ├── ui/
-│   │   ├── components/    React components (Header, Intro, Experience, Skills, Education, Footer)
+│   │   ├── components/    React components (Header, Intro, Experience, Skills, Footer)
 │   │   ├── hooks/         Custom React hooks (useTheme, useTranslation, useCV, etc.)
 │   │   ├── contexts/      React contexts (Theme, Translation, CV)
 │   │   └── App.tsx        Root component
-│   │   ├── Company*       Pure functions (CompanyUrl, CompanyImage, CompanyLogoFile)
+│   │   ├── CompanyData.ts  Company lookup (URL, image, logo via CompanyMatch factories)
 │   │   └── format.ts      Text formatting helpers
-│   ├── core/              (legacy — replaced by React contexts)
 │   ├── public/            Static assets (favicon, backgrounds/, logos/)
 │   ├── main.tsx           Entry point with React root
 │   └── index.html         Shell with CSP meta tag
@@ -62,7 +61,7 @@ myCV/
 │   │   ├── Api/           CvController, GlobalExceptionHandler, API versioning,
 │   │   │                   CORS, Swagger, DI registration, launch settings
 │   │   ├── Program.cs     Middleware pipeline (rate limiter, CORS, security headers, HSTS, Serilog)
-│   │   └── Dockerfile     Multi-stage container build
+│   ├── Dockerfile         Multi-stage container build
 │   └── tests/
 │       ├── Domain.Tests/       Entity + exception unit tests
 │       ├── Application.Tests/  Use case + service + middleware unit tests
@@ -80,7 +79,7 @@ myCV/
 5. **Frontend**: React 18 app with contexts (Theme, Translation, CV) and custom hooks (`useTheme`, `useTranslation`, `useCV`). Components are functional-only, no classes. Fetches CV from the API on load, re-fetches on locale switch. UI chrome (nav, labels, footer) uses `t()` from a translation context. CV data fields are displayed directly from the API response — no client-side CV translation.
 6. **Resilience**: Frontend has a circuit breaker (3 failures → 30s open → half-open), retry with exponential backoff (2 attempts), and in-memory cache. Offline fallback shows a localized message. Tests via Vitest + @testing-library/react + happy-dom.
 7. **Security**: Rate limiter (100 req/min), file size cap (5 MB), UNC path rejection, HSTS, security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`), CSP in `index.html`.
-8. **Career cards**: Company logos via local WebP files (initials SVG fallback), Pexels background images, location/work mode badges, paginated (3 per page).
+8. **Career cards**: Company logos via local WebP files (initials SVG fallback), Pexels background images, location/work mode badges, paginated (2 per page).
 
 ## Key features
 

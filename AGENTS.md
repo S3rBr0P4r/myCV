@@ -89,13 +89,15 @@ tests/
 
 **Editorconfig conventions (C#):** 4-space indent, CRLF, file-scoped namespaces, `_camelCase` private fields, `I` prefix for interfaces, `Async` suffix for async methods.
 
-## CI (`.github/workflows/CI.yml`)
+## CI (`.github/workflows/ci.yml`) + CD (`.github/workflows/cd.yml`)
 
-Triggers on push to `main`. Two independent jobs:
+Triggers on push to `main`. Three jobs:
 - **FrontEnd:** `npm ci` → `npm run build` → `npm run test`
 - **Backend:** `dotnet restore` → `dotnet build` → `dotnet test`
+- **Docker:** Builds and pushes image to GHCR (only on `main`)
 
-**Security:** Deploy step removed — CI is build+test only. Actions pinned to major versions.
+**CD:** Manual workflow dispatch — SSH-keys into the server via `SSH_PRIVATE_KEY` secret, pulls the latest Docker image, and restarts the stack.
+**Security:** Actions pinned to major versions.
 
 ## Skills (`.opencode/skills/` + `.agents/skills/`)
 
@@ -114,7 +116,27 @@ Triggers on push to `main`. Two independent jobs:
 
 - **DRY — Don't Repeat Yourself.** Any duplicated logic across both frontend and backend must be extracted into a shared module or utility. This applies to pure functions, type definitions, configuration maps, string normalization, and any other repeated code. If a pattern appears more than once, it should be unified — provided the extraction makes semantic sense and doesn't introduce unnecessary indirection.
 
-## Gotchas
+## Cleanup Hygiene
+
+Before marking any feature/refactor PR as complete, verify these common dead-code sources are not reintroduced:
+
+### Frontend
+- **Dead CSS**: After removing a component/feature, grep `design-system.css` + `animations.css` for any class names or `@keyframes` that are no longer referenced in any `.tsx`/`.ts` file. Remove the orphaned rules.
+- **Unused translation keys**: After removing a UI element, check if its `t('key')` call is gone. If so, delete the key from both `en.ts` and `es.ts`. Keep `nav.dot*` keys (used by scroll-progress in `App.tsx`).
+- **Orphaned utility files**: When consolidating or refactoring (e.g. merging 3 company lookup files into 1), delete the old files and update all imports. Check AGENTS.md + README.md for stale file references.
+- **One-off scripts**: Image conversion, data migration, or generation scripts (`scripts/`) that were run once should be deleted after use. Remove their devDependencies too (e.g. `sharp`).
+- **Empty directories**: Delete empty dirs like `src/core/` left behind after refactors.
+
+### Backend
+- **Orphaned exception/class**: If a domain exception or class is no longer thrown, caught, or imported by any code, delete the file.
+- **Dead variables**: After extracting config setup, check for orphaned `var` assignments where the value is never read.
+- **Unused `using` directives**: After signature changes, remove any `using` that is no longer required for compilation.
+- **`GenerateDocumentationFile`**: Turn off if no XML doc comments exist and no consumer reads the generated `.xml` file. Remove `1591` from `NoWarn` alongside it.
+
+### Both
+- **Temp files**: Word lock files (`~$*`) and OS artifacts should be in `.gitignore`, never committed.
+- **Translation fallback strings**: If offline/fallback strings are hardcoded in the repository code, the corresponding translation keys should be deleted. Don't maintain both.
+- **README + AGENTS.md drift**: Every file rename, deletion, or structural change must update the architecture tree and file references in both docs.
 
 - **Clean Architecture discipline:** The Domain layer must have ZERO awareness of external concerns — no file paths, no env vars, no DB contexts, no HTTP. Infrastructure handles all external data access. Application orchestrates use cases. API presents results. Before placing any code or file, ask: *which layer does this belong to?*
 - Always run commands from the specific subdirectory (`frontend/` or `backend/`).
@@ -126,5 +148,5 @@ Triggers on push to `main`. Two independent jobs:
 - Integration.Tests uses `WebApplicationFactory<Program>` with a temp .docx fixture. Always reset static state (e.g. `DiscordNotifier.ResetCooldown()`) in test setup. `Program.cs` declares `public partial class Program { }` at file end so `WebApplicationFactory<Program>` can reference it — no `InternalsVisibleTo` needed.
 - Namespace root is `Backend.*` — no `MyCV` prefix anywhere in the backend.
 - **README must be kept in sync** — every change that adds, removes, or modifies a feature, directory, dependency, configuration key, or command must also update `README.md` (stack table, architecture tree, config table, quick start, how it works). This is enforced in code review.
-- **DOCX file is immutable** — the `cv.docx` file must never be modified. All derived data (company URLs, logos, etc.) must be provided via hardcoded frontend maps (`CompanyUrl.ts`, `CompanyImage.ts`, `CompanyLogoFile.ts`). The DOCX parser must remain backward-compatible with the old 2-line format (`Company | Location` → `Role | Period`). Company logo/URL/image matching uses accent-normalized prefix-based fuzzy matching.
+- **DOCX file is immutable** — the `cv.docx` file must never be modified. All derived data (company URLs, logos, etc.) must be provided via hardcoded frontend maps (`CompanyData.ts` with `CompanyMatch.ts` factories). The DOCX parser must remain backward-compatible with the old 2-line format (`Company | Location` → `Role | Period`). Company logo/URL/image matching uses accent-normalized prefix-based fuzzy matching.
 - Frontend Vitest setup: `tests/test-setup.ts` imports `@testing-library/jest-dom/vitest`. Vitest config in `vite.config.ts` `test` block with `happy-dom` environment, `VITE_API_URL` env var, and `globals: true`.
