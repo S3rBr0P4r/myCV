@@ -2,13 +2,10 @@ using Backend.Domain.Exceptions;
 using Backend.Infrastructure.Options;
 using Backend.Infrastructure.Services;
 using Backend.Infrastructure.Sources;
-using DocumentFormat.OpenXml;
-using Moq;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Wordprocessing;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Moq;
 using Xunit;
 
 namespace Backend.Tests.Infrastructure.Sources;
@@ -34,7 +31,7 @@ public sealed class WordCvSourceTests : IDisposable
     [Fact]
     public async Task GetCvAsync_ValidDocument_ShouldReturnCVWithAllProperties()
     {
-        var filePath = CreateValidDocument();
+        var filePath = TestDocumentBuilder.CreateValidDocument(_tempDir);
         var sut = CreateSut(filePath);
 
         var cv = await sut.GetCvAsync();
@@ -69,7 +66,7 @@ public sealed class WordCvSourceTests : IDisposable
     [Fact]
     public async Task GetCvAsync_MultiLineSummary_ShouldCollectAllLinesUntilNextSection()
     {
-        var filePath = CreateDocumentWithMultiLineSummary();
+        var filePath = TestDocumentBuilder.CreateDocumentWithMultiLineSummary(_tempDir);
         var sut = CreateSut(filePath);
 
         var cv = await sut.GetCvAsync();
@@ -80,7 +77,7 @@ public sealed class WordCvSourceTests : IDisposable
     [Fact]
     public async Task GetCvAsync_NoExperiences_ShouldReturnEmptyExperiences()
     {
-        var filePath = CreateDocumentWithNoExperiences();
+        var filePath = TestDocumentBuilder.CreateDocumentWithNoExperiences(_tempDir);
         var sut = CreateSut(filePath);
 
         var cv = await sut.GetCvAsync();
@@ -128,7 +125,7 @@ public sealed class WordCvSourceTests : IDisposable
     [Fact]
     public async Task GetCvAsync_CalledTwice_ShouldReturnCachedResult()
     {
-        var filePath = CreateValidDocument();
+        var filePath = TestDocumentBuilder.CreateValidDocument(_tempDir);
         var sut = CreateSut(filePath);
 
         var first = await sut.GetCvAsync();
@@ -140,7 +137,7 @@ public sealed class WordCvSourceTests : IDisposable
     [Fact]
     public async Task GetCvAsync_HierarchicalSkills_ShouldPreserveStructure()
     {
-        var filePath = CreateDocumentWithHierarchicalSkills();
+        var filePath = TestDocumentBuilder.CreateDocumentWithHierarchicalSkills(_tempDir);
         var sut = CreateSut(filePath);
 
         var cv = await sut.GetCvAsync();
@@ -161,7 +158,7 @@ public sealed class WordCvSourceTests : IDisposable
     [Fact]
     public async Task GetCvAsync_LegacyFormat_ShouldParseCorrectly()
     {
-        var filePath = CreateLegacyFormatDocument();
+        var filePath = TestDocumentBuilder.CreateLegacyFormatDocument(_tempDir);
         var sut = CreateSut(filePath);
 
         var cv = await sut.GetCvAsync();
@@ -183,40 +180,6 @@ public sealed class WordCvSourceTests : IDisposable
         cv.Experiences[1].Description.Should().Be("Creating products.\nTech Stack: TypeScript, React");
     }
 
-    private string CreateLegacyFormatDocument()
-    {
-        var path = Path.Combine(_tempDir, "legacy.docx");
-
-        using var document = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
-        var mainPart = document.AddMainDocumentPart();
-        mainPart.Document = new Document();
-        var body = mainPart.Document.AppendChild(new Body());
-
-        AddParagraph(body, "John Doe");
-        AddParagraph(body, "Creative Developer");
-        AddParagraph(body, "s3rbr0p4r@example.com");
-        AddParagraph(body, "+34 123 456 789");
-        AddParagraph(body, "Remote");
-        AddParagraph(body, "Willingness to travel");
-        AddParagraph(body, "SUMMARY");
-        AddParagraph(body, "Building digital experiences.");
-        AddParagraph(body, "Passionate about code.");
-        AddParagraph(body, "EXPERIENCE");
-        AddParagraph(body, "Acme Corp | Barcelona (Remote)");
-        AddParagraph(body, "Senior Developer | 2024 - PRESENT");
-        AddParagraph(body, "Building things.");
-        AddParagraph(body, "Tech Stack: C#, .NET");
-        AddParagraph(body, "StartupX | Madrid (Onsite)");
-        AddParagraph(body, "Full Stack Engineer | 2021 - 2023");
-        AddParagraph(body, "Creating products.");
-        AddParagraph(body, "Tech Stack: TypeScript, React");
-        AddParagraph(body, "TECHNICAL SKILLS");
-        AddParagraph(body, "Languages");
-        AddParagraph(body, "C#, .NET, TypeScript");
-
-        return path;
-    }
-
     private static WordCvSource CreateSut(string filePath)
     {
         var options = Options.Create(new CvSourceOptions { FilePath = filePath });
@@ -228,112 +191,5 @@ public sealed class WordCvSourceTests : IDisposable
     {
         var options = Options.Create(new DiscordOptions { WebhookUrl = string.Empty });
         return new DiscordNotifier(new HttpClient(), options, Mock.Of<ILogger<DiscordNotifier>>());
-    }
-
-    private string CreateValidDocument()
-    {
-        var path = Path.Combine(_tempDir, "valid.docx");
-
-        using var document = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
-        var mainPart = document.AddMainDocumentPart();
-        mainPart.Document = new Document();
-        var body = mainPart.Document.AppendChild(new Body());
-
-        AddParagraph(body, "John Doe");
-        AddParagraph(body, "Creative Developer");
-        AddParagraph(body, "s3rbr0p4r@example.com");
-        AddParagraph(body, "+34 123 456 789");
-        AddParagraph(body, "Remote");
-        AddParagraph(body, "Willingness to travel");
-        AddParagraph(body, "SUMMARY");
-        AddParagraph(body, "Building digital experiences.");
-        AddParagraph(body, "Passionate about code.");
-        AddParagraph(body, "EXPERIENCE");
-        AddParagraph(body, "Acme Corp | https://acme.com");
-        AddParagraph(body, "Barcelona | Remote");
-        AddParagraph(body, "Senior Developer | 2024 - PRESENT");
-        AddParagraph(body, "Building things.");
-        AddParagraph(body, "Tech Stack: C#, .NET");
-        AddParagraph(body, "StartupX | https://startupx.io");
-        AddParagraph(body, "Madrid | Remote");
-        AddParagraph(body, "Full Stack Engineer | 2021 - 2023");
-        AddParagraph(body, "Creating products.");
-        AddParagraph(body, "Tech Stack: TypeScript, React");
-        AddParagraph(body, "TECHNICAL SKILLS");
-        AddParagraph(body, "Languages");
-        AddParagraph(body, "C#, .NET, TypeScript");
-
-        return path;
-    }
-
-    private string CreateDocumentWithMultiLineSummary()
-    {
-        var path = Path.Combine(_tempDir, "multiline_summary.docx");
-
-        using var document = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
-        var mainPart = document.AddMainDocumentPart();
-        mainPart.Document = new Document();
-        var body = mainPart.Document.AppendChild(new Body());
-
-        AddParagraph(body, "Alice Wonder");
-        AddParagraph(body, "Developer");
-        AddParagraph(body, "SUMMARY");
-        AddParagraph(body, "First line of summary.");
-        AddParagraph(body, "Second line of summary.");
-        AddParagraph(body, "Third line.");
-        AddParagraph(body, "TECHNICAL SKILLS");
-
-        return path;
-    }
-
-    private string CreateDocumentWithNoExperiences()
-    {
-        var path = Path.Combine(_tempDir, "no_experiences.docx");
-
-        using var document = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
-        var mainPart = document.AddMainDocumentPart();
-        mainPart.Document = new Document();
-        var body = mainPart.Document.AppendChild(new Body());
-
-        AddParagraph(body, "Jane Smith");
-        AddParagraph(body, "Architect");
-        AddParagraph(body, "SUMMARY");
-        AddParagraph(body, "Just a summary.");
-        AddParagraph(body, "EXPERIENCE");
-        AddParagraph(body, "TECHNICAL SKILLS");
-
-        return path;
-    }
-
-    private string CreateDocumentWithHierarchicalSkills()
-    {
-        var path = Path.Combine(_tempDir, "hierarchical_skills.docx");
-
-        using var document = WordprocessingDocument.Create(path, WordprocessingDocumentType.Document);
-        var mainPart = document.AddMainDocumentPart();
-        mainPart.Document = new Document();
-        var body = mainPart.Document.AppendChild(new Body());
-
-        AddParagraph(body, "Test User");
-        AddParagraph(body, "Developer");
-        AddParagraph(body, "SUMMARY");
-        AddParagraph(body, "Summary text.");
-        AddParagraph(body, "EXPERIENCE");
-        AddParagraph(body, "TECHNICAL SKILLS");
-        AddParagraph(body, "Languages");
-        AddParagraph(body, "Advanced");
-        AddParagraph(body, "C#, .NET");
-        AddParagraph(body, "Working Knowledge");
-        AddParagraph(body, "TypeScript, JavaScript");
-        AddParagraph(body, "Cloud");
-        AddParagraph(body, "AWS");
-        AddParagraph(body, "Lambda, S3");
-
-        return path;
-    }
-
-    private static void AddParagraph(Body body, string text)
-    {
-        body.AppendChild(new Paragraph(new Run(new Text(text))));
     }
 }
