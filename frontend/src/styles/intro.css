@@ -1,0 +1,41 @@
+#intro {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 120px 5% 10px;
+}
+
+.intro-content {
+  text-align: left;
+  position: relative;
+  z-index: 2;
+}
+
+.main-title {
+  margin-bottom: 12px;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.intro-description {
+  max-width: none;
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.85;
+  color: var(--text-secondary);
+}
+
+.intro-description strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  #intro {
+    padding: 100px 6% 10px;
+  }
+}
