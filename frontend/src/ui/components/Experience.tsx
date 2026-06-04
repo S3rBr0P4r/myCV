@@ -6,7 +6,7 @@ import { loadCompanyImage } from '../CompanyImage';
 import { getCompanyUrl } from '../CompanyUrl';
 import { loadCompanyLogo } from '../CompanyLogoFile';
 
-const PER_PAGE = 3;
+const PER_PAGE = 2;
 
 function companyFallbackBg(company: string): string {
   let hash = 0;

@@ -15,18 +15,19 @@ export const es: Record<string, string> = {
   'experience.title': 'Trayectoria',
 
   /* Skills section */
-  'skills.title': 'Maestría',
+  'skills.title': 'Capacidades',
 
   /* Contact section */
   'contact.heading': 'Hagamos que las cosas sucedan',
 
   /* Footer */
-  'footer.copyright': '\u00A9 {year} {name}.',
+  'footer.copyright': '\u00A9 {year} {name}. Todos los derechos reservados.',
+  'footer.builtWith': '',
 
   /* Scroll progress */
   'nav.dotIntro': 'Inicio',
   'nav.dotExperience': 'Trayectoria',
-  'nav.dotSkills': 'Maestría',
+  'nav.dotSkills': 'Capacidades',
   'nav.dotContact': 'Contacto',
   'nav.dotAria': 'Navegaci\u00F3n r\u00E1pida',
 
