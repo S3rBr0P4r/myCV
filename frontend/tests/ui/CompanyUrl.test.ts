@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getCompanyUrl } from '../../src/ui/CompanyUrl';
+import { getCompanyUrl } from '../../src/ui/CompanyData';
 
 describe('getCompanyUrl', () => {
   it('returns url for exact match', () => {

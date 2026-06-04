@@ -2,9 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Experience } from '../../domain/entities/CV';
 import { useTranslation } from '../hooks/useTranslation';
 import { renderFormattedText } from '../format';
-import { loadCompanyImage } from '../CompanyImage';
-import { getCompanyUrl } from '../CompanyUrl';
-import { loadCompanyLogo } from '../CompanyLogoFile';
+import { getCompanyUrl, loadCompanyImage, loadCompanyLogo } from '../CompanyData';
 
 const PER_PAGE = 2;
 
