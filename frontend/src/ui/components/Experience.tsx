@@ -76,6 +76,8 @@ function ExpCard({ exp }: { exp: Experience }) {
             className="exp-company-logo"
             alt={`${exp.company} logo`}
             src={initialsLogo(exp.company)}
+            loading="lazy"
+            decoding="async"
           />
           <div className="exp-company-info">
             {effectiveUrl ? (

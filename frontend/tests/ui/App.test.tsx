@@ -75,13 +75,13 @@ describe('App', () => {
     expect(screen.getByText('Failed to load CV')).toBeInTheDocument();
   });
 
-  it('renders main sections when CV loaded', () => {
+  it('renders main sections when CV loaded', async () => {
     const Wrapper = createWrapper(mockCV, false, null);
     render(<App />, { wrapper: Wrapper });
 
     expect(screen.getByText('Career')).toBeInTheDocument();
     expect(screen.getByText('Capabilities')).toBeInTheDocument();
-    expect(screen.getByText("Let's make things happen")).toBeInTheDocument();
+    expect(await screen.findByText("Let's make things happen")).toBeInTheDocument();
   });
 
   it('renders scroll navigation dots', () => {
