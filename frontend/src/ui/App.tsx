@@ -9,6 +9,7 @@ import { Intro } from './components/Intro';
 import { Experience } from './components/Experience';
 import { Skills } from './components/Skills';
 import { Footer } from './components/Footer';
+import { AnimatedBackground } from './components/AnimatedBackground';
 
 function useSectionTracker(cv: CV | null) {
   useEffect(() => {
@@ -70,6 +71,7 @@ export function App() {
 
   useScrollReveal('.reveal', 'active', 0.15, [cv]);
   useParallax('bg', 0.15);
+  useParallax('code-dust', 0.05);
   useSectionTracker(cv);
   useLocaleDropdown();
 
@@ -77,6 +79,7 @@ export function App() {
     return (
       <>
         <Header />
+        <AnimatedBackground />
         <div className="painted-bg" id="bg" />
         <section className="intro-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ opacity: 0.5 }}>Loading CV...</p>
@@ -89,6 +92,7 @@ export function App() {
     return (
       <>
         <Header />
+        <AnimatedBackground />
         <div className="painted-bg" id="bg" />
         <section className="intro-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <p style={{ color: 'var(--accent)' }}>{error || 'Failed to load CV'}</p>
@@ -102,6 +106,7 @@ export function App() {
   return (
     <>
       <Header />
+      <AnimatedBackground />
       <div className="painted-bg" id="bg" />
       <Intro name={cv.name} summary={cv.summary} />
       <Experience experiences={cv.experiences} />
