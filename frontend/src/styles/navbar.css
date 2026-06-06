@@ -157,7 +157,7 @@
   align-items: center;
   gap: 6px;
   height: 48px;
-  padding: 0 14px;
+  padding: 0 10px;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -175,9 +175,18 @@
   outline-offset: 2px;
 }
 
-.locale-trigger svg {
+.locale-flag {
   display: block;
   border-radius: 2px;
+  object-fit: cover;
+}
+
+.locale-label {
+  font-family: 'Figtree', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
 }
 
 .locale-caret {
@@ -196,8 +205,9 @@
   right: 0;
   list-style: none;
   margin: 0;
-  padding: 6px;
-  min-width: 130px;
+  padding: 4px;
+  min-width: 0;
+  width: max-content;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -218,9 +228,9 @@
 .locale-option {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 8px 10px;
+  padding: 6px 8px;
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
@@ -241,8 +251,6 @@
   outline-offset: 2px;
 }
 
-.locale-option svg {
-  display: block;
-  border-radius: 2px;
+.locale-option .locale-flag {
   flex-shrink: 0;
 }
