@@ -137,13 +137,14 @@ Infrastructure/Sources/
 
 ## CI (`.github/workflows/ci.yml`) + CD (`.github/workflows/cd.yml`)
 
-Triggers on push to `main`. Three jobs:
+Triggers on push to `main` (or manual `workflow_dispatch`). Concurrency group `ci-${{ github.ref }}` with `cancel-in-progress: true` prevents Docker tag races. Three jobs (frontend 10m, backend 10m, docker 15m timeouts):
 - **FrontEnd:** `npm ci` → `npm run build` → `npm run test`
 - **Backend:** `dotnet restore` → `dotnet build` → `dotnet test`
 - **Docker:** Builds and pushes image to GHCR (only on `main`)
 
-**CD:** Manual workflow dispatch — SSH-keys into the server via `SSH_PRIVATE_KEY` secret, pulls the latest Docker image, and restarts the stack.
+**CD:** Manual workflow dispatch (10m timeout) — `docker/login-action` → SSH into server via `SSH_PRIVATE_KEY` + `SSH_KNOWN_HOSTS` → pull and restart → health check with retry.
 **Security:** All GitHub Actions pinned to commit SHA digests (with `# vX.Y.Z` version comment).
+**Public repo hygiene:** Any infrastructure detail (hostnames, URLs, IPs) that appears in workflow logs must use `${{ secrets.* }}` (masked) instead of `${{ vars.* }}` (visible). The CD workflow's `API_HOST` is a secret for this reason. CI vars like `VITE_API_URL` are intentionally public (inlined into the website's JS bundle).
 
 ## Skills (`.opencode/skills/` + `.agents/skills/`)
 
