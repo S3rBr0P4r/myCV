@@ -242,3 +242,4 @@ Every file change must uphold these invariants:
 - Complex boolean conditions extracted into named private methods.
 - No inline documentation comments (`//`, `///`) on implementation logic.
 - Parsing classes describe the domain structure, not the file format (name by intent).
+- **Middleware and inline logic extracted into dedicated classes** — inline `app.Use(...)` lambdas in `Program.cs` that contain standalone logic (security headers, health checks, etc.) must be extracted into `IMiddleware` implementations registered via DI, following the same pattern as `GlobalExceptionHandler` and `SecurityHeadersMiddleware`. This keeps `Program.cs` focused on the pipeline composition, not the implementation details.

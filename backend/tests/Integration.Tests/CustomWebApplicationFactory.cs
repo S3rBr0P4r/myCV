@@ -60,6 +60,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["CvSource:FilePath"] = _docxFilePath,
+                ["CvSource:AllowedDirectory"] = "",
                 ["DeepL:AuthKey"] = "",
                 ["Discord:WebhookUrl"] = "",
                 ["Cors:AllowedOrigins:0"] = "http://localhost:5173",

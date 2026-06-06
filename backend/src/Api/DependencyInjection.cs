@@ -10,6 +10,7 @@ public static class DependencyInjection
     {
         services.AddControllers();
         services.AddScoped<GlobalExceptionHandler>();
+        services.AddScoped<SecurityHeadersMiddleware>();
 
         services.AddApiVersioning(options =>
         {

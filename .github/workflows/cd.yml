@@ -16,12 +16,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Pull and restart on server
+      - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+      - name: Pull and restart on server
+        run: |
           ssh -i ~/.ssh/id_ed25519 \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
             "cd /opt/mycv && docker compose pull && docker compose up -d"

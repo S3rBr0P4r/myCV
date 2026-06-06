@@ -46,6 +46,8 @@ try
 
     var app = builder.Build();
 
+    app.UseMiddleware<GlobalExceptionHandler>();
+
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
@@ -94,21 +96,13 @@ try
                     ? LogEventLevel.Warning
                     : LogEventLevel.Information;
     });
-    app.UseMiddleware<GlobalExceptionHandler>();
 
     if (!app.Environment.IsDevelopment())
     {
         app.UseHsts();
     }
 
-    app.Use(async (context, next) =>
-    {
-        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
-        context.Response.Headers["X-Frame-Options"] = "DENY";
-        context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-        context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), interest-cohort=()";
-        await next();
-    });
+    app.UseMiddleware<SecurityHeadersMiddleware>();
 
     app.UseRateLimiter();
     app.UseCors("AllowFrontend");
