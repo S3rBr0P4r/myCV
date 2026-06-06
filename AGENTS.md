@@ -20,7 +20,11 @@ backend/     .NET 10 Clean Architecture
 | `npm run test:watch` | `vitest` (watch mode) |
 | `npm run test:coverage` | `vitest run --coverage` |
 
-**Vulnerability fix:** Vite pinned to `^6.0.0` (upgraded from `^5.0.0`) to resolve esbuild moderate-severity advisory (GHSA-67mh-4wv8-2f99). Run `npm audit fix` to stay current.
+**Vulnerability fixes:**
+- Vite upgraded `^5.0.0` → `^6.0.0` → `^8.0.0` (Rolldown-powered) to resolve esbuild advisory (GHSA-67mh-4wv8-2f99) and reduce transitive deps from 151→111.
+- `@vitejs/plugin-react` upgraded `^4.7.0` → `^5.0.0` → `^6.0.2` (uses `@rolldown/plugin-babel` instead of `@babel/core` directly; removes `gensync@1.0.0-beta.2` transitive).
+- `vitest` upgraded from `^2.1.9` → `^4.1.8` and `happy-dom` from `^15.11.7` → `^20.10.1` to resolve 6 CVEs (2 critical, 4 moderate).
+- Run `npm audit fix` to stay current.
 
 No linter/formatter beyond `.editorconfig` (2-space indent, single quotes for TS).
 
@@ -127,7 +131,7 @@ Infrastructure/Sources/
 - **Single exit per method**: Validate early with guard clauses (`if (condition) return;`), then proceed. This avoids deep nesting and keeps the main path linear.
 - **Extract condition logic**: Complex boolean expressions should be extracted into well-named private methods (e.g. `IsKnownWorkMode(value)`, `HasSectionHeader(lines)`).
 - **Methods do one thing**: If a method contains a loop that does two different things, split it. Each loop, switch, or condition block should have a single responsibility.
-- **Name by intent, not by format**: Parsing classes must not use `Word` or `Docx` prefixes — they describe the domain structure, not the file format. If the source format changes (e.g. DOCX → PDF), create a new reader class rather than renaming existing ones.
+- **Name by intent, not by format**: Parsing helpers must not use `Word` or `Docx` prefixes — they describe the domain structure, not the file format. The top-level orchestrator (e.g. `WordCvSource`) is the single exception; if the source format changes, create a new orchestrator and reader class rather than renaming existing ones.
 - **Self-documenting code over comments**: No inline documentation comments (`//`, `///`) on implementation logic. Use expressive method/variable names instead. Reserve XML doc comments for public API surfaces.
 - **Small private methods**: Keep each private method under ~30 lines. Validate-and-throw guard blocks should be extracted into named validation methods. Parsing state-machine steps should be extracted into focused helpers.
 
@@ -139,7 +143,7 @@ Triggers on push to `main`. Three jobs:
 - **Docker:** Builds and pushes image to GHCR (only on `main`)
 
 **CD:** Manual workflow dispatch — SSH-keys into the server via `SSH_PRIVATE_KEY` secret, pulls the latest Docker image, and restarts the stack.
-**Security:** Actions pinned to major versions.
+**Security:** All GitHub Actions pinned to commit SHA digests (with `# vX.Y.Z` version comment).
 
 ## Skills (`.opencode/skills/` + `.agents/skills/`)
 
@@ -194,3 +198,47 @@ Before marking any feature/refactor PR as complete, verify these common dead-cod
 - **README must be kept in sync** — every change that adds, removes, or modifies a feature, directory, dependency, configuration key, or command must also update `README.md` (stack table, architecture tree, config table, quick start, how it works). This is enforced in code review.
 - **DOCX file is immutable** — the `cv.docx` file must never be modified. All derived data (company URLs, logos, etc.) must be provided via hardcoded frontend maps (`CompanyData.ts` with `CompanyMatch.ts` factories). The DOCX parser must remain backward-compatible with the old 2-line format (`Company | Location` → `Role | Period`). Company logo/URL/image matching uses accent-normalized prefix-based fuzzy matching.
 - Frontend Vitest setup: `tests/test-setup.ts` imports `@testing-library/jest-dom/vitest`. Vitest config in `vite.config.ts` `test` block with `happy-dom` environment, `VITE_API_URL` env var, and `globals: true`.
+
+## Security & Quality Baselines
+
+Every file change must uphold these invariants:
+
+### Supply Chain
+- All GitHub Actions must be pinned to **commit SHA digests**, not major version tags. Add a `# vX.Y.Z` comment after the SHA.
+- `npm audit` must report **0 vulnerabilities** before any merge.
+- All packages (npm + NuGet) must be **stable releases** — no `-beta`, `-alpha`, `-rc`, `-preview`, `-next`, `-dev`, or `-canary` prerelease suffixes. Every direct dependency version must be a stable SemVer release with no tag suffix. Transitive dependencies with prerelease tags should be flagged and evaluated for replacement if viable.
+- All NuGet packages must use central version management (`Directory.Packages.props`), with stable versions only (no preview versions).
+
+### Docker
+- `Dockerfile` must set `ASPNETCORE_URLS` explicitly to match `EXPOSE`.
+- `Dockerfile` must have a `HEALTHCHECK` instruction.
+- `Dockerfile` should use targeted `COPY` paths (not `COPY . .`).
+- Run as non-root via `USER $APP_UID`.
+
+### Frontend Build
+- `vite.config.ts` must have `build.emptyOutDir: true` to prevent stale asset accumulation.
+- `.env.production` must exist and provide production-safe CSP values (`'unsafe-inline'` only in dev).
+- `dist/` must not contain orphaned or stale assets from prior builds.
+
+### CSP
+- Production CSP must NOT include `'unsafe-inline'` for `script-src` (Vite extracts all JS to separate files).
+- Frontend CSP: both `<meta>` tag (in `index.html`) and backend `Content-Security-Policy` header must be kept in sync.
+- Backend responses should include `Content-Security-Policy` header as defense-in-depth.
+
+### Testing Coverage
+- Every **public class** in the backend must have corresponding test coverage (unit or integration).
+- Every **React component** should have at least a smoke test (renders without error).
+- Every **custom hook** should have behavior tests via `renderHook`.
+- Integration tests must reset static state (e.g. `DiscordNotifier.ResetCooldown()`).
+
+### Accessibility
+- Interactive elements must have `aria-label` or visible text labels.
+- Dropdown menus need `aria-expanded`, `aria-haspopup`, `role="menu"`, and `role="menuitem"`.
+- Skip-to-content link recommended at the top of `App.tsx`.
+
+### Clean Code (enforced)
+- Methods do one thing (≤ ~30 lines per private method).
+- Single exit per method — guard clauses first, main path linear.
+- Complex boolean conditions extracted into named private methods.
+- No inline documentation comments (`//`, `///`) on implementation logic.
+- Parsing classes describe the domain structure, not the file format (name by intent).
