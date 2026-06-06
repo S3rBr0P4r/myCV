@@ -46,7 +46,7 @@ function ExpCard({ exp }: { exp: Experience }) {
         bg.style.backgroundSize = 'cover';
         bg.style.backgroundPosition = 'center';
       }
-    });
+    }).catch(() => {});
   }, [exp.company]);
 
   useEffect(() => {
@@ -60,8 +60,9 @@ function ExpCard({ exp }: { exp: Experience }) {
           img.src = url;
         }
       };
+      preload.onerror = () => {};
       preload.src = url;
-    });
+    }).catch(() => {});
   }, [exp.company]);
 
   const bullets = exp.description.split('\n').filter(b => b.trim().length > 0);
@@ -127,6 +128,10 @@ interface ExperienceProps {
 export function Experience({ experiences }: ExperienceProps) {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    setPage(1);
+  }, [experiences.length]);
   const totalPages = Math.ceil(experiences.length / PER_PAGE);
   const start = (page - 1) * PER_PAGE;
   const pageItems = experiences.slice(start, start + PER_PAGE);

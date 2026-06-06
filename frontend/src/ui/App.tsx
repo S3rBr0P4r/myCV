@@ -63,7 +63,7 @@ function buildSections(cv: { skillCategories: unknown[] }, t: (k: string) => str
     { id: 'intro', label: t('nav.dotIntro') },
     { id: 'experience', label: t('nav.dotExperience') },
   ];
-  if (cv.skillCategories.length > 0) {
+  if (Array.isArray(cv.skillCategories) && cv.skillCategories.length > 0) {
     sections.push({ id: 'skills', label: t('nav.dotSkills') });
   }
   sections.push({ id: 'contact', label: t('nav.dotContact') });
@@ -71,7 +71,7 @@ function buildSections(cv: { skillCategories: unknown[] }, t: (k: string) => str
 }
 
 export function App() {
-  const { cv, loading, error } = useCV();
+  const { cv, loading, error, refetch } = useCV();
   const { t } = useTranslation();
 
   useScrollReveal('.reveal', 'active', 0.15, [cv]);
@@ -99,8 +99,22 @@ export function App() {
         <Header />
         <AnimatedBackground />
         <div className="painted-bg" id="bg" />
-        <section className="intro-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ color: 'var(--accent)' }}>{error || 'Failed to load CV'}</p>
+        <section className="intro-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+          <p style={{ color: 'var(--accent)', marginBottom: '1rem' }}>{error || 'Failed to load CV'}</p>
+          <button
+            onClick={refetch}
+            className="retry-btn"
+            style={{
+              padding: '0.5rem 1.5rem',
+              border: '1px solid var(--accent)',
+              background: 'transparent',
+              color: 'var(--accent)',
+              cursor: 'pointer',
+              borderRadius: '4px',
+            }}
+          >
+            Retry
+          </button>
         </section>
       </>
     );

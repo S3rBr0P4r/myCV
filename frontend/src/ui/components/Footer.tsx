@@ -25,7 +25,7 @@ export function Footer({ name, contactInfo }: FooterProps) {
         </div>
       </section>
       <footer>
-        <p>{renderFormattedText(t('footer.copyright', { year: 2026, name }))}</p>
+        <p>{renderFormattedText(t('footer.copyright', { year: new Date().getFullYear(), name }))}</p>
         <p className="footer-attribution">
           Crafted with <span className="heart">{'\u2764'}</span> in React &bull; TypeScript &bull; .NET &bull;{' '}
           <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">View source on GitHub</a>

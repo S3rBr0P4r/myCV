@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { SkillCategory } from '../../domain/entities/CV';
 import { useTranslation } from '../hooks/useTranslation';
 import { renderFormattedText } from '../format';
@@ -32,6 +32,10 @@ interface SkillsProps {
 export function Skills({ skillCategories }: SkillsProps) {
   const { t } = useTranslation();
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    setPage(1);
+  }, [skillCategories.length]);
   const totalPages = Math.ceil(skillCategories.length / PER_PAGE);
   const start = (page - 1) * PER_PAGE;
   const pageItems = skillCategories.slice(start, start + PER_PAGE);

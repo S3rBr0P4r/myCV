@@ -7,6 +7,7 @@ import { TranslationProvider } from './ui/contexts/TranslationContext';
 import { CVProvider } from './ui/contexts/CVContext';
 import { useTranslation } from './ui/hooks/useTranslation';
 import { App } from './ui/App';
+import { ErrorBoundary } from './ui/components/ErrorBoundary';
 
 const repository = new ApiCVRepository();
 const getCVUseCase = new GetCVUseCase(repository);
@@ -24,7 +25,9 @@ ReactDOM.createRoot(document.getElementById('app')!).render(
   <React.StrictMode>
     <ThemeProvider>
       <TranslationProvider>
-        <Root />
+        <ErrorBoundary>
+          <Root />
+        </ErrorBoundary>
       </TranslationProvider>
     </ThemeProvider>
   </React.StrictMode>,
