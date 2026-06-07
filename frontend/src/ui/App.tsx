@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useCV } from './hooks/useCV';
 import { useTranslation } from './hooks/useTranslation';
 import { useScrollReveal } from './hooks/useScrollReveal';
@@ -8,13 +8,8 @@ import { Header } from './components/Header';
 import { Intro } from './components/Intro';
 import { Experience } from './components/Experience';
 import { AnimatedBackground } from './components/AnimatedBackground';
-
-const Skills = lazy(() =>
-  import('./components/Skills').then(m => ({ default: m.Skills }))
-);
-const Footer = lazy(() =>
-  import('./components/Footer').then(m => ({ default: m.Footer }))
-);
+import { Skills } from './components/Skills';
+import { Footer } from './components/Footer';
 
 function useSectionTracker(cv: CV | null) {
   useEffect(() => {
@@ -129,12 +124,8 @@ export function App() {
       <div className="painted-bg" id="bg" />
       <Intro name={cv.name} summary={cv.summary} />
       <Experience experiences={cv.experiences} />
-      <Suspense fallback={<section className="reveal"><h2 className="section-title">{t('skills.title')}</h2></section>}>
-        <Skills skillCategories={cv.skillCategories} />
-      </Suspense>
-      <Suspense fallback={<section id="contact" className="reveal" />}>
-        <Footer name={cv.name} contactInfo={cv.contactInfo} />
-      </Suspense>
+      <Skills skillCategories={cv.skillCategories} />
+      <Footer name={cv.name} contactInfo={cv.contactInfo} />
 
       <nav className="scroll-progress" aria-label={t('nav.dotAria')}>
         {sections.map(s => (
