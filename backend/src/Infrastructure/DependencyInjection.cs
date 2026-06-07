@@ -19,7 +19,7 @@ public static class DependencyInjection
 
         services.AddMemoryCache();
 
-        services.AddScoped<ICvSource, WordCvSource>();
+        services.AddSingleton<ICvSource, WordCvSource>();
         services.AddScoped<ITranslationService, DeepLTranslationService>();
 
         services.AddScoped<ICVRepository, CVRepository>();

@@ -22,13 +22,11 @@ function Root() {
 }
 
 ReactDOM.createRoot(document.getElementById('app')!).render(
-  <React.StrictMode>
-    <ThemeProvider>
-      <TranslationProvider>
-        <ErrorBoundary>
-          <Root />
-        </ErrorBoundary>
-      </TranslationProvider>
-    </ThemeProvider>
-  </React.StrictMode>,
+  <ThemeProvider>
+    <TranslationProvider>
+      <ErrorBoundary>
+        <Root />
+      </ErrorBoundary>
+    </TranslationProvider>
+  </ThemeProvider>,
 );

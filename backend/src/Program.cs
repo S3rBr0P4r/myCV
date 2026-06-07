@@ -71,14 +71,6 @@ try
 
     app.UseResponseCompression();
 
-    app.Use(async (context, next) =>
-    {
-        Log.Information("{Method} {Path} — start",
-            context.Request.Method,
-            context.Request.Path);
-        await next();
-    });
-
     app.UseSerilogRequestLogging(options =>
     {
         options.MessageTemplate = "{RequestMethod} {RequestPath} — ended {StatusText} in {Elapsed:0.0}ms";
