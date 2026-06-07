@@ -136,7 +136,8 @@ public sealed class WordCvSource : ICvSource
         }
 
         var fullPath = Path.GetFullPath(_filePath);
-        if (fullPath.StartsWith(_allowedDirectory, StringComparison.Ordinal))
+        var allowedDir = Path.GetFullPath(_allowedDirectory);
+        if (fullPath.StartsWith(allowedDir, StringComparison.Ordinal))
         {
             return;
         }
