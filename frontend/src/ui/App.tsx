@@ -122,7 +122,7 @@ export function App() {
       <Header />
       <AnimatedBackground />
       <div className="painted-bg" id="bg" />
-      <Intro name={cv.name} summary={cv.summary} />
+      <Intro name={cv.name} summary={cv.summary} gitHubUrl={cv.gitHubUrl} />
       <Experience experiences={cv.experiences} />
       <Skills skillCategories={cv.skillCategories} />
       <Footer name={cv.name} contactInfo={cv.contactInfo} />
