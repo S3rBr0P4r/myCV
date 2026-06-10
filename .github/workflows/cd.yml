@@ -17,20 +17,35 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
-      - name: Pull and restart on server
+
+      - name: Pull and restart
         run: |
           ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
-            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
-            "cd /opt/mycv && docker compose pull && docker compose up -d"
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "docker pull ghcr.io/${{ github.repository }}/mycv-api && \
+             docker stop mycv-api || true && \
+             docker rm mycv-api || true && \
+             docker run -d --name mycv-api --restart unless-stopped \
+               -p 60355:60355 \
+               -v /opt/mycv/data:/app/Infrastructure/Data \
+               -e CvSource__FilePath=Infrastructure/Data/cv.docx \
+               -e CvSource__AllowedDirectory=Infrastructure/Data \
+               -e SocialLinks__LinkedIn=${{ vars.SOCIAL_LINKS_LINKEDIN }} \
+               -e SocialLinks__GitHub=${{ vars.SOCIAL_LINKS_GITHUB }} \
+               -e AllowedHosts=* \
+               -e Discord__WebhookUrl=${{ secrets.DISCORD_WEBHOOK_URL }} \
+               -e DeepL__AuthKey=${{ secrets.DEEPL_AUTH_KEY }} \
+               ghcr.io/${{ github.repository }}/mycv-api"
+
       - name: Health check
         run: |
           sleep 5
           curl --retry 5 --retry-delay 3 --retry-connrefused \
             https://${{ secrets.API_HOST }}/api/v1/cv
-
