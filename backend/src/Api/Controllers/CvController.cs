@@ -1,6 +1,6 @@
 using Asp.Versioning;
+using Backend.Application.DTOs;
 using Backend.Application.UseCases.GetCV;
-using Backend.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Backend.Api.Controllers;
@@ -21,7 +21,7 @@ public sealed class CvController : ControllerBase
 
     [HttpGet]
     [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, VaryByHeader = "Accept-Language")]
-    [ProducesResponseType<CV>(StatusCodes.Status200OK)]
+    [ProducesResponseType<CVDto>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetCV(CancellationToken cancellationToken)
     {

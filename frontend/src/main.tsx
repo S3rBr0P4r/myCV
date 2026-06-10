@@ -1,4 +1,3 @@
-import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ApiCVRepository } from './infrastructure/repositories/ApiCVRepository';
 import { GetCVUseCase } from './application/use-cases/GetCVUseCase';
