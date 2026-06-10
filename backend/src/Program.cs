@@ -57,17 +57,7 @@ try
         });
     }
 
-    app.Use(async (context, next) =>
-    {
-        if (context.Request.Path == "/health")
-        {
-            context.Response.StatusCode = 200;
-            context.Response.ContentType = "text/plain";
-            await context.Response.WriteAsync("Healthy");
-            return;
-        }
-        await next();
-    });
+    app.UseMiddleware<HealthCheckMiddleware>();
 
     app.UseResponseCompression();
 

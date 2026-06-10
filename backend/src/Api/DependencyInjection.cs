@@ -11,6 +11,7 @@ public static class DependencyInjection
         services.AddControllers();
         services.AddScoped<GlobalExceptionHandler>();
         services.AddScoped<SecurityHeadersMiddleware>();
+        services.AddScoped<HealthCheckMiddleware>();
 
         services.AddApiVersioning(options =>
         {
