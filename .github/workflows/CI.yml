@@ -52,8 +52,15 @@ jobs:
         working-directory: ./backend
       - run: dotnet build Backend.slnx --no-restore --configuration Release
         working-directory: ./backend
-      - run: dotnet test Backend.slnx --no-build --configuration Release
+      - run: |
+          dotnet test Backend.slnx --no-build --configuration Release > /tmp/test-output.txt 2>&1; status=$?; cat /tmp/test-output.txt
+          echo "## Backend tests" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E '^(Passed!|Failed!)' /tmp/test-output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          exit $status
         working-directory: ./backend
+        shell: bash
 
   docker:
     name: Docker
