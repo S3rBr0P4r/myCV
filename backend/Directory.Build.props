@@ -8,8 +8,8 @@
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <!-- Suppress CA1707 (test naming underscores) and CA1848 (LoggerMessage perf — low-traffic app) -->
-    <NoWarn>$(NoWarn);CA1707;CA1848</NoWarn>
+    <!-- Suppress CA1707 (test naming underscores), CA1848 (LoggerMessage perf), IDE0005 (needs GenerateDocumentationFile) -->
+    <NoWarn>$(NoWarn);CA1707;CA1848;IDE0005</NoWarn>
   </PropertyGroup>
 
 </Project>
