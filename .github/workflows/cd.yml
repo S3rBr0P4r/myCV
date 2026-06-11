@@ -29,16 +29,14 @@ jobs:
 
       - name: Pull and restart
         env:
-          IMAGE: ghcr.io/${{ github.repository }}/mycv-api
+          IMAGE: ghcr.io/s3rbr0p4r/mycv/mycv-api
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          IMG="${IMAGE,,}"
           ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
-             docker pull $IMG && \
-             docker stop mycv-api || true && \
-             docker rm mycv-api || true && \
+             docker pull $IMAGE && \
+             docker rm -f mycv-api || true && \
              docker run -d --name mycv-api --restart unless-stopped \
                -p 60355:60355 \
                -v /opt/mycv/data:/app/Infrastructure/Data \
@@ -50,7 +48,7 @@ jobs:
                -e Cors__FrontendUrl=${{ vars.FRONTEND_URL }} \
                -e Discord__WebhookUrl=${{ secrets.DISCORD_WEBHOOK_URL }} \
                -e DeepL__AuthKey=${{ secrets.DEEPL_AUTH_KEY }} \
-               $IMG && \
+               $IMAGE && \
              docker logout ghcr.io"
 
       - name: Health check
