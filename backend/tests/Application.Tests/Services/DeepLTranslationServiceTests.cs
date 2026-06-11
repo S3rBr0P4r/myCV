@@ -21,8 +21,10 @@ public sealed class DeepLTranslationServiceTests
         var client = new HttpClient();
         var cache = new MemoryCache(new MemoryCacheOptions());
         var options = Options.Create(new DeepLOptions { AuthKey = string.Empty });
+        var discordOptions = Options.Create(new DiscordOptions { WebhookUrl = string.Empty });
         var sut = new DeepLTranslationService(
             client, options, cache,
+            new DiscordNotifier(new HttpClient(), discordOptions, Mock.Of<ILogger<DiscordNotifier>>()),
             Mock.Of<ILogger<DeepLTranslationService>>());
 
         var result = await sut.TranslateAsync(CVTestDataFactory.CreateSampleCV(), "ES");
@@ -65,8 +67,10 @@ public sealed class DeepLTranslationServiceTests
             AuthKey = "test-key-12345",
             CacheDurationMinutes = 1440
         });
+        var discordOptions = Options.Create(new DiscordOptions { WebhookUrl = string.Empty });
         var sut = new DeepLTranslationService(
             client, options, cache,
+            new DiscordNotifier(new HttpClient(), discordOptions, Mock.Of<ILogger<DiscordNotifier>>()),
             Mock.Of<ILogger<DeepLTranslationService>>());
 
         var result = await sut.TranslateAsync(original, "ES");

@@ -16,17 +16,20 @@ public sealed class DeepLTranslationService : ITranslationService
     private readonly HttpClient _httpClient;
     private readonly DeepLOptions _options;
     private readonly IMemoryCache _cache;
+    private readonly DiscordNotifier _discordNotifier;
     private readonly ILogger<DeepLTranslationService> _logger;
 
     public DeepLTranslationService(
         HttpClient httpClient,
         IOptions<DeepLOptions> options,
         IMemoryCache cache,
+        DiscordNotifier discordNotifier,
         ILogger<DeepLTranslationService> logger)
     {
         _httpClient = httpClient;
         _options = options.Value;
         _cache = cache;
+        _discordNotifier = discordNotifier;
         _logger = logger;
     }
 
@@ -78,6 +81,11 @@ public sealed class DeepLTranslationService : ITranslationService
             {
                 _logger.LogWarning(ex, "DeepL translation failed for language {Lang}, falling back to English", lang);
             }
+
+            _ = _discordNotifier.SendAlertAsync(
+                "DeepL Translation Failed",
+                $"Language: {lang}\nError: {ex.Message}");
+
             return null;
         }
     }
