@@ -83,7 +83,11 @@ export function Header() {
                     type="button"
                     aria-label={t(l.ariaKey)}
                     title={t(l.ariaKey)}
-                    onClick={() => setLocale(l.code)}
+                    onClick={e => {
+                      setLocale(l.code);
+                      const dd = e.currentTarget.closest('.locale-dropdown');
+                      dd?.classList.remove('locale-menu--open');
+                    }}
                   >
                     <img className="locale-flag" src={l.flagSrc} alt="" width="24" height="24" />
                     <span>{l.label}</span>
