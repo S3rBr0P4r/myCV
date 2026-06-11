@@ -26,10 +26,13 @@ jobs:
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
       - name: Pull and restart
+        env:
+          IMAGE: ghcr.io/${{ github.repository }}/mycv-api
         run: |
+          IMG="${IMAGE,,}"
           ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "docker pull ghcr.io/${{ github.repository }}/mycv-api && \
+            "docker pull $IMG && \
              docker stop mycv-api || true && \
              docker rm mycv-api || true && \
              docker run -d --name mycv-api --restart unless-stopped \
@@ -42,7 +45,7 @@ jobs:
                -e AllowedHosts=* \
                -e Discord__WebhookUrl=${{ secrets.DISCORD_WEBHOOK_URL }} \
                -e DeepL__AuthKey=${{ secrets.DEEPL_AUTH_KEY }} \
-               ghcr.io/${{ github.repository }}/mycv-api"
+               $IMG"
 
       - name: Health check
         run: |
