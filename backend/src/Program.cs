@@ -85,6 +85,7 @@ try
     }
 
     app.UseMiddleware<SecurityHeadersMiddleware>();
+    app.UseMiddleware<OriginValidationMiddleware>();
 
     app.UseRateLimiter();
     app.UseCors("AllowFrontend");

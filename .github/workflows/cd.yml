@@ -55,4 +55,5 @@ jobs:
         run: |
           sleep 5
           curl --retry 5 --retry-delay 3 --retry-connrefused \
-            https://${{ secrets.API_HOST }}/api/v1/cv
+            --output /dev/null --write-out "%{http_code}" \
+            https://${{ secrets.API_HOST }}/health

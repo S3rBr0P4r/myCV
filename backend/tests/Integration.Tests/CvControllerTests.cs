@@ -18,7 +18,9 @@ public sealed class CvControllerTests : IClassFixture<CustomWebApplicationFactor
     [Fact]
     public async Task GetCv_ShouldReturn200_WithCVDto()
     {
-        var response = await _client.GetAsync("/api/v1/cv");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/cv");
+        request.Headers.Add("Origin", "http://localhost:5173");
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var cv = await response.Content.ReadFromJsonAsync<CVDto>();
@@ -32,7 +34,9 @@ public sealed class CvControllerTests : IClassFixture<CustomWebApplicationFactor
     [Fact]
     public async Task GetCv_ShouldReturnExperiences()
     {
-        var response = await _client.GetAsync("/api/v1/cv");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/cv");
+        request.Headers.Add("Origin", "http://localhost:5173");
+        var response = await _client.SendAsync(request);
         var cv = await response.Content.ReadFromJsonAsync<CVDto>();
 
         cv!.Experiences.Should().HaveCount(1);
@@ -49,7 +53,9 @@ public sealed class CvControllerTests : IClassFixture<CustomWebApplicationFactor
     [Fact]
     public async Task GetCv_ShouldReturnSkillCategories()
     {
-        var response = await _client.GetAsync("/api/v1/cv");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/cv");
+        request.Headers.Add("Origin", "http://localhost:5173");
+        var response = await _client.SendAsync(request);
         var cv = await response.Content.ReadFromJsonAsync<CVDto>();
 
         cv!.SkillCategories.Should().HaveCount(1);
@@ -62,6 +68,7 @@ public sealed class CvControllerTests : IClassFixture<CustomWebApplicationFactor
     public async Task GetCv_WithAcceptLanguageSpanish_ShouldReturnUntranslatedWhenNoAuthKey()
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/cv");
+        request.Headers.Add("Origin", "http://localhost:5173");
         request.Headers.AcceptLanguage.ParseAdd("es");
 
         var response = await _client.SendAsync(request);
@@ -77,6 +84,7 @@ public sealed class CvControllerTests : IClassFixture<CustomWebApplicationFactor
     public async Task GetCv_WithAcceptLanguageEnglish_ShouldReturnUntranslated()
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/cv");
+        request.Headers.Add("Origin", "http://localhost:5173");
         request.Headers.AcceptLanguage.ParseAdd("en");
 
         var response = await _client.SendAsync(request);

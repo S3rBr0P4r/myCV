@@ -16,7 +16,9 @@ public sealed class MiddlewareTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task SecurityHeaders_ShouldBePresent()
     {
-        var response = await _client.GetAsync("/api/v1/cv");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/cv");
+        request.Headers.Add("Origin", "http://localhost:5173");
+        var response = await _client.SendAsync(request);
 
         response.Headers.Should().ContainKey("X-Content-Type-Options");
         response.Headers.GetValues("X-Content-Type-Options").Should().Contain("nosniff");
@@ -64,9 +66,46 @@ public sealed class MiddlewareTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task OriginValidation_ShouldBlockRequestWithoutOrigin()
+    {
+        var response = await _client.GetAsync("/api/v1/cv");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task OriginValidation_ShouldAllowRequestWithMatchingOrigin()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/cv");
+        request.Headers.Add("Origin", "http://localhost:5173");
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task OriginValidation_ShouldBlockRequestWithNonMatchingOrigin()
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/cv");
+        request.Headers.Add("Origin", "https://evil.com");
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task OriginValidation_ShouldAllowHealthEndpointWithoutOrigin()
+    {
+        var response = await _client.GetAsync("/health");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
     public async Task ResponseCompression_ShouldBeEnabled()
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/cv");
+        request.Headers.Add("Origin", "http://localhost:5173");
         request.Headers.AcceptEncoding.ParseAdd("gzip");
 
         var response = await _client.SendAsync(request);

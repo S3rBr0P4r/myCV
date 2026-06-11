@@ -14,7 +14,9 @@ public sealed class CvErrorTests
         await factory.InitializeAsync();
 
         var client = factory.CreateClient();
-        var response = await client.GetAsync("/api/v1/cv");
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/v1/cv");
+        request.Headers.Add("Origin", "http://localhost:5173");
+        var response = await client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
     }

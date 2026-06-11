@@ -64,6 +64,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 ["DeepL:AuthKey"] = "",
                 ["Discord:WebhookUrl"] = "",
                 ["Cors:AllowedOrigins:0"] = "http://localhost:5173",
+                ["Cors:FrontendUrl"] = "http://localhost:5173",
                 ["Serilog:MinimumLevel:Default"] = "Fatal",
             }!);
         });
