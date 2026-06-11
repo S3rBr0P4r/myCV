@@ -162,7 +162,7 @@ export function Experience({ experiences }: ExperienceProps) {
             disabled={page <= 1}
             onClick={() => goToPage(page - 1)}
           >
-            ← Previous
+            {t('exp.prev')}
           </button>
           <span className="exp-page-indicator">{page} / {totalPages}</span>
           <button
@@ -170,7 +170,7 @@ export function Experience({ experiences }: ExperienceProps) {
             disabled={page >= totalPages}
             onClick={() => goToPage(page + 1)}
           >
-            Next →
+            {t('exp.next')}
           </button>
         </div>
       )}
