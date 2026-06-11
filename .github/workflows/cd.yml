@@ -68,5 +68,6 @@ jobs:
           cd frontend
           npm ci
           npm run build
-          rsync -avz -e "ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }}" \
-            dist/ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/mycv/frontend/
+          tar c -C dist . | ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "rm -rf /opt/mycv/frontend/* 2>/dev/null; mkdir -p /opt/mycv/frontend && tar x -C /opt/mycv/frontend"
