@@ -145,7 +145,7 @@ Triggers on push to `main` (or manual `workflow_dispatch`). Concurrency group `c
 - **Docker API:** Builds and pushes API image to GHCR (only on `main`).
 - **Docker Frontend:** Builds and pushes frontend image to GHCR (only on `main`). Uses `build-args` for `VITE_API_URL` and `VITE_CSP_*` vars.
 
-**CD:** Manual workflow dispatch (15m timeout) — `docker/login-action` → SSH into server via `SSH_PRIVATE_KEY` + `SSH_KNOWN_HOSTS` → ensure `mycv-net` Docker network → pull and restart API container on `mycv-net` with alias `mycv-api` → health check with retry → pull and restart frontend container on `mycv-net` with `FRONTEND_URL` env var.
+**CD:** Manual `workflow_dispatch` or automatic after CI succeeds on `main` (via `workflow_run`). Four sequential jobs: `ensure-network` (5m) → `deploy-api` (10m) → `health-check` (5m) → `deploy-frontend` (10m). Each SSH job sets up its own keys. `deploy-frontend` only runs if `health-check` passes.
 **Security:** All GitHub Actions pinned to commit SHA digests (with `# vX.Y.Z` version comment).
 **Public repo hygiene:** Any infrastructure detail (hostnames, URLs, IPs) that appears in workflow logs must use `${{ secrets.* }}` (masked) instead of `${{ vars.* }}` (visible). The CD workflow's `API_HOST` is a secret for this reason. CI vars like `VITE_API_URL` are intentionally public (inlined into the website's JS bundle).
 

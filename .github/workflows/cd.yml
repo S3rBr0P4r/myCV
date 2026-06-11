@@ -1,6 +1,10 @@
 name: CD
 
 on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -8,10 +12,11 @@ permissions:
   packages: read
 
 jobs:
-  deploy:
-    name: Deploy
+  ensure-network:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    name: Ensure Docker network
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
@@ -27,13 +32,33 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
-      - name: Ensure Docker network
+      - name: Create Docker network
         run: |
           ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "docker network create mycv-net 2>/dev/null || true"
 
-      - name: Pull and restart
+  deploy-api:
+    name: Deploy API
+    needs: [ensure-network]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Pull and restart API
         env:
           IMAGE: ghcr.io/s3rbr0p4r/mycv/mycv-api
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -58,12 +83,38 @@ jobs:
                $IMAGE && \
              docker logout ghcr.io"
 
-      - name: Health check
+  health-check:
+    name: Health check
+    needs: [deploy-api]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Wait and verify API health
         run: |
           sleep 5
           curl --retry 5 --retry-delay 3 --retry-connrefused \
             --output /dev/null --write-out "%{http_code}" \
             https://${{ secrets.API_HOST }}/health
+
+  deploy-frontend:
+    name: Deploy Frontend
+    needs: [health-check]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
       - name: Pull and restart frontend
         env:
