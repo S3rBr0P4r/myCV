@@ -1,3 +1,4 @@
+import { useTranslation } from '../hooks/useTranslation';
 import { renderFormattedText } from '../format';
 
 interface IntroProps {
@@ -7,6 +8,7 @@ interface IntroProps {
 }
 
 export function Intro({ name, summary, gitHubUrl }: IntroProps) {
+  const { t } = useTranslation();
   const avatarUrl = gitHubUrl
     ? `https://github.com/${gitHubUrl.replace(/https?:\/\/github\.com\//, '').replace(/\/.*$/, '')}.png`
     : undefined;
@@ -27,7 +29,7 @@ export function Intro({ name, summary, gitHubUrl }: IntroProps) {
           </div>
         )}
         <div className="intro-content">
-          <h1 className="main-title">{renderFormattedText(`Well met. I'm ${name}.`)}</h1>
+          <h1 className="main-title">{renderFormattedText(t('intro.greeting', { name }))}</h1>
           <p className="intro-description">{renderFormattedText(summary)}</p>
         </div>
       </div>
