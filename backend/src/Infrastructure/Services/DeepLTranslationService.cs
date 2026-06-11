@@ -1,5 +1,3 @@
-using System.Globalization;
-using System.Text.Json.Serialization;
 using Backend.Domain.Entities;
 using Backend.Domain.Interfaces;
 using Backend.Infrastructure.Options;
@@ -37,14 +35,11 @@ public sealed class DeepLTranslationService : ITranslationService
     {
         if (string.IsNullOrWhiteSpace(_options.AuthKey))
         {
-            if (_logger.IsEnabled(LogLevel.Debug))
-            {
-                _logger.LogDebug("DeepL AuthKey not configured — skipping translation");
-            }
+            _logger.LogDebug("DeepL AuthKey not configured — skipping translation");
             return null;
         }
 
-        var lang = NormalizeLanguage(targetLanguage);
+        var lang = LanguageHelper.NormalizeLanguage(targetLanguage);
 
         if (string.IsNullOrEmpty(lang) || string.Equals(lang, "EN", StringComparison.OrdinalIgnoreCase))
         {
@@ -61,7 +56,6 @@ public sealed class DeepLTranslationService : ITranslationService
             }
             return cached;
         }
-
         try
         {
             var translated = await TranslateCoreAsync(source, lang, cancellationToken);
@@ -77,13 +71,9 @@ public sealed class DeepLTranslationService : ITranslationService
         }
         catch (Exception ex)
         {
-            if (_logger.IsEnabled(LogLevel.Warning))
-            {
-                _logger.LogWarning(ex, "DeepL translation failed for language {Lang}, falling back to English", lang);
-            }
+            _logger.LogWarning(ex, "DeepL translation failed for language {Lang}, falling back to English", lang);
 
-            _ = _discordNotifier.SendAlertAsync(
-                "DeepL Translation Failed",
+            _ = _discordNotifier.SendAlertAsync("DeepL Translation Failed",
                 $"Language: {lang}\nError: {ex.Message}");
 
             return null;
@@ -99,6 +89,9 @@ public sealed class DeepLTranslationService : ITranslationService
         var title = source.Title;
         var periods = source.Experiences.Select(e => e.Period).ToList();
         var roles = source.Experiences.Select(e => e.Role).ToList();
+        var companies = source.Experiences.Select(e => e.Company).ToList();
+        var locations = source.Experiences.Select(e => e.Location).ToList();
+        var workModes = source.Experiences.Select(e => e.WorkMode).ToList();
         var descriptions = source.Experiences.Select(e => e.Description).ToList();
 
         var skillItems = source.SkillCategories
@@ -107,19 +100,19 @@ public sealed class DeepLTranslationService : ITranslationService
             .ToList();
 
         var allTexts = new List<string>();
-
         if (!string.IsNullOrEmpty(summary))
         {
             allTexts.Add(summary);
         }
-
         if (!string.IsNullOrEmpty(title))
         {
             allTexts.Add(title);
         }
-
         allTexts.AddRange(periods.Where(t => !string.IsNullOrEmpty(t)));
         allTexts.AddRange(roles.Where(t => !string.IsNullOrEmpty(t)));
+        allTexts.AddRange(companies.Where(t => !string.IsNullOrEmpty(t)));
+        allTexts.AddRange(locations.Where(t => !string.IsNullOrEmpty(t)));
+        allTexts.AddRange(workModes.Where(t => !string.IsNullOrEmpty(t)));
         allTexts.AddRange(descriptions.Where(t => !string.IsNullOrEmpty(t)));
         allTexts.AddRange(skillItems.Where(t => !string.IsNullOrEmpty(t)));
 
@@ -128,18 +121,26 @@ public sealed class DeepLTranslationService : ITranslationService
             return source;
         }
 
-        var segments = allTexts.Select(t => new { text = t }).ToList();
+        var translatedTexts = await CallDeepLApiAsync(allTexts, lang, timeoutToken);
 
+        if (translatedTexts is null)
+        {
+            return null;
+        }
+
+        return BuildTranslatedCV(source, summary, title, periods, roles, companies,
+            locations, workModes, descriptions, skillItems, translatedTexts);
+    }
+
+    private async Task<string[]?> CallDeepLApiAsync(List<string> allTexts, string lang, CancellationToken timeoutToken)
+    {
         var request = new DeepLRequest
         {
-            Text = segments.Select(s => s.text).ToArray(),
+            Text = allTexts.ToArray(),
             TargetLang = lang
         };
 
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, DeepLApiUrl)
-        {
-            Content = JsonContent.Create(request)
-        };
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, DeepLApiUrl) { Content = JsonContent.Create(request) };
         httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("DeepL-Auth-Key", _options.AuthKey);
 
         var response = await _httpClient.SendAsync(httpRequest, timeoutToken);
@@ -149,31 +150,39 @@ public sealed class DeepLTranslationService : ITranslationService
 
         if (result?.Translations is null || result.Translations.Length != allTexts.Count)
         {
-            if (_logger.IsEnabled(LogLevel.Warning))
-            {
-                _logger.LogWarning(
-                    "DeepL returned {Count} translations but expected {Expected}", result?.Translations?.Length ?? 0, allTexts.Count);
-            }
+            _logger.LogWarning("DeepL returned {Count} translations but expected {Expected}",
+                result?.Translations?.Length ?? 0, allTexts.Count);
             return null;
         }
+        return result.Translations
+            .Select(t => t.Text.Length > MaxFieldLength ? t.Text[..MaxFieldLength] : t.Text)
+            .ToArray();
+    }
 
-        var translatedTexts = result.Translations.Select(t => t.Text.Length > MaxFieldLength ? t.Text[..MaxFieldLength] : t.Text).ToArray();
+    private static CV BuildTranslatedCV(CV source,
+        string? summary, string? title,
+        List<string> periods, List<string> roles, List<string> companies,
+        List<string> locations, List<string> workModes, List<string> descriptions,
+        List<string> skillItems, string[] translatedTexts)
+    {
         int idx = 0;
 
-        string? translatedSummary = null;
-        if (!string.IsNullOrEmpty(summary))
-        {
-            translatedSummary = translatedTexts[idx++];
-        }
-
-        string? translatedTitle = null;
-        if (!string.IsNullOrEmpty(title))
-        {
-            translatedTitle = translatedTexts[idx++];
-        }
+        string? translatedSummary = !string.IsNullOrEmpty(summary) ? translatedTexts[idx++] : null;
+        string? translatedTitle = !string.IsNullOrEmpty(title) ? translatedTexts[idx++] : null;
 
         var translatedPeriods = periods.Select(p => !string.IsNullOrEmpty(p) ? translatedTexts[idx++] : p).ToList();
         var translatedRoles = roles.Select(r => !string.IsNullOrEmpty(r) ? translatedTexts[idx++] : r).ToList();
+        var translatedCompanies = companies.Select(c =>
+        {
+            if (string.IsNullOrEmpty(c))
+            {
+                return c;
+            }
+            var translated = translatedTexts[idx++];
+            return c.Contains('(') ? translated : c;
+        }).ToList();
+        var translatedLocations = locations.Select(l => !string.IsNullOrEmpty(l) ? translatedTexts[idx++] : l).ToList();
+        var translatedWorkModes = workModes.Select(w => !string.IsNullOrEmpty(w) ? translatedTexts[idx++] : w).ToList();
         var translatedDescriptions = descriptions.Select(d => !string.IsNullOrEmpty(d) ? translatedTexts[idx++] : d).ToList();
         var translatedSkillItems = skillItems.Select(s => !string.IsNullOrEmpty(s) ? translatedTexts[idx++] : s).ToList();
 
@@ -181,7 +190,9 @@ public sealed class DeepLTranslationService : ITranslationService
         {
             Period = translatedPeriods[i],
             Role = translatedRoles[i],
-            Company = e.Company,
+            Company = translatedCompanies[i],
+            Location = translatedLocations[i],
+            WorkMode = translatedWorkModes[i],
             Description = translatedDescriptions[i],
             Background = e.Background
         }).ToList();
@@ -231,50 +242,5 @@ public sealed class DeepLTranslationService : ITranslationService
         }
 
         return result;
-    }
-
-    private static string? NormalizeLanguage(string? culture)
-    {
-        if (string.IsNullOrWhiteSpace(culture))
-        {
-            return null;
-        }
-
-        var primary = culture.Split(',')[0].Trim().Split(';')[0].Trim();
-
-        try
-        {
-            var ci = CultureInfo.GetCultureInfo(primary);
-            var lang = ci.TwoLetterISOLanguageName.ToUpperInvariant();
-            return lang;
-        }
-        catch (CultureNotFoundException)
-        {
-            return null;
-        }
-    }
-
-    private sealed class DeepLRequest
-    {
-        [JsonPropertyName("text")]
-        public string[] Text { get; init; } = [];
-
-        [JsonPropertyName("target_lang")]
-        public string TargetLang { get; init; } = string.Empty;
-    }
-
-    private sealed class DeepLResponse
-    {
-        [JsonPropertyName("translations")]
-        public DeepLTranslation[] Translations { get; init; } = [];
-    }
-
-    private sealed class DeepLTranslation
-    {
-        [JsonPropertyName("detected_source_language")]
-        public string DetectedSourceLanguage { get; init; } = string.Empty;
-
-        [JsonPropertyName("text")]
-        public string Text { get; init; } = string.Empty;
     }
 }

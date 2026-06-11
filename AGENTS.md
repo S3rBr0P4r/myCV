@@ -85,7 +85,7 @@ Each file ≤ 250 lines. Add new component styles as separate files, never appen
 | `dotnet build Backend.slnx --no-restore` | Build all projects |
 | `dotnet test Backend.slnx --no-build` | Run all tests (unit + integration) |
 
-**Build hardens:** `TreatWarningsAsErrors`, `AnalysisLevel: latest-recommended`, `EnforceCodeStyleInBuild` — fix all analyzer warnings to build. Every new public class must have corresponding test coverage.
+**Build hardens:** `TreatWarningsAsErrors`, `AnalysisLevel: latest-recommended`, `EnforceCodeStyleInBuild` — fix all analyzer warnings to build. Every new class must have corresponding test coverage — mandatory, no exceptions.
 
 **Folder structure (one project, layers as folders):**
 
@@ -220,7 +220,7 @@ Every file change must uphold these invariants:
 - Frontend Docker image: `ghcr.io/s3rbr0p4r/mycv/mycv-frontend` (nginx:alpine, serves built `dist/` on configurable port via `${PORT}` env var).
 - Backend Docker image: `ghcr.io/s3rbr0p4r/mycv/mycv-api` (aspnet:10.0).
 - Run as non-root via `USER $APP_UID`.
-- **Docker networking**: Both containers run on a shared `mycv-net` bridge network. Backend has `--network-alias mycv-api`. Frontend nginx proxies `/api/` requests to `http://mycv-api:60355/api/`. CD workflow creates the network with `docker network create mycv-net 2>/dev/null || true` before starting containers.
+- **Docker networking**: Both containers run on a shared `mycv-net` bridge network. Backend has `--network-alias mycv-api`. Frontend nginx proxies `/api/` requests to `http://mycv-api:${BACKEND_PORT}/api/`. CD workflow creates the network with `docker network create mycv-net 2>/dev/null || true` before starting containers.
 - **nginx reverse proxy** (`frontend/nginx.conf`): Location block `/api/` proxies to backend, sets `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto`, and `Origin` (from `FRONTEND_URL` env var) so `OriginValidationMiddleware` allows proxied requests.
 - `FRONTEND_URL` env var must be passed to the frontend container (used by nginx template via `envsubst`). Set in CD via `-e FRONTEND_URL=${{ vars.FRONTEND_URL }}`.
 
@@ -236,7 +236,7 @@ Every file change must uphold these invariants:
 - CSP env vars in `.env` files must be **double-quoted** to preserve single quotes for CSP keywords (e.g. `VITE_CSP_SCRIPT_SRC="'self'"`). Node.js 24's `parseEnv` strips bare single quotes. GitHub variables bypass this and use bare CSP syntax (e.g. `'self'`).
 
 ### Testing Coverage
-- Every **public class** in the backend must have corresponding test coverage (unit or integration).
+- Every **class** in the backend must have corresponding test coverage (unit or integration) — mandatory, no exceptions.
 - Every **React component** should have at least a smoke test (renders without error).
 - Every **custom hook** should have behavior tests via `renderHook`.
 - Integration tests must reset static state (e.g. `DiscordNotifier.ResetCooldown()`).

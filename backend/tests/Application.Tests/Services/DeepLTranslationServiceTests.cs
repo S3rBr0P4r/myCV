@@ -155,6 +155,7 @@ public sealed class DeepLTranslationServiceTests
                 new { detected_source_language = "EN", text = "Título" },
                 new { detected_source_language = "EN", text = "Periodo 1" },
                 new { detected_source_language = "EN", text = "Rol 1" },
+                new { detected_source_language = "EN", text = "Empresa 1" },
                 new { detected_source_language = "EN", text = "Descripción 1" },
                 new { detected_source_language = "EN", text = "Habilidad 1" },
                 new { detected_source_language = "EN", text = "Habilidad 2" }
