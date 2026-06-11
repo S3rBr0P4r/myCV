@@ -139,10 +139,11 @@ Infrastructure/Sources/
 
 ## CI (`.github/workflows/ci.yml`) + CD (`.github/workflows/cd.yml`)
 
-Triggers on push to `main` (or manual `workflow_dispatch`). Concurrency group `ci-${{ github.ref }}` with `cancel-in-progress: true` prevents Docker tag races. Three jobs (frontend 10m, backend 10m, docker 15m timeouts):
-- **FrontEnd:** `npm ci` → `npm run build` → `npm run test`
+Triggers on push to `main` (or manual `workflow_dispatch`). Concurrency group `ci-${{ github.ref }}` with `cancel-in-progress: true` prevents Docker tag races. Four jobs (frontend 10m, backend 10m, docker-api 15m, docker-frontend 15m timeouts):
+- **Frontend:** `npm ci` → `npm run build` → `npm run test`
 - **Backend:** `dotnet restore` → `dotnet build` → `dotnet test`
-- **Docker:** Builds and pushes API + frontend images to GHCR (only on `main`). Frontend image uses `build-args` for `VITE_API_URL` and `VITE_CSP_*` vars.
+- **Docker API:** Builds and pushes API image to GHCR (only on `main`).
+- **Docker Frontend:** Builds and pushes frontend image to GHCR (only on `main`). Uses `build-args` for `VITE_API_URL` and `VITE_CSP_*` vars.
 
 **CD:** Manual workflow dispatch (15m timeout) — `docker/login-action` → SSH into server via `SSH_PRIVATE_KEY` + `SSH_KNOWN_HOSTS` → ensure `mycv-net` Docker network → pull and restart API container on `mycv-net` with alias `mycv-api` → health check with retry → pull and restart frontend container on `mycv-net` with `FRONTEND_URL` env var.
 **Security:** All GitHub Actions pinned to commit SHA digests (with `# vX.Y.Z` version comment).
