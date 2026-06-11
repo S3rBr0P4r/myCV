@@ -58,16 +58,18 @@ jobs:
             --output /dev/null --write-out "%{http_code}" \
             https://${{ secrets.API_HOST }}/health
 
-      - name: Build and deploy frontend
+      - name: Pull and restart frontend
         env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
-          VITE_CSP_SCRIPT_SRC: ${{ vars.VITE_CSP_SCRIPT_SRC }}
-          VITE_CSP_STYLE_SRC: ${{ vars.VITE_CSP_STYLE_SRC }}
-          VITE_CSP_CONNECT_SRC: ${{ vars.VITE_CSP_CONNECT_SRC }}
+          IMAGE: ghcr.io/s3rbr0p4r/mycv/mycv-frontend
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd frontend
-          npm ci
-          npm run build
-          tar c -C dist . | ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
+          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "rm -rf /opt/mycv/frontend/* 2>/dev/null; mkdir -p /opt/mycv/frontend && tar x -C /opt/mycv/frontend"
+            "echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
+             docker pull $IMAGE && \
+             docker rm -f mycv-frontend || true && \
+             docker run -d --name mycv-frontend --restart unless-stopped \
+               -p ${{ vars.FRONTEND_PORT }}:${{ vars.FRONTEND_PORT }} \
+               -e PORT=${{ vars.FRONTEND_PORT }} \
+               $IMAGE && \
+             docker logout ghcr.io"
