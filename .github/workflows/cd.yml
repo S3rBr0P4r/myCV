@@ -59,6 +59,11 @@ jobs:
             https://${{ secrets.API_HOST }}/health
 
       - name: Build and deploy frontend
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_CSP_SCRIPT_SRC: ${{ vars.VITE_CSP_SCRIPT_SRC }}
+          VITE_CSP_STYLE_SRC: ${{ vars.VITE_CSP_STYLE_SRC }}
+          VITE_CSP_CONNECT_SRC: ${{ vars.VITE_CSP_CONNECT_SRC }}
         run: |
           cd frontend
           npm ci
