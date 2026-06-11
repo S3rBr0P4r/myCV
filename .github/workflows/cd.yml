@@ -27,6 +27,12 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
+      - name: Ensure Docker network
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "docker network create mycv-net 2>/dev/null || true"
+
       - name: Pull and restart
         env:
           IMAGE: ghcr.io/s3rbr0p4r/mycv/mycv-api
@@ -38,7 +44,8 @@ jobs:
              docker pull $IMAGE && \
              docker rm -f mycv-api || true && \
              docker run -d --name mycv-api --restart unless-stopped \
-               -p 60355:60355 \
+               --network mycv-net --network-alias mycv-api \
+               -p ${{ vars.BACKEND_PORT }}:${{ vars.BACKEND_PORT }} \
                -v /opt/mycv/data:/app/Infrastructure/Data \
                -e CvSource__FilePath=Infrastructure/Data/cv.docx \
                -e CvSource__AllowedDirectory=Infrastructure/Data \
@@ -69,7 +76,10 @@ jobs:
              docker pull $IMAGE && \
              docker rm -f mycv-frontend || true && \
              docker run -d --name mycv-frontend --restart unless-stopped \
+               --network mycv-net \
                -p ${{ vars.FRONTEND_PORT }}:${{ vars.FRONTEND_PORT }} \
                -e PORT=${{ vars.FRONTEND_PORT }} \
+               -e FRONTEND_URL=${{ vars.FRONTEND_URL }} \
+               -e BACKEND_PORT=${{ vars.BACKEND_PORT }} \
                $IMAGE && \
              docker logout ghcr.io"

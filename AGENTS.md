@@ -144,7 +144,7 @@ Triggers on push to `main` (or manual `workflow_dispatch`). Concurrency group `c
 - **Backend:** `dotnet restore` → `dotnet build` → `dotnet test`
 - **Docker:** Builds and pushes API + frontend images to GHCR (only on `main`). Frontend image uses `build-args` for `VITE_API_URL` and `VITE_CSP_*` vars.
 
-**CD:** Manual workflow dispatch (15m timeout) — `docker/login-action` → SSH into server via `SSH_PRIVATE_KEY` + `SSH_KNOWN_HOSTS` → pull and restart both API + frontend containers → health check with retry.
+**CD:** Manual workflow dispatch (15m timeout) — `docker/login-action` → SSH into server via `SSH_PRIVATE_KEY` + `SSH_KNOWN_HOSTS` → ensure `mycv-net` Docker network → pull and restart API container on `mycv-net` with alias `mycv-api` → health check with retry → pull and restart frontend container on `mycv-net` with `FRONTEND_URL` env var.
 **Security:** All GitHub Actions pinned to commit SHA digests (with `# vX.Y.Z` version comment).
 **Public repo hygiene:** Any infrastructure detail (hostnames, URLs, IPs) that appears in workflow logs must use `${{ secrets.* }}` (masked) instead of `${{ vars.* }}` (visible). The CD workflow's `API_HOST` is a secret for this reason. CI vars like `VITE_API_URL` are intentionally public (inlined into the website's JS bundle).
 
@@ -219,6 +219,9 @@ Every file change must uphold these invariants:
 - Frontend Docker image: `ghcr.io/s3rbr0p4r/mycv/mycv-frontend` (nginx:alpine, serves built `dist/` on configurable port via `${PORT}` env var).
 - Backend Docker image: `ghcr.io/s3rbr0p4r/mycv/mycv-api` (aspnet:10.0).
 - Run as non-root via `USER $APP_UID`.
+- **Docker networking**: Both containers run on a shared `mycv-net` bridge network. Backend has `--network-alias mycv-api`. Frontend nginx proxies `/api/` requests to `http://mycv-api:60355/api/`. CD workflow creates the network with `docker network create mycv-net 2>/dev/null || true` before starting containers.
+- **nginx reverse proxy** (`frontend/nginx.conf`): Location block `/api/` proxies to backend, sets `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto`, and `Origin` (from `FRONTEND_URL` env var) so `OriginValidationMiddleware` allows proxied requests.
+- `FRONTEND_URL` env var must be passed to the frontend container (used by nginx template via `envsubst`). Set in CD via `-e FRONTEND_URL=${{ vars.FRONTEND_URL }}`.
 
 ### Frontend Build
 - `vite.config.ts` must have `build.emptyOutDir: true` to prevent stale asset accumulation.
