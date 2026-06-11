@@ -27,7 +27,10 @@ export function Footer({ name, contactInfo }: FooterProps) {
       <footer>
         <p>{renderFormattedText(t('footer.copyright', { year: new Date().getFullYear(), name }))}</p>
         <p className="footer-attribution">
-          {renderFormattedText(t('footer.attribution', { heart: '\u2764' }))} &bull;{' '}
+          {(() => {
+            const parts = t('footer.attribution').split('{heart}');
+            return <>{parts[0]}<span className="heart">{'\u2764'}</span>{parts[1]}</>;
+          })()} &bull;{' '}
           <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">{t('footer.sourceLink')}</a>
         </p>
       </footer>
