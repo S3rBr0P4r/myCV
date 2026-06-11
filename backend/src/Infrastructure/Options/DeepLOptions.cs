@@ -7,4 +7,6 @@ public sealed class DeepLOptions
     public string? AuthKey { get; init; }
 
     public int CacheDurationMinutes { get; init; } = 1440;
+
+    public int TimeoutSeconds { get; init; } = 60;
 }

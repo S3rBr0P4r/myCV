@@ -84,6 +84,9 @@ public sealed class DeepLTranslationService : ITranslationService
 
     private async Task<CV?> TranslateCoreAsync(CV source, string lang, CancellationToken cancellationToken)
     {
+        using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(Math.Max(1, _options.TimeoutSeconds)));
+        var timeoutToken = timeoutCts.Token;
+
         var summary = source.Summary;
         var title = source.Title;
         var periods = source.Experiences.Select(e => e.Period).ToList();
@@ -131,10 +134,10 @@ public sealed class DeepLTranslationService : ITranslationService
         };
         httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("DeepL-Auth-Key", _options.AuthKey);
 
-        var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+        var response = await _httpClient.SendAsync(httpRequest, timeoutToken);
         response.EnsureSuccessStatusCode();
 
-        var result = await response.Content.ReadFromJsonAsync<DeepLResponse>(cancellationToken: cancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<DeepLResponse>(cancellationToken: timeoutToken);
 
         if (result?.Translations is null || result.Translations.Length != allTexts.Count)
         {

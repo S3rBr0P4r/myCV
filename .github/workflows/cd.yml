@@ -80,6 +80,7 @@ jobs:
                -e Cors__FrontendUrl=${{ vars.FRONTEND_URL }} \
                -e Discord__WebhookUrl=${{ secrets.DISCORD_WEBHOOK_URL }} \
                -e DeepL__AuthKey=${{ secrets.DEEPL_AUTH_KEY }} \
+               -e DeepL__TimeoutSeconds=${{ vars.DEEPL_TIMEOUT_SECONDS }} \
                $IMAGE && \
              docker logout ghcr.io"
 
