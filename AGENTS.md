@@ -13,7 +13,7 @@ backend/     .NET 10 Clean Architecture
 
 | Command | Action |
 |---------|--------|
-| `npm run dev` | Vite dev server (port 5173) + backend |
+| `npm run dev` | Vite dev server + backend |
 | `npm run build` | `tsc && vite build` |
 | `npm run preview` | Vite preview |
 | `npm run test` | `vitest run` |
@@ -71,7 +71,9 @@ Each file ≤ 250 lines. Add new component styles as separate files, never appen
 
 **API:** Configured via `VITE_API_URL` env var (dev = `/api/v1/cv` via Vite proxy, production = set via CI variable `VITE_API_URL`). Has offline fallback if backend is unreachable.
 
-**Root-level dev command:** `cd frontend && npm run dev` starts both services (via `concurrently`). Pre-kills port 60355.
+**Root-level dev command:** `cd frontend && npm run dev` starts both services (via `concurrently`).
+
+**Docker build:** Multi-stage `Dockerfile` at `frontend/Dockerfile` — build stage with `node:22-alpine`, runtime with `nginx:alpine`. Nginx config in `frontend/nginx.conf` uses template syntax (`listen ${PORT};`) processed by nginx's built-in `envsubst` entrypoint. Pass `-e PORT=<value>` to set the listen port.
 
 ## Backend (`backend/`)
 
@@ -121,9 +123,9 @@ Infrastructure/Sources/
 - Namespace root: `Backend.*` (not `MyCV.*`).
 - API uses `[ApiController]` + `[Route("api/v{version:apiVersion}/[controller]")]` with URL segment versioning. Current version: `v1`. Add `[ApiVersion("X.Y")]` to controllers. Swagger via `Swashbuckle.AspNetCore` (no `Microsoft.AspNetCore.OpenApi`).
 
-**Backend launch URL:** `http://localhost:60355` (from `Properties/launchSettings.json`). Only HTTP in development — firewall-friendly and matches Vite proxy scheme.
+**Backend launch URL:** `http://localhost` (from `Properties/launchSettings.json`). Only HTTP in development — firewall-friendly and matches Vite proxy scheme.
 
-**CORS:** Allows `http://localhost:5173`, `http://127.0.0.1:5173`, `https://localhost:5173` with `AllowCredentials()`.
+**CORS:** Allows `http://localhost`, `http://127.0.0.1`, `https://localhost` with `AllowCredentials()`.
 
 **Editorconfig conventions (C#):** 4-space indent, CRLF, file-scoped namespaces, `_camelCase` private fields, `I` prefix for interfaces, `Async` suffix for async methods.
 
@@ -140,9 +142,9 @@ Infrastructure/Sources/
 Triggers on push to `main` (or manual `workflow_dispatch`). Concurrency group `ci-${{ github.ref }}` with `cancel-in-progress: true` prevents Docker tag races. Three jobs (frontend 10m, backend 10m, docker 15m timeouts):
 - **FrontEnd:** `npm ci` → `npm run build` → `npm run test`
 - **Backend:** `dotnet restore` → `dotnet build` → `dotnet test`
-- **Docker:** Builds and pushes image to GHCR (only on `main`)
+- **Docker:** Builds and pushes API + frontend images to GHCR (only on `main`). Frontend image uses `build-args` for `VITE_API_URL` and `VITE_CSP_*` vars.
 
-**CD:** Manual workflow dispatch (10m timeout) — `docker/login-action` → SSH into server via `SSH_PRIVATE_KEY` + `SSH_KNOWN_HOSTS` → pull and restart → health check with retry.
+**CD:** Manual workflow dispatch (15m timeout) — `docker/login-action` → SSH into server via `SSH_PRIVATE_KEY` + `SSH_KNOWN_HOSTS` → pull and restart both API + frontend containers → health check with retry.
 **Security:** All GitHub Actions pinned to commit SHA digests (with `# vX.Y.Z` version comment).
 **Public repo hygiene:** Any infrastructure detail (hostnames, URLs, IPs) that appears in workflow logs must use `${{ secrets.* }}` (masked) instead of `${{ vars.* }}` (visible). The CD workflow's `API_HOST` is a secret for this reason. CI vars like `VITE_API_URL` are intentionally public (inlined into the website's JS bundle).
 
@@ -211,9 +213,11 @@ Every file change must uphold these invariants:
 - All NuGet packages must use central version management (`Directory.Packages.props`), with stable versions only (no preview versions).
 
 ### Docker
-- `Dockerfile` must set `ASPNETCORE_URLS` explicitly to match `EXPOSE`.
+- `Dockerfile` must set `ASPNETCORE_URLS` explicitly to match `EXPOSE` (backend only).
 - `Dockerfile` must have a `HEALTHCHECK` instruction.
 - `Dockerfile` should use targeted `COPY` paths (not `COPY . .`).
+- Frontend Docker image: `ghcr.io/s3rbr0p4r/mycv/mycv-frontend` (nginx:alpine, serves built `dist/` on configurable port via `${PORT}` env var).
+- Backend Docker image: `ghcr.io/s3rbr0p4r/mycv/mycv-api` (aspnet:10.0).
 - Run as non-root via `USER $APP_UID`.
 
 ### Frontend Build
@@ -225,6 +229,7 @@ Every file change must uphold these invariants:
 - Production CSP must NOT include `'unsafe-inline'` for `script-src` (Vite extracts all JS to separate files).
 - Frontend CSP: both `<meta>` tag (in `index.html`) and backend `Content-Security-Policy` header must be kept in sync.
 - Backend responses should include `Content-Security-Policy` header as defense-in-depth.
+- CSP env vars in `.env` files must be **double-quoted** to preserve single quotes for CSP keywords (e.g. `VITE_CSP_SCRIPT_SRC="'self'"`). Node.js 24's `parseEnv` strips bare single quotes. GitHub variables bypass this and use bare CSP syntax (e.g. `'self'`).
 
 ### Testing Coverage
 - Every **public class** in the backend must have corresponding test coverage (unit or integration).

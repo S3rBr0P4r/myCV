@@ -16,7 +16,7 @@ Built with [opencode](https://opencode.ai) under human supervision.
 ## Quick start
 
 ```bash
-cd frontend && npm run dev   # starts both (FE :5173, BE :60355)
+cd frontend && npm run dev   # starts both services
 ```
 
 | Command | Action |
