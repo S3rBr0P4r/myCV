@@ -53,6 +53,7 @@ jobs:
       - run: dotnet build Backend.slnx --no-restore --configuration Release
         working-directory: ./backend
       - run: |
+          set +e
           dotnet test Backend.slnx --no-build --configuration Release > /tmp/test-output.txt 2>&1; status=$?; cat /tmp/test-output.txt
           echo "## Backend tests" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
