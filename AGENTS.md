@@ -231,6 +231,7 @@ Every file change must uphold these invariants:
 - Every **React component** should have at least a smoke test (renders without error).
 - Every **custom hook** should have behavior tests via `renderHook`.
 - Integration tests must reset static state (e.g. `DiscordNotifier.ResetCooldown()`).
+- **Removing production code must also remove its tests** — when a feature, header, endpoint, or class is deleted, all corresponding test assertions and test files must be deleted alongside it. Orphaned tests that assert deleted functionality will fail.
 
 ### Accessibility
 - Interactive elements must have `aria-label` or visible text labels.

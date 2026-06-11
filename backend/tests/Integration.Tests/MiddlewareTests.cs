@@ -29,19 +29,6 @@ public sealed class MiddlewareTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task PermissionsPolicyHeader_ShouldRestrictFeatures()
-    {
-        var response = await _client.GetAsync("/api/v1/cv");
-
-        response.Headers.Should().ContainKey("Permissions-Policy");
-        var policy = response.Headers.GetValues("Permissions-Policy").First();
-        policy.Should().Contain("camera=()");
-        policy.Should().Contain("microphone=()");
-        policy.Should().Contain("geolocation=()");
-        policy.Should().Contain("interest-cohort=()");
-    }
-
-    [Fact]
     public async Task CorsPreflight_ShouldAllowConfiguredOrigin()
     {
         var request = new HttpRequestMessage(HttpMethod.Options, "/api/v1/cv");
