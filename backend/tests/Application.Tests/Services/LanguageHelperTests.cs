@@ -49,9 +49,9 @@ public sealed class LanguageHelperTests
     }
 
     [Fact]
-    public void NormalizeLanguage_InvalidCulture_ShouldReturnNull()
+    public void NormalizeLanguage_MultipleCulturesInHeader_ShouldUseFirst()
     {
-        LanguageHelper.NormalizeLanguage("zzzzz").Should().BeNull();
+        LanguageHelper.NormalizeLanguage("fr-FR,en;q=0.9").Should().Be("FR");
     }
 
     [Fact]
