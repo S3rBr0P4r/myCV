@@ -51,6 +51,7 @@ section-common.css       Section, .section-title, .painted-bg
 experience.css           Cards, pagination, description links
 skills.css               Skill grid, categories, items
 contact.css              #contact, .contact-card, .email-link
+feedback.css             FAB, overlay, modal, star rating, textarea, toast
 footer.css               Footer, .footer-attribution
 utilities.css            Scrollbar, transition-lock, reduced-motion
 animations.css           Stagger + scroll-reveal keyframes
@@ -173,7 +174,7 @@ Triggers on push to `main` (or manual `workflow_dispatch`). Concurrency group `c
 Before marking any feature/refactor PR as complete, verify these common dead-code sources are not reintroduced:
 
 ### Frontend
-- **Dead CSS**: After removing a component/feature, grep all 12 component files under `styles/` + `animations.css` for any class names or `@keyframes` that are no longer referenced in any `.tsx`/`.ts` file. Remove the orphaned rules.
+- **Dead CSS**: After removing a component/feature, grep all 13 component files under `styles/` + `animations.css` for any class names or `@keyframes` that are no longer referenced in any `.tsx`/`.ts` file. Remove the orphaned rules.
 - **Unused translation keys**: After removing a UI element, check if its `t('key')` call is gone. If so, delete the key from both `en.ts` and `es.ts`. Keep `nav.dot*` keys (used by scroll-progress in `App.tsx`).
 - **Orphaned utility files**: When consolidating or refactoring (e.g. merging 3 company lookup files into 1), delete the old files and update all imports. Check AGENTS.md + README.md for stale file references.
 - **One-off scripts**: Image conversion, data migration, or generation scripts (`scripts/`) that were run once should be deleted after use. Remove their devDependencies too (e.g. `sharp`).
@@ -196,12 +197,14 @@ Before marking any feature/refactor PR as complete, verify these common dead-cod
 - `NoWarn` suppresses CS1591 (missing XML docs) and CA1707 (test naming underscores).
 - Frontend `index.html` lives in `src/`, so `vite.config.ts` needs `root: 'src'`, `envDir: '..'`, and HTML paths are relative to `src/` (e.g. `./main.tsx`, not `./src/main.tsx`).
 - Backend `global.json` requires `rollForward: latestMajor` (not `latestPatch`) to work on SDK versions newer than 10.0.203.
-- Backend tests use **Moq** (not NSubstitute). Test projects: Domain.Tests (5), Application.Tests (33), Integration.Tests (14).
-- Integration.Tests uses `WebApplicationFactory<Program>` with a temp .docx fixture. Always reset static state (e.g. `DiscordNotifier.ResetCooldown()`) in test setup. `Program.cs` declares `public partial class Program { }` at file end so `WebApplicationFactory<Program>` can reference it — no `InternalsVisibleTo` needed.
+- Backend tests use **Moq** (not NSubstitute). Test projects: Domain.Tests (5), Application.Tests (73), Integration.Tests (21).
+- Integration.Tests uses `WebApplicationFactory<Program>` with a temp .docx fixture. Always reset static state (e.g. `DiscordErrorNotifier.ResetCooldown()`) in test setup. `Program.cs` declares `public partial class Program { }` at file end so `WebApplicationFactory<Program>` can reference it — no `InternalsVisibleTo` needed.
 - Namespace root is `Backend.*` — no `MyCV` prefix anywhere in the backend.
 - **README must be kept in sync** — every change that adds, removes, or modifies a feature, directory, dependency, configuration key, or command must also update `README.md` (stack table, architecture tree, config table, quick start, how it works). This is enforced in code review.
 - **DOCX file is immutable** — the `cv.docx` file must never be modified. All derived data (company URLs, logos, etc.) must be provided via hardcoded frontend maps (`CompanyData.ts` with `CompanyMatch.ts` factories). The DOCX parser must remain backward-compatible with the old 2-line format (`Company | Location` → `Role | Period`). Company logo/URL/image matching uses accent-normalized prefix-based fuzzy matching.
 - Frontend Vitest setup: `tests/test-setup.ts` imports `@testing-library/jest-dom/vitest`. Vitest config in `vite.config.ts` `test` block with `happy-dom` environment, `VITE_API_URL` env var, and `globals: true`.
+- **Feedback flow**: FAB (fixed bottom-right) → modal with name, stars, optional comment → toast notification (bottom-right, 5s auto-dismiss, gold left accent). Country auto-detected via `Intl.DisplayNames`, sent in POST body but not shown. Comment is optional, only included in Discord embed when non-empty.
+- **Two Discord webhooks**: `DiscordErrorNotifier` (red embed, 1h cooldown via static `_lastAlertTime`, uses `ErrorWebhookUrl`). `DiscordFeedbackNotifier` (green embed with fields array, no cooldown, uses `FeedbackWebhookUrl`). Both have empty-URL and invalid-URL guards, 5s timeout. CD passes both via `Discord__ErrorWebhookUrl` and `Discord__FeedbackWebhookUrl` env vars.
 
 ## Security & Quality Baselines
 
@@ -239,7 +242,7 @@ Every file change must uphold these invariants:
 - Every **class** in the backend must have corresponding test coverage (unit or integration) — mandatory, no exceptions.
 - Every **React component** should have at least a smoke test (renders without error).
 - Every **custom hook** should have behavior tests via `renderHook`.
-- Integration tests must reset static state (e.g. `DiscordNotifier.ResetCooldown()`).
+- Integration tests must reset static state (e.g. `DiscordErrorNotifier.ResetCooldown()`).
 - **Removing production code must also remove its tests** — when a feature, header, endpoint, or class is deleted, all corresponding test assertions and test files must be deleted alongside it. Orphaned tests that assert deleted functionality will fail.
 
 ### Accessibility
