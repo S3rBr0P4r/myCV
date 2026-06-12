@@ -38,24 +38,20 @@ describe('ApiCVRepository', () => {
     );
   });
 
-  it('returns fallback on HTTP error', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce({
+  it('throws on HTTP error', async () => {
+    vi.mocked(fetch).mockResolvedValue({
       ok: false,
       status: 500,
     } as Response);
 
     const repo = new ApiCVRepository();
-    const result = await repo.getCV('en');
-
-    expect(result.experiences).toEqual([]);
+    await expect(repo.getCV('en')).rejects.toThrow('BACKEND_UNREACHABLE');
   });
 
-  it('returns fallback on network error', async () => {
-    vi.mocked(fetch).mockRejectedValueOnce(new Error('Network error'));
+  it('throws on network error', async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error('Network error'));
 
     const repo = new ApiCVRepository();
-    const result = await repo.getCV('en');
-
-    expect(result.experiences).toEqual([]);
+    await expect(repo.getCV('en')).rejects.toThrow('BACKEND_UNREACHABLE');
   });
 });

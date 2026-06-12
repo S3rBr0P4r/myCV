@@ -47,17 +47,6 @@ function isValidCV(data: unknown): data is CV {
   );
 }
 
-function buildFallback(): CV {
-  return {
-    name: 'John',
-    lastName: 'Doe (Offline)',
-    title: 'Creative Developer',
-    summary: 'The backend is not responding, but here is your local data.',
-    experiences: [],
-    skillCategories: [],
-  };
-}
-
 function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -73,7 +62,7 @@ export class ApiCVRepository implements ICVRepository {
     }
 
     if (isCircuitOpen()) {
-      return buildFallback();
+      throw new Error('BACKEND_UNREACHABLE');
     }
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
@@ -105,6 +94,6 @@ export class ApiCVRepository implements ICVRepository {
     }
 
     onFailure();
-    return buildFallback();
+    throw new Error('BACKEND_UNREACHABLE');
   }
 }

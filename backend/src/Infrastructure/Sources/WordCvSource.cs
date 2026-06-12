@@ -14,7 +14,7 @@ public sealed class WordCvSource : ICvSource
     private readonly string _filePath;
     private readonly string _allowedDirectory;
     private readonly ILogger<WordCvSource> _logger;
-    private readonly DiscordNotifier _discordNotifier;
+    private readonly DiscordErrorNotifier _discordNotifier;
     private CV? _cv;
     private bool _parsed;
     private readonly object _parseLock = new();
@@ -22,7 +22,7 @@ public sealed class WordCvSource : ICvSource
     public WordCvSource(
         IOptions<CvSourceOptions> options,
         ILogger<WordCvSource> logger,
-        DiscordNotifier discordNotifier)
+        DiscordErrorNotifier discordNotifier)
     {
         _filePath = options.Value.FilePath ?? string.Empty;
         _allowedDirectory = options.Value.AllowedDirectory ?? string.Empty;

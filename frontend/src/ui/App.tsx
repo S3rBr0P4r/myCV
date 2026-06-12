@@ -10,6 +10,7 @@ import { Experience } from './components/Experience';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { Skills } from './components/Skills';
 import { Footer } from './components/Footer';
+import { Feedback } from './components/Feedback';
 
 function useSectionTracker(cv: CV | null) {
   useEffect(() => {
@@ -66,7 +67,7 @@ function buildSections(cv: { skillCategories: unknown[] }, t: (k: string) => str
 }
 
 export function App() {
-  const { cv, loading, error, refetch } = useCV();
+  const { cv, loading, error } = useCV();
   const { t } = useTranslation();
 
   useScrollReveal('.reveal', 'active', 0.15, [cv]);
@@ -82,8 +83,9 @@ export function App() {
         <AnimatedBackground />
         <div className="painted-bg" id="bg" />
         <section className="intro-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ opacity: 0.5 }}>Loading CV...</p>
+          <p style={{ opacity: 0.5 }}>{t('loading.message')}</p>
         </section>
+        <Feedback />
       </>
     );
   }
@@ -94,23 +96,22 @@ export function App() {
         <Header />
         <AnimatedBackground />
         <div className="painted-bg" id="bg" />
-        <section className="intro-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-          <p style={{ color: 'var(--accent)', marginBottom: '1rem' }}>{error || 'Failed to load CV'}</p>
-          <button
-            onClick={refetch}
-            className="retry-btn"
-            style={{
-              padding: '0.5rem 1.5rem',
-              border: '1px solid var(--accent)',
-              background: 'transparent',
-              color: 'var(--accent)',
-              cursor: 'pointer',
-              borderRadius: '4px',
-            }}
-          >
-            Retry
-          </button>
+        <section style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: '2rem',
+          textAlign: 'center',
+          padding: 'min(20vh, 160px) 5% 60px',
+        }}>
+          <img src="/errors/backend_not_responding.webp" alt="" style={{ width: 'min(85vw, 600px)', height: 'auto', display: 'block' }} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            <h2 style={{ color: 'var(--text)', fontSize: '1.6rem', margin: 0 }}>{t('offline.title')}</h2>
+            <p style={{ color: 'var(--text-secondary)', margin: 0, maxWidth: '440px' }}>{t('offline.message')}</p>
+          </div>
         </section>
+        <Feedback />
       </>
     );
   }
@@ -137,6 +138,7 @@ export function App() {
           />
         ))}
       </nav>
+      <Feedback />
     </>
   );
 }

@@ -62,7 +62,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 ["CvSource:FilePath"] = _docxFilePath,
                 ["CvSource:AllowedDirectory"] = "",
                 ["DeepL:AuthKey"] = "",
-                ["Discord:WebhookUrl"] = "",
+                ["Discord:ErrorWebhookUrl"] = "",
                 ["Cors:AllowedOrigins:0"] = "http://localhost:5173",
                 ["Cors:FrontendUrl"] = "http://localhost:5173",
                 ["Serilog:MinimumLevel:Default"] = "Fatal",

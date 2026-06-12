@@ -14,14 +14,14 @@ public sealed class DeepLTranslationService : ITranslationService
     private readonly HttpClient _httpClient;
     private readonly DeepLOptions _options;
     private readonly IMemoryCache _cache;
-    private readonly DiscordNotifier _discordNotifier;
+    private readonly DiscordErrorNotifier _discordNotifier;
     private readonly ILogger<DeepLTranslationService> _logger;
 
     public DeepLTranslationService(
         HttpClient httpClient,
         IOptions<DeepLOptions> options,
         IMemoryCache cache,
-        DiscordNotifier discordNotifier,
+        DiscordErrorNotifier discordNotifier,
         ILogger<DeepLTranslationService> logger)
     {
         _httpClient = httpClient;

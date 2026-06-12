@@ -60,19 +60,20 @@ describe('App', () => {
 
   it('shows loading state', () => {
     render(<App />, { wrapper: TestWrapper });
-    expect(screen.getByText('Loading CV...')).toBeInTheDocument();
+    expect(screen.getByText('Loading\u2026')).toBeInTheDocument();
   });
 
-  it('shows error state', () => {
-    const Wrapper = createWrapper(null, false, 'Something went wrong');
+  it('shows offline page on error', () => {
+    const Wrapper = createWrapper(null, false, 'BACKEND_UNREACHABLE');
     render(<App />, { wrapper: Wrapper });
-    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByText('Calcifer and Totoro are on it!')).toBeInTheDocument();
+    expect(screen.getByText("The backend is taking a quick nap, but our spirited team is working on waking it up. Come back in a moment!")).toBeInTheDocument();
   });
 
-  it('shows generic error when cv is null without error', () => {
+  it('shows offline page when cv is null without error', () => {
     const Wrapper = createWrapper(null, false, null);
     render(<App />, { wrapper: Wrapper });
-    expect(screen.getByText('Failed to load CV')).toBeInTheDocument();
+    expect(screen.getByText('Calcifer and Totoro are on it!')).toBeInTheDocument();
   });
 
   it('renders main sections when CV loaded', async () => {

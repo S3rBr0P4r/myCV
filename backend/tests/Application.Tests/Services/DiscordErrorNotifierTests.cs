@@ -10,20 +10,20 @@ using Xunit;
 
 namespace Backend.Tests.Infrastructure.Services;
 
-public sealed class DiscordNotifierTests
+public sealed class DiscordErrorNotifierTests
 {
-    public DiscordNotifierTests()
+    public DiscordErrorNotifierTests()
     {
-        DiscordNotifier.ResetCooldown();
+        DiscordErrorNotifier.ResetCooldown();
     }
     [Fact]
     public async Task SendAlertAsync_EmptyWebhookUrl_ShouldNotCallHttpClient()
     {
         var handlerMock = new Mock<HttpMessageHandler>();
         var httpClient = new HttpClient(handlerMock.Object);
-        var options = Options.Create(new DiscordOptions { WebhookUrl = string.Empty });
-        var loggerMock = new Mock<ILogger<DiscordNotifier>>();
-        var notifier = new DiscordNotifier(httpClient, options, loggerMock.Object);
+        var options = Options.Create(new DiscordOptions { ErrorWebhookUrl = string.Empty });
+        var loggerMock = new Mock<ILogger<DiscordErrorNotifier>>();
+        var notifier = new DiscordErrorNotifier(httpClient, options, loggerMock.Object);
 
         await notifier.SendAlertAsync("title", "message");
 
@@ -48,10 +48,10 @@ public sealed class DiscordNotifierTests
         var httpClient = new HttpClient(handlerMock.Object);
         var options = Options.Create(new DiscordOptions
         {
-            WebhookUrl = "https://discord.com/api/webhooks/test"
+            ErrorWebhookUrl = "https://discord.com/api/webhooks/test"
         });
-        var loggerMock = new Mock<ILogger<DiscordNotifier>>();
-        var notifier = new DiscordNotifier(httpClient, options, loggerMock.Object);
+        var loggerMock = new Mock<ILogger<DiscordErrorNotifier>>();
+        var notifier = new DiscordErrorNotifier(httpClient, options, loggerMock.Object);
 
         await notifier.SendAlertAsync("First", "First message");
         await notifier.SendAlertAsync("Second", "Second message");
@@ -82,9 +82,9 @@ public sealed class DiscordNotifierTests
 
         var httpClient = new HttpClient(handlerMock.Object);
         var webhookUrl = "https://discord.com/api/webhooks/test";
-        var options = Options.Create(new DiscordOptions { WebhookUrl = webhookUrl });
-        var loggerMock = new Mock<ILogger<DiscordNotifier>>();
-        var notifier = new DiscordNotifier(httpClient, options, loggerMock.Object);
+        var options = Options.Create(new DiscordOptions { ErrorWebhookUrl = webhookUrl });
+        var loggerMock = new Mock<ILogger<DiscordErrorNotifier>>();
+        var notifier = new DiscordErrorNotifier(httpClient, options, loggerMock.Object);
 
         await notifier.SendAlertAsync("Test Title", "Test description");
 

@@ -66,10 +66,10 @@ internal static class DeepLTestFixture
             AuthKey = "test-key-12345",
             CacheDurationMinutes = 1440
         });
-        var discordOptions = Options.Create(new DiscordOptions { WebhookUrl = string.Empty });
+        var discordOptions = Options.Create(new DiscordOptions { ErrorWebhookUrl = string.Empty });
         return new DeepLTranslationService(
             client, options, cache,
-            new DiscordNotifier(new HttpClient(), discordOptions, Mock.Of<ILogger<DiscordNotifier>>()),
+            new DiscordErrorNotifier(new HttpClient(), discordOptions, Mock.Of<ILogger<DiscordErrorNotifier>>()),
             Mock.Of<ILogger<DeepLTranslationService>>());
     }
 }

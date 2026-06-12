@@ -187,9 +187,9 @@ public sealed class WordCvSourceTests : IDisposable
         return new WordCvSource(options, Mock.Of<ILogger<WordCvSource>>(), notifier);
     }
 
-    private static DiscordNotifier CreateNoopNotifier()
+    private static DiscordErrorNotifier CreateNoopNotifier()
     {
-        var options = Options.Create(new DiscordOptions { WebhookUrl = string.Empty });
-        return new DiscordNotifier(new HttpClient(), options, Mock.Of<ILogger<DiscordNotifier>>());
+        var options = Options.Create(new DiscordOptions { ErrorWebhookUrl = string.Empty });
+        return new DiscordErrorNotifier(new HttpClient(), options, Mock.Of<ILogger<DiscordErrorNotifier>>());
     }
 }

@@ -30,4 +30,22 @@ export const en: Record<string, string> = {
   'nav.dotSkills': 'Capabilities',
   'nav.dotContact': 'Contact',
   'nav.dotAria': 'Quick navigation',
+
+  /* Loading & Offline */
+  'loading.message': 'Loading\u2026',
+  'offline.title': 'Calcifer and Totoro are on it!',
+  'offline.message': "The backend is taking a quick nap, but our spirited team is working on waking it up. Come back in a moment!",
+
+  /* Feedback */
+  'feedback.fab': 'Send feedback',
+  'feedback.title': 'Send feedback',
+  'feedback.subtitle': 'What’s on your mind? I’d love to hear it.',
+  'feedback.nameLabel': 'Your name',
+  'feedback.commentLabel': 'Comment (optional)',
+  'feedback.ratingLabel': 'Rating',
+  'feedback.send': 'Send',
+  'feedback.thankYou': 'Thank you!',
+  'feedback.error': 'Something went wrong. Please try again.',
+  'feedback.requiredName': 'Please enter your name.',
+  'feedback.requiredRating': 'Please select a rating.',
 };

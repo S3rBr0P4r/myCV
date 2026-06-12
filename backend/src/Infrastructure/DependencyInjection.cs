@@ -14,7 +14,8 @@ public static class DependencyInjection
         services.Configure<DiscordOptions>(configuration.GetSection(DiscordOptions.SectionName));
         services.Configure<DeepLOptions>(configuration.GetSection(DeepLOptions.SectionName));
 
-        services.AddHttpClient<DiscordNotifier>();
+        services.AddHttpClient<DiscordErrorNotifier>();
+        services.AddHttpClient<DiscordFeedbackNotifier>();
         services.AddHttpClient<DeepLTranslationService>();
 
         services.AddMemoryCache();
