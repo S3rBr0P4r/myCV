@@ -9,6 +9,9 @@ internal sealed class DeepLRequest
 
     [JsonPropertyName("target_lang")]
     public string TargetLang { get; init; } = string.Empty;
+
+    [JsonPropertyName("context")]
+    public string Context { get; init; } = string.Empty;
 }
 
 internal sealed class DeepLResponse

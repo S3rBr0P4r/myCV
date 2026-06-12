@@ -104,9 +104,11 @@ public sealed class DeepLTranslationServiceTests
         result.Experiences[0].Description.Should().Be("Translated desc 1");
         result.Experiences[0].Background.Should().Be(string.Empty);
         result.SkillCategories.Should().HaveCount(1);
+        result.SkillCategories[0].Name.Should().Be("Translated languages");
         result.SkillCategories[0].SubCategories.Should().HaveCount(1);
+        result.SkillCategories[0].SubCategories[0].Name.Should().Be("Translated dotnet");
         result.SkillCategories[0].SubCategories[0].Items.Should()
-            .BeEquivalentTo(["Translated skill 1", "Translated skill 2"]);
+            .BeEquivalentTo(["C#", ".NET"]);
     }
 
     [Fact]
@@ -157,8 +159,8 @@ public sealed class DeepLTranslationServiceTests
                 new { detected_source_language = "EN", text = "Rol 1" },
                 new { detected_source_language = "EN", text = "Empresa 1" },
                 new { detected_source_language = "EN", text = "Descripción 1" },
-                new { detected_source_language = "EN", text = "Habilidad 1" },
-                new { detected_source_language = "EN", text = "Habilidad 2" }
+                new { detected_source_language = "EN", text = "Lenguajes" },
+                new { detected_source_language = "EN", text = "PuntoNET" }
             }
         });
 
