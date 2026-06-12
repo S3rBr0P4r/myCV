@@ -78,7 +78,8 @@ jobs:
                -e SocialLinks__GitHub=${{ vars.SOCIAL_LINKS_GITHUB }} \
                -e AllowedHosts=* \
                -e Cors__FrontendUrl=${{ vars.FRONTEND_URL }} \
-               -e Discord__WebhookUrl=${{ secrets.DISCORD_WEBHOOK_URL }} \
+               -e Discord__ErrorWebhookUrl=${{ secrets.DISCORD_ERROR_WEBHOOK_URL }} \
+               -e Discord__FeedbackWebhookUrl=${{ secrets.DISCORD_FEEDBACK_WEBHOOK_URL }} \
                -e DeepL__AuthKey=${{ secrets.DEEPL_AUTH_KEY }} \
                -e DeepL__TimeoutSeconds=${{ vars.DEEPL_TIMEOUT_SECONDS }} \
                $IMAGE && \
