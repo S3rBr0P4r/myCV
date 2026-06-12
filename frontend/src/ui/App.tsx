@@ -19,12 +19,19 @@ function useSectionTracker(cv: CV | null) {
 
     if (sections.length === 0) return;
 
+    const visible = new Set<string>();
+
     const observer = new IntersectionObserver(entries => {
       for (const entry of entries) {
         if (entry.isIntersecting) {
-          dots.forEach(d => d.classList.toggle('active', d.dataset.section === entry.target.id));
+          visible.add(entry.target.id);
+        } else {
+          visible.delete(entry.target.id);
         }
       }
+      const ids = Array.from(dots).map(d => d.dataset.section).filter(Boolean) as string[];
+      const active = ids.findLast(id => visible.has(id)) ?? ids[0];
+      dots.forEach(d => d.classList.toggle('active', d.dataset.section === active));
     }, { threshold: 0.3, rootMargin: '0px 0px -30% 0px' });
 
     sections.forEach(s => observer.observe(s));
