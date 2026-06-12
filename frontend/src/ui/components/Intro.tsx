@@ -13,6 +13,12 @@ export function Intro({ name, summary, gitHubUrl }: IntroProps) {
     ? `https://github.com/${gitHubUrl.replace(/https?:\/\/github\.com\//, '').replace(/\/.*$/, '')}.png`
     : undefined;
 
+  const greeting = t('intro.greeting', { name });
+
+  const phraseBroken = greeting
+    .replace(/ /g, '\u00a0')
+    .replace(/\.\u00a0/g, '. ');
+
   return (
     <section id="intro" className="intro-section">
       <div className="intro-layout">
@@ -29,7 +35,7 @@ export function Intro({ name, summary, gitHubUrl }: IntroProps) {
           </div>
         )}
         <div className="intro-content">
-          <h1 className="main-title">{renderFormattedText(t('intro.greeting', { name }))}</h1>
+          <h1 className="main-title">{renderFormattedText(phraseBroken)}</h1>
           <p className="intro-description">{renderFormattedText(summary)}</p>
         </div>
       </div>
