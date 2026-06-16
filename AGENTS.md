@@ -48,10 +48,12 @@ navbar.css               Navbar, social-links, theme-toggle, locale-dropdown
 scroll-progress.css      Side navigation dots
 intro.css                #intro, .main-title, .intro-description
 section-common.css       Section, .section-title, .painted-bg
-experience.css           Cards, pagination, description links
+experience.css           Cards, layout, work-mode badges
+experience-detail.css   Pagination, description list, links
 skills.css               Skill grid, categories, items
 contact.css              #contact, .contact-card, .email-link
 feedback.css             FAB, overlay, modal, star rating, textarea, toast
+lang-transition.css      Language switch shimmer + pulse animation
 footer.css               Footer, .footer-attribution
 utilities.css            Scrollbar, transition-lock, reduced-motion
 animations.css           Stagger + scroll-reveal keyframes

@@ -15,7 +15,7 @@ const locales = [
 ];
 
 export function Header() {
-  const { t, locale, setLocale } = useTranslation();
+  const { t, locale, startTransition } = useTranslation();
   const { toggleTheme } = useTheme();
   const { cv } = useCV();
   const active = locales.find(l => l.code === locale)!;
@@ -84,7 +84,7 @@ export function Header() {
                     aria-label={t(l.ariaKey)}
                     title={t(l.ariaKey)}
                     onClick={e => {
-                      setLocale(l.code);
+                      startTransition(l.code);
                       const dd = e.currentTarget.closest('.locale-dropdown');
                       dd?.classList.remove('locale-menu--open');
                     }}

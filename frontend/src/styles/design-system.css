@@ -6,8 +6,10 @@
 @import './intro.css';
 @import './section-common.css';
 @import './experience.css';
+@import './experience-detail.css';
 @import './skills.css';
 @import './contact.css';
 @import './footer.css';
 @import './feedback.css';
+@import './lang-transition.css';
 @import './utilities.css';
