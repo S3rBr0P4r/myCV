@@ -570,7 +570,7 @@ public sealed class WordCvSourceTests : IDisposable
 
 ### Key points for WordCvSource tests:
 - **Document creation**: Uses `WordprocessingDocument.Create()` to build a minimal `.docx` in a temp file. The `AddMainDocumentPart()` only creates the part — the `Document` property is null until explicitly assigned: `mainPart.Document = new Document()`.
-- **Noop DiscordNotifier**: Create with empty `WebhookUrl` so `SendAlertAsync` returns immediately without HTTP calls. No mocking required.
+- **Noop DiscordNotifier**: Create with empty `ErrorWebhookUrl` so `SendAlertAsync` returns immediately without HTTP calls. No mocking required.
 - **Temp directory**: `IDisposable` pattern with `_tempDir` ensures cleanup. Use `Guid` in folder name to avoid collisions.
 - **SUT creation helper**: Extract `CreateSut(path)` to avoid repeating the options/logger/notifier setup.
 - **Caching**: Verify `GetCvAsync_CalledTwice_ShouldReturnCachedResult` by asserting `second.Should().BeSameAs(first)`.
@@ -578,15 +578,14 @@ public sealed class WordCvSourceTests : IDisposable
 
 ---
 
-## 6. DiscordNotifier Tests
+## 6. DiscordErrorNotifier Tests
 
-### Pattern: Testing Static Flag with HttpMessageHandler Mock
+### Pattern: Testing Static Cooldown with HttpMessageHandler Mock
 
-Use `Mock<HttpMessageHandler>` with `Protected().Setup()` to capture or verify HTTP calls. Reset the static `_alertSent` flag in the constructor to avoid cross-test pollution.
+Use `Mock<HttpMessageHandler>` with `Protected().Setup()` to capture or verify HTTP calls. Reset the static `_lastAlertTime` via `DiscordErrorNotifier.ResetCooldown()` in the constructor to avoid cross-test pollution.
 
 ```csharp
 using System.Net;
-using System.Reflection;
 using Backend.Infrastructure.Options;
 using Backend.Infrastructure.Services;
 using FluentAssertions;
@@ -595,13 +594,11 @@ using Moq;
 using Moq.Protected;
 using Xunit;
 
-public sealed class DiscordNotifierTests
+public sealed class DiscordErrorNotifierTests
 {
-    // Reset static flag between tests to avoid pollution (reflection only — no production code exposed for testing)
-    public DiscordNotifierTests()
+    public DiscordErrorNotifierTests()
     {
-        var field = typeof(DiscordNotifier).GetField("_alertSent", BindingFlags.Static | BindingFlags.NonPublic);
-        field!.SetValue(null, false);
+        DiscordErrorNotifier.ResetCooldown();
     }
 
     [Fact]
@@ -609,8 +606,8 @@ public sealed class DiscordNotifierTests
     {
         var handlerMock = new Mock<HttpMessageHandler>();
         var httpClient = new HttpClient(handlerMock.Object);
-        var options = Options.Create(new DiscordOptions { WebhookUrl = string.Empty });
-        var notifier = new DiscordNotifier(httpClient, options);
+        var options = Options.Create(new DiscordOptions { ErrorWebhookUrl = string.Empty });
+        var notifier = new DiscordErrorNotifier(httpClient, options);
 
         await notifier.SendAlertAsync("title", "message");
 
@@ -635,9 +632,9 @@ public sealed class DiscordNotifierTests
         var httpClient = new HttpClient(handlerMock.Object);
         var options = Options.Create(new DiscordOptions
         {
-            WebhookUrl = "https://discord.com/api/webhooks/test"
+            ErrorWebhookUrl = "https://discord.com/api/webhooks/test"
         });
-        var notifier = new DiscordNotifier(httpClient, options);
+        var notifier = new DiscordErrorNotifier(httpClient, options);
 
         await notifier.SendAlertAsync("First", "First message");
         await notifier.SendAlertAsync("Second", "Second message");
@@ -669,9 +666,9 @@ public sealed class DiscordNotifierTests
         var httpClient = new HttpClient(handlerMock.Object);
         var options = Options.Create(new DiscordOptions
         {
-            WebhookUrl = "https://discord.com/api/webhooks/test"
+            ErrorWebhookUrl = "https://discord.com/api/webhooks/test"
         });
-        var notifier = new DiscordNotifier(httpClient, options);
+        var notifier = new DiscordErrorNotifier(httpClient, options);
 
         await notifier.SendAlertAsync("Test Title", "Test description");
 
@@ -683,11 +680,11 @@ public sealed class DiscordNotifierTests
 }
 ```
 
-### Key points for DiscordNotifier tests:
-- **Static flag reset**: The `_alertSent` field is `static` — it persists across all tests in the process. Use reflection to reset it in the constructor (`typeof(DiscordNotifier).GetField("_alertSent", BindingFlags.Static | BindingFlags.NonPublic)`). Do NOT expose `internal` methods just for testing.
+### Key points for DiscordErrorNotifier tests:
+- **Static cooldown reset**: `DiscordErrorNotifier.ResetCooldown()` is a `public static` method that resets `_lastAlertTime` to `DateTime.MinValue`. Call it in the test constructor to avoid cross-test pollution.
 - **HttpMessageHandler**: Moq's `Protected().Setup("SendAsync", ...)` mocks the protected `SendAsync` method. Verify with `Protected().Verify("SendAsync", Times.Once(), ...)`.
 - **Request capture**: Use a callback in `ReturnsAsync` to capture the `HttpRequestMessage` for body/content assertions.
-- **Noop**: Empty `WebhookUrl` causes `DiscordNotifier` to return immediately without any HTTP call.
+- **Noop**: Empty `ErrorWebhookUrl` causes `DiscordErrorNotifier` to return immediately without any HTTP call.
 - **Moq.Protected namespace**: Requires `using Moq.Protected;`.
 
 ---
