@@ -13,9 +13,8 @@ function loadStored(): Locale {
   return 'en';
 }
 
-const FADE_OUT = 500;
-const HOLD = 300;
-const FADE_IN = 400;
+const WASH_IN = 300;
+const WASH_OUT = 250;
 
 interface TranslationContextValue {
   locale: Locale;
@@ -52,22 +51,24 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const startTransition = useCallback((newLocale: Locale) => {
     if (newLocale === locale || isTransitioning) return;
 
-    setIsTransitioning(true);
+    // Switch locale immediately
+    setLocaleState(newLocale);
+    localStorage.setItem(STORAGE_KEY, newLocale);
+    document.documentElement.setAttribute('data-locale', newLocale);
+
+    // Play the shimmer as a brief acknowledgment effect
     document.documentElement.classList.add('lang-transitioning');
+    setIsTransitioning(true);
 
     timeoutRef.current = setTimeout(() => {
-      setLocaleState(newLocale);
-      localStorage.setItem(STORAGE_KEY, newLocale);
-      document.documentElement.setAttribute('data-locale', newLocale);
-
       document.documentElement.classList.remove('lang-transitioning');
       document.documentElement.classList.add('lang-entering');
 
       timeoutRef.current = setTimeout(() => {
         setIsTransitioning(false);
         document.documentElement.classList.remove('lang-entering');
-      }, FADE_IN);
-    }, FADE_OUT + HOLD);
+      }, WASH_OUT);
+    }, WASH_IN);
   }, [locale, isTransitioning]);
 
   const t = useCallback(
