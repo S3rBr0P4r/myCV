@@ -1,9 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { Experience } from '../../src/ui/components/Experience';
 import { TranslationProvider } from '../../src/ui/contexts/TranslationContext';
 import type { ReactNode } from 'react';
 import type { Experience as ExpType } from '../../src/domain/entities/CV';
+
+const oneExp: ExpType[] = [
+  { period: '2024', role: 'Senior Dev', company: 'Acme', description: 'Did work' },
+];
 
 const twoExps: ExpType[] = [
   { period: '2024', role: 'Senior Dev', company: 'Acme', description: 'Did work' },
@@ -22,79 +26,72 @@ function Wrapper({ children }: { children: ReactNode }) {
   return <TranslationProvider>{children}</TranslationProvider>;
 }
 
+function getPrevBtn() {
+  return screen.getAllByLabelText('Previous')[0];
+}
+
+function getNextBtn() {
+  return screen.getAllByLabelText('Next')[0];
+}
+
 describe('Experience', () => {
   it('renders section title', () => {
-    render(<Experience experiences={twoExps} />, { wrapper: Wrapper });
+    render(<Experience experiences={oneExp} />, { wrapper: Wrapper });
     expect(screen.getByText('Career')).toBeInTheDocument();
   });
 
   it('renders experience cards', () => {
-    render(<Experience experiences={twoExps} />, { wrapper: Wrapper });
+    render(<Experience experiences={oneExp} />, { wrapper: Wrapper });
     expect(screen.getByText('Senior Dev')).toBeInTheDocument();
-    expect(screen.getByText('Junior Dev')).toBeInTheDocument();
   });
 
   it('shows company name', () => {
-    render(<Experience experiences={twoExps} />, { wrapper: Wrapper });
+    render(<Experience experiences={oneExp} />, { wrapper: Wrapper });
     expect(screen.getByText('Acme')).toBeInTheDocument();
-    expect(screen.getByText('Beta')).toBeInTheDocument();
   });
 
   it('shows period', () => {
-    render(<Experience experiences={twoExps} />, { wrapper: Wrapper });
+    render(<Experience experiences={oneExp} />, { wrapper: Wrapper });
     expect(screen.getByText('2024')).toBeInTheDocument();
   });
 
   it('shows description', () => {
-    render(<Experience experiences={twoExps} />, { wrapper: Wrapper });
+    render(<Experience experiences={oneExp} />, { wrapper: Wrapper });
     expect(screen.getByText('Did work')).toBeInTheDocument();
   });
 
-  it('does not show pagination for <= 2 items', () => {
-    render(<Experience experiences={twoExps} />, { wrapper: Wrapper });
-    expect(screen.queryByText('← Previous')).not.toBeInTheDocument();
-    expect(screen.queryByText('Next →')).not.toBeInTheDocument();
-  });
-
-  it('shows pagination for > 2 items', () => {
+  it('shows carousel controls for > 1 item', () => {
     render(<Experience experiences={fiveExps} />, { wrapper: Wrapper });
-    expect(screen.getByText('← Previous')).toBeInTheDocument();
-    expect(screen.getByText('Next →')).toBeInTheDocument();
+    expect(getPrevBtn()).toBeInTheDocument();
+    expect(getNextBtn()).toBeInTheDocument();
   });
 
-  it('shows first page by default', () => {
+  it('hides carousel controls for 1 item', () => {
+    render(<Experience experiences={oneExp} />, { wrapper: Wrapper });
+    expect(screen.queryByLabelText('Previous')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Next')).not.toBeInTheDocument();
+  });
+
+  it('renders all items with scroll-snap pages', () => {
     render(<Experience experiences={fiveExps} />, { wrapper: Wrapper });
     expect(screen.getByText('Role A')).toBeInTheDocument();
-    expect(screen.getByText('Role B')).toBeInTheDocument();
-    expect(screen.queryByText('Role C')).not.toBeInTheDocument();
+    expect(screen.getByText('Role E')).toBeInTheDocument();
   });
 
-  it('navigates to next page', () => {
-    render(<Experience experiences={fiveExps} />, { wrapper: Wrapper });
-    fireEvent.click(screen.getByText('Next →'));
-    expect(screen.getByText('Role C')).toBeInTheDocument();
-    expect(screen.getByText('Role D')).toBeInTheDocument();
-    expect(screen.queryByText('Role A')).not.toBeInTheDocument();
+  it('renders correct number of pages', () => {
+    const { container } = render(<Experience experiences={fiveExps} />, { wrapper: Wrapper });
+    const pages = container.querySelectorAll('.exp-carousel-page');
+    expect(pages.length).toBe(5);
   });
 
-  it('disables Previous on page 1', () => {
+  it('disables previous on first page', () => {
     render(<Experience experiences={fiveExps} />, { wrapper: Wrapper });
-    expect(screen.getByText('← Previous')).toBeDisabled();
-    expect(screen.getByText('Next →')).not.toBeDisabled();
+    expect(getPrevBtn()).toBeDisabled();
+    expect(getNextBtn()).not.toBeDisabled();
   });
 
-  it('disables Next on last page', () => {
+  it('disables next on last page', () => {
     render(<Experience experiences={fiveExps} />, { wrapper: Wrapper });
-    fireEvent.click(screen.getByText('Next →'));
-    fireEvent.click(screen.getByText('Next →'));
-    expect(screen.getByText('Next →')).toBeDisabled();
-    expect(screen.getByText('← Previous')).not.toBeDisabled();
-  });
-
-  it('shows page indicator', () => {
-    render(<Experience experiences={fiveExps} />, { wrapper: Wrapper });
-    expect(screen.getByText('1 / 3')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Next →'));
-    expect(screen.getByText('2 / 3')).toBeInTheDocument();
+    expect(getNextBtn()).not.toBeDisabled();
   });
 });

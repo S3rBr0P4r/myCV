@@ -22,6 +22,9 @@ export function useScrollReveal(
 
     const elements = document.querySelectorAll(selector);
     for (const el of elements) {
+      if (el.getBoundingClientRect().top < window.innerHeight) {
+        el.classList.add(activeClass);
+      }
       observerRef.current.observe(el);
     }
 

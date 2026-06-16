@@ -100,4 +100,8 @@
   .skills-grid {
     grid-template-columns: 1fr;
   }
+
+  .skill-category {
+    padding-top: 52px;
+  }
 }

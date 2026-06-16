@@ -10,8 +10,8 @@ export const es: Record<string, string> = {
 
   /* Experience section */
   'experience.title': 'Trayectoria',
-  'exp.prev': '← Anterior',
-  'exp.next': 'Siguiente →',
+  'exp.prev': 'Anterior',
+  'exp.next': 'Siguiente',
 
   /* Skills section */
   'skills.title': 'Capacidades',
