@@ -13,9 +13,33 @@
   max-width: 1100px;
 }
 
+@media (min-width: 1600px) {
+  .intro-layout {
+    max-width: 1400px;
+  }
+}
+
+@media (min-width: 2200px) {
+  .intro-layout {
+    max-width: 1600px;
+  }
+}
+
 .intro-content {
   max-width: 640px;
   text-align: left;
+}
+
+@media (min-width: 1600px) {
+  .intro-content {
+    max-width: 850px;
+  }
+}
+
+@media (min-width: 2200px) {
+  .intro-content {
+    max-width: 1000px;
+  }
 }
 
 .main-title {

@@ -4,6 +4,18 @@ section {
   margin: 0 auto;
 }
 
+@media (min-width: 1600px) {
+  section {
+    max-width: 1400px;
+  }
+}
+
+@media (min-width: 2200px) {
+  section {
+    max-width: 1600px;
+  }
+}
+
 .section-title {
   margin-bottom: 48px;
   position: relative;
