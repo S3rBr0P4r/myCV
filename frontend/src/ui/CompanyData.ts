@@ -37,10 +37,10 @@ const companyData: Record<string, CompanyAssets> = {
     image: '/backgrounds/altran.webp',
     logo: '/logos/altran.webp',
   },
-  'hemini plc': {
-    url: 'https://www.hemini.com',
-    image: '/backgrounds/hemini.webp',
-    logo: '/logos/hemini.webp',
+  'it digital': {
+    url: 'https://itdigital.net/',
+    image: '/backgrounds/itdigital.webp',
+    logo: '/logos/itdigital.webp',
   },
   'imed hospitals': {
     url: 'https://www.imedhospitales.com',
