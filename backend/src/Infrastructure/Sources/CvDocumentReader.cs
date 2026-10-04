@@ -23,7 +23,7 @@ internal static class CvDocumentReader
 
         var lines = new List<string>();
 
-        foreach (var element in body.ChildElements)
+        foreach (var element in body!.ChildElements)
         {
             if (element is Paragraph paragraph)
             {
@@ -31,6 +31,22 @@ internal static class CvDocumentReader
                 if (text.Length > 0)
                 {
                     lines.Add(text);
+                }
+            }
+            else if (element is Table table)
+            {
+                foreach (var row in table.Elements<TableRow>())
+                {
+                    foreach (var cell in row.Elements<TableCell>())
+                    {
+                        var cellText = string.Join(" ", cell.Elements<Paragraph>()
+                            .Select(p => TextFormatter.GetFormattedText(p, hyperlinkRels))
+                            .Where(t => t.Length > 0));
+                        if (cellText.Length > 0)
+                        {
+                            lines.Add(cellText);
+                        }
+                    }
                 }
             }
         }
@@ -41,11 +57,6 @@ internal static class CvDocumentReader
         }
 
         return BuildCV(lines, hyperlinkRels);
-    }
-
-    private static bool HasSectionHeader(List<string> lines)
-    {
-        return lines.Any(l => SectionHelper.SectionHeaders.Contains(l.ToLowerInvariant().Trim()));
     }
 
     private static CV BuildCV(List<string> lines, Dictionary<string, Uri> hyperlinkRels)
