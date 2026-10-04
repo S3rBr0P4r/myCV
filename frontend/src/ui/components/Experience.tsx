@@ -111,9 +111,16 @@ function ExpCard({ exp }: { exp: Experience }) {
         <h3>{exp.role}</h3>
         {bullets.length > 0 && (
           <ul className="exp-description">
-            {bullets.map((b, i) => (
-              <li key={i}>{renderFormattedText(b)}</li>
-            ))}
+            {bullets.map((b, i) => {
+              const trimmed = b.trim();
+              // Check if it's a sub-category: starts with ** and contains **...**: (bold text followed by colon space)
+              const isSubCategory = trimmed.startsWith('**') && trimmed.includes('**:') && !trimmed.startsWith('**Tech Stack');
+              return (
+                <li key={i} className={isSubCategory ? 'exp-description-sub' : ''}>
+                  {renderFormattedText(b)}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

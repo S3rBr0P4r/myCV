@@ -10,49 +10,54 @@ internal static class ExperienceParser
     private static bool IsKnownWorkMode(string value) =>
         KnownWorkModes.Contains(value.Trim(), StringComparer.OrdinalIgnoreCase);
 
-    private static (string location, string workMode) ParseLegacyLocation(string raw)
-    {
-        var parenStart = raw.LastIndexOf('(');
-        var parenEnd = raw.LastIndexOf(')');
-        if (parenStart >= 0 && parenEnd > parenStart)
-        {
-            return (raw[..parenStart].Trim(), raw[(parenStart + 1)..parenEnd].Trim());
-        }
-        return (raw.Trim(), string.Empty);
-    }
+    private static readonly string[] PipeSeparator = [" | "];
 
-    private static bool TryResolveNewFormatLocation(
-        string nextLine, string companyAfterPipe,
-        out string companyUrl, out string location, out string workMode)
+    private static bool TryParseExperienceFormat(
+        string line, out string role, out string company, out string location, out string workMode)
     {
-        var nextPipeIdx = nextLine.IndexOf(" | ", StringComparison.Ordinal);
-        if (nextPipeIdx >= 0 && IsKnownWorkMode(nextLine[(nextPipeIdx + 3)..].Trim()))
-        {
-            companyUrl = companyAfterPipe;
-            location = nextLine[..nextPipeIdx].Trim();
-            workMode = nextLine[(nextPipeIdx + 3)..].Trim();
-            return true;
-        }
-
-        companyUrl = string.Empty;
+        role = string.Empty;
+        company = string.Empty;
         location = string.Empty;
         workMode = string.Empty;
-        return false;
-    }
 
-    private static bool TryParseRoleLine(string line, out string role, out string period)
-    {
-        var pipeIdx = line.IndexOf(" | ", StringComparison.Ordinal);
-        if (pipeIdx < 0)
+        // Expected format: "Role | Company | WorkMode (Location)" e.g., "Senior Backend Engineer | Docplanner | Remote (Barcelona-based)"
+        var parts = line.Split(PipeSeparator, StringSplitOptions.None);
+        if (parts.Length != 3)
         {
-            role = string.Empty;
-            period = string.Empty;
             return false;
         }
 
-        role = line[..pipeIdx].Trim();
-        period = line[(pipeIdx + 3)..].Trim();
-        return true;
+        role = parts[0].Trim();
+        company = parts[1].Trim();
+
+        var locationPart = parts[2].Trim();
+        var parenStart = locationPart.LastIndexOf('(');
+        var parenEnd = locationPart.LastIndexOf(')');
+        if (parenStart >= 0 && parenEnd > parenStart)
+        {
+            var beforeParen = locationPart[..parenStart].Trim();
+            var insideParen = locationPart[(parenStart + 1)..parenEnd].Trim();
+
+            // Document format is "WorkMode (Location)" e.g., "Remote (Barcelona-based)"
+            if (IsKnownWorkMode(beforeParen))
+            {
+                workMode = beforeParen;
+                location = insideParen;
+            }
+            else
+            {
+                // Default: assume before paren is work mode, inside is location
+                workMode = beforeParen;
+                location = insideParen;
+            }
+        }
+        else
+        {
+            // No parentheses - cannot parse
+            return false;
+        }
+
+        return !string.IsNullOrEmpty(role) && !string.IsNullOrEmpty(company);
     }
 
     internal static List<Experience> ParseExperiences(List<string> lines, Dictionary<string, int> sectionMap)
@@ -68,60 +73,36 @@ internal static class ExperienceParser
 
         while (idx < sectionLines.Count)
         {
-            var companyLine = sectionLines[idx];
-            var pipeIdx = companyLine.IndexOf(" | ", StringComparison.Ordinal);
-            if (pipeIdx < 0)
+            var line = sectionLines[idx];
+
+            if (TryParseExperienceFormat(line, out var role, out var company, out var location, out var workMode))
             {
                 idx++;
+                if (idx >= sectionLines.Count)
+                {
+                    break;
+                }
+
+                // Next line should be the period
+                var period = sectionLines[idx].Trim();
+                idx++;
+
+                experiences.Add(new Experience
+                {
+                    Period = period,
+                    Role = role,
+                    Company = company,
+                    CompanyUrl = string.Empty,
+                    Location = location,
+                    WorkMode = workMode,
+                    Description = CollectDescription(sectionLines, ref idx),
+                    Background = string.Empty
+                });
                 continue;
             }
 
-            var companyName = companyLine[..pipeIdx].Trim();
-            var afterPipe = companyLine[(pipeIdx + 3)..].Trim();
+            // Unrecognized line - skip
             idx++;
-
-            if (idx >= sectionLines.Count)
-            {
-                break;
-            }
-
-            string companyUrl;
-            string location;
-            string workMode;
-
-            if (TryResolveNewFormatLocation(sectionLines[idx], afterPipe, out companyUrl, out location, out workMode))
-            {
-                idx++;
-            }
-            else
-            {
-                companyUrl = string.Empty;
-                (location, workMode) = ParseLegacyLocation(afterPipe);
-            }
-
-            if (idx >= sectionLines.Count)
-            {
-                break;
-            }
-
-            if (!TryParseRoleLine(sectionLines[idx], out var role, out var period))
-            {
-                idx++;
-                continue;
-            }
-            idx++;
-
-            experiences.Add(new Experience
-            {
-                Period = period,
-                Role = role,
-                Company = companyName,
-                CompanyUrl = companyUrl,
-                Location = location,
-                WorkMode = workMode,
-                Description = CollectDescription(sectionLines, ref idx),
-                Background = string.Empty
-            });
         }
 
         return experiences;
@@ -135,7 +116,11 @@ internal static class ExperienceParser
             var line = sectionLines[idx];
             if (line.Contains(" | ", StringComparison.Ordinal))
             {
-                break;
+                // Check if this is a new experience entry
+                if (line.Split(" | ", StringSplitOptions.None).Length == 3)
+                {
+                    break;
+                }
             }
 
             lines.Add(line);

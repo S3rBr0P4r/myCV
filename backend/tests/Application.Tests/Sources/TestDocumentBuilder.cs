@@ -25,18 +25,16 @@ internal static class TestDocumentBuilder
         AddParagraph(body, "Building digital experiences.");
         AddParagraph(body, "Passionate about code.");
         AddParagraph(body, "EXPERIENCE");
-        AddParagraph(body, "Acme Corp | https://acme.com");
-        AddParagraph(body, "Barcelona | Remote");
-        AddParagraph(body, "Senior Developer | 2024 - PRESENT");
+        AddParagraph(body, "Senior Developer | Acme Corp | Remote (Barcelona)");
+        AddParagraph(body, "2024 - PRESENT");
         AddParagraph(body, "Building things.");
         AddParagraph(body, "Tech Stack: C#, .NET");
-        AddParagraph(body, "StartupX | https://startupx.io");
-        AddParagraph(body, "Madrid | Remote");
-        AddParagraph(body, "Full Stack Engineer | 2021 - 2023");
+        AddParagraph(body, "Full Stack Engineer | StartupX | Remote (Madrid)");
+        AddParagraph(body, "2021 - 2023");
         AddParagraph(body, "Creating products.");
         AddParagraph(body, "Tech Stack: TypeScript, React");
-        AddParagraph(body, "TECHNICAL SKILLS");
-        AddParagraph(body, "Languages");
+        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
+        AddParagraph(body, "**Languages**");
         AddParagraph(body, "C#, .NET, TypeScript");
 
         return path;
@@ -61,16 +59,16 @@ internal static class TestDocumentBuilder
         AddParagraph(body, "Building digital experiences.");
         AddParagraph(body, "Passionate about code.");
         AddParagraph(body, "EXPERIENCE");
-        AddParagraph(body, "Acme Corp | Barcelona (Remote)");
-        AddParagraph(body, "Senior Developer | 2024 - PRESENT");
+        AddParagraph(body, "Senior Developer | Acme Corp | Remote (Barcelona)");
+        AddParagraph(body, "2024 - PRESENT");
         AddParagraph(body, "Building things.");
         AddParagraph(body, "Tech Stack: C#, .NET");
-        AddParagraph(body, "StartupX | Madrid (Onsite)");
-        AddParagraph(body, "Full Stack Engineer | 2021 - 2023");
+        AddParagraph(body, "Full Stack Engineer | StartupX | Onsite (Madrid)");
+        AddParagraph(body, "2021 - 2023");
         AddParagraph(body, "Creating products.");
         AddParagraph(body, "Tech Stack: TypeScript, React");
-        AddParagraph(body, "TECHNICAL SKILLS");
-        AddParagraph(body, "Languages");
+        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
+        AddParagraph(body, "**Languages**");
         AddParagraph(body, "C#, .NET, TypeScript");
 
         return path;
@@ -91,7 +89,6 @@ internal static class TestDocumentBuilder
         AddParagraph(body, "First line of summary.");
         AddParagraph(body, "Second line of summary.");
         AddParagraph(body, "Third line.");
-        AddParagraph(body, "TECHNICAL SKILLS");
 
         return path;
     }
@@ -110,7 +107,6 @@ internal static class TestDocumentBuilder
         AddParagraph(body, "SUMMARY");
         AddParagraph(body, "Just a summary.");
         AddParagraph(body, "EXPERIENCE");
-        AddParagraph(body, "TECHNICAL SKILLS");
 
         return path;
     }
@@ -129,14 +125,14 @@ internal static class TestDocumentBuilder
         AddParagraph(body, "SUMMARY");
         AddParagraph(body, "Summary text.");
         AddParagraph(body, "EXPERIENCE");
-        AddParagraph(body, "TECHNICAL SKILLS");
-        AddParagraph(body, "Languages");
-        AddParagraph(body, "Advanced");
+        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
+        AddParagraph(body, "**Languages**");
+        AddParagraph(body, "Advanced:");
         AddParagraph(body, "C#, .NET");
-        AddParagraph(body, "Working Knowledge");
+        AddParagraph(body, "Working Knowledge:");
         AddParagraph(body, "TypeScript, JavaScript");
-        AddParagraph(body, "Cloud");
-        AddParagraph(body, "AWS");
+        AddParagraph(body, "**Cloud**");
+        AddParagraph(body, "AWS:");
         AddParagraph(body, "Lambda, S3");
 
         return path;

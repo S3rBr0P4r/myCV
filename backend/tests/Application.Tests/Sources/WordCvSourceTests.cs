@@ -45,14 +45,14 @@ public sealed class WordCvSourceTests : IDisposable
         cv.Experiences[0].Period.Should().Be("2024 - PRESENT");
         cv.Experiences[0].Role.Should().Be("Senior Developer");
         cv.Experiences[0].Company.Should().Be("Acme Corp");
-        cv.Experiences[0].CompanyUrl.Should().Be("https://acme.com");
+        cv.Experiences[0].CompanyUrl.Should().BeEmpty();
         cv.Experiences[0].Location.Should().Be("Barcelona");
         cv.Experiences[0].WorkMode.Should().Be("Remote");
         cv.Experiences[0].Description.Should().Be("Building things.\nTech Stack: C#, .NET");
         cv.Experiences[1].Period.Should().Be("2021 - 2023");
         cv.Experiences[1].Role.Should().Be("Full Stack Engineer");
         cv.Experiences[1].Company.Should().Be("StartupX");
-        cv.Experiences[1].CompanyUrl.Should().Be("https://startupx.io");
+        cv.Experiences[1].CompanyUrl.Should().BeEmpty();
         cv.Experiences[1].Location.Should().Be("Madrid");
         cv.Experiences[1].WorkMode.Should().Be("Remote");
         cv.Experiences[1].Description.Should().Be("Creating products.\nTech Stack: TypeScript, React");

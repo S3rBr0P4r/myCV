@@ -1,5 +1,4 @@
 using Backend.Domain.Entities;
-using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace Backend.Infrastructure.Sources;
 
@@ -7,12 +6,15 @@ internal static class SkillsParser
 {
     internal static List<SkillCategory> ParseSkills(List<string> lines, Dictionary<string, int> sectionMap)
     {
-        if (!sectionMap.TryGetValue("technical skills", out var start))
+        // New format: "certifications & relevant training" section with bold category headers
+        var sectionName = sectionMap.ContainsKey("certifications & relevant training") ? "certifications & relevant training" : null;
+
+        if (sectionName is null)
         {
             return [];
         }
 
-        var sectionLines = SectionHelper.GetSectionLines(lines, sectionMap, "technical skills");
+        var sectionLines = SectionHelper.GetSectionLines(lines, sectionMap, sectionName);
         if (sectionLines.Count == 0)
         {
             return [];
@@ -32,9 +34,48 @@ internal static class SkillsParser
                 break;
             }
 
+            var trimmed = line.Trim();
+
+            // Detect category headers (bold lines: **Category**)
+            var isCategoryHeader = trimmed.StartsWith("**", StringComparison.Ordinal)
+                && trimmed.EndsWith("**", StringComparison.Ordinal)
+                && !trimmed.Contains(',')
+                && !trimmed.Contains(':');
+
+            if (isCategoryHeader)
+            {
+                FlushSub(ref categories, ref currentSub, ref currentItems, currentCategory);
+                FlushCategory(ref categories, currentCategory);
+                currentCategory = trimmed.Trim('*');
+                currentSub = null;
+                currentItems = [];
+                continue;
+            }
+
             if (currentCategory is null)
             {
-                currentCategory = line;
+                // Skip lines before first category
+                continue;
+            }
+
+            // Handle subsection headers ending with ":"
+            if (trimmed.EndsWith(':'))
+            {
+                FlushSub(ref categories, ref currentSub, ref currentItems, currentCategory);
+                currentSub = trimmed[..^1].Trim();
+                continue;
+            }
+
+            // Handle subcategory with items on same line: "Subcategory: item1, item2, item3"
+            var colonIdx = trimmed.IndexOf(": ", StringComparison.Ordinal);
+            if (colonIdx > 0 && trimmed.IndexOf(',', colonIdx) > 0)
+            {
+                var subCategory = trimmed[..colonIdx].Trim();
+                var itemsText = trimmed[(colonIdx + 2)..].Trim();
+                FlushSub(ref categories, ref currentSub, ref currentItems, currentCategory);
+                currentSub = subCategory;
+                currentItems.AddRange(
+                    itemsText.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries));
                 continue;
             }
 
@@ -46,22 +87,26 @@ internal static class SkillsParser
                 continue;
             }
 
-            FlushSub(ref categories, ref currentSub, ref currentItems, currentCategory);
+            // Skill items on separate lines, possibly with **Language**: Level format
+            var skillText = ExtractSkillText(line);
+            if (!string.IsNullOrEmpty(skillText))
+            {
+                currentSub ??= "General";
+                currentItems.Add(skillText);
+                continue;
+            }
 
-            if (NextLineHasItems(sectionLines, i))
-            {
-                currentSub = line;
-            }
-            else
-            {
-                FlushCategory(ref categories, currentCategory);
-                currentCategory = line;
-            }
+            // Empty or unrecognized line - skip
         }
 
         FlushSub(ref categories, ref currentSub, ref currentItems, currentCategory);
         FlushCategory(ref categories, currentCategory);
 
+        return BuildCategories(categories);
+    }
+
+    private static List<SkillCategory> BuildCategories(List<(string Name, List<(string SubName, List<string> Items)> Subs)> categories)
+    {
         return categories.Select(c => new SkillCategory
         {
             Name = c.Name,
@@ -73,82 +118,30 @@ internal static class SkillsParser
         }).ToList();
     }
 
-    internal static List<SkillCategory> ParseSkillsFromTable(Table table)
+    private static string ExtractSkillText(string line)
     {
-        var categories = new List<(string Name, List<(string SubName, List<string> Items)> Subs)>();
-        string? currentCategory = null;
-
-        foreach (var row in table.Elements<TableRow>())
+        var trimmed = line.Trim();
+        if (string.IsNullOrEmpty(trimmed))
         {
-            var cells = row.Elements<TableCell>().ToList();
-            if (cells.Count < 2)
-            {
-                continue;
-            }
-
-            var nameCell = cells[0].InnerText.Trim();
-            var itemsCell = cells[1].InnerText.Trim();
-
-            if (nameCell.Length == 0)
-            {
-                continue;
-            }
-
-            if (itemsCell.Length == 0)
-            {
-                currentCategory = nameCell;
-                if (!categories.Any(c => c.Name == currentCategory))
-                {
-                    categories.Add((currentCategory, []));
-                }
-            }
-            else if (currentCategory is not null)
-            {
-                var items = SplitRespectingParentheses(itemsCell);
-                var catIdx = categories.FindIndex(c => c.Name == currentCategory);
-                if (catIdx >= 0)
-                {
-                    var cat = categories[catIdx];
-                    var updatedSubs = cat.Subs.Append((nameCell, items)).ToList();
-                    categories[catIdx] = (cat.Name, updatedSubs);
-                }
-            }
+            return string.Empty;
         }
 
-        return categories.Select(c => new SkillCategory
+        // Handle **Language**: Level format
+        if (trimmed.StartsWith("**", StringComparison.Ordinal) && trimmed.Contains("**:", StringComparison.Ordinal))
         {
-            Name = c.Name,
-            SubCategories = c.Subs.Select(s => new SkillSubCategory
-            {
-                Name = s.SubName,
-                Items = s.Items.AsReadOnly()
-            }).ToList().AsReadOnly()
-        }).ToList();
-    }
-
-    private static bool NextLineHasItems(List<string> lines, int currentIndex)
-    {
-        for (int i = currentIndex + 1; i < lines.Count; i++)
-        {
-            var next = lines[i];
-
-            if (SectionHelper.IsSectionHeader(next))
-            {
-                return false;
-            }
-
-            if (next.Contains(','))
-            {
-                return true;
-            }
-
-            if (!string.IsNullOrWhiteSpace(next))
-            {
-                return false;
-            }
+            var colonIdx = trimmed.IndexOf("**:", StringComparison.Ordinal);
+            var skillName = trimmed[..colonIdx].Trim('*').Trim();
+            var level = trimmed[(colonIdx + 3)..].Trim();
+            return $"{skillName}: {level}";
         }
 
-        return false;
+        // Skip if it's just formatting markers or section-like
+        if (trimmed.StartsWith("**", StringComparison.Ordinal) && trimmed.EndsWith("**", StringComparison.Ordinal) && trimmed.Count(c => c == '*') == 4)
+        {
+            return string.Empty;
+        }
+
+        return trimmed;
     }
 
     private static void FlushSub(

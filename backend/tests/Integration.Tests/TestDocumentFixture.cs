@@ -20,13 +20,12 @@ internal static class TestDocumentFixture
         AddParagraph(body, "SUMMARY");
         AddParagraph(body, "Experienced developer.");
         AddParagraph(body, "EXPERIENCE");
-        AddParagraph(body, "Acme Corp | https://acme.com");
-        AddParagraph(body, "San Francisco, CA | Remote");
-        AddParagraph(body, "Senior Dev | Jan 2020 - Present");
+        AddParagraph(body, "Senior Dev | Acme Corp | Remote (San Francisco, CA)");
+        AddParagraph(body, "Jan 2020 - Present");
         AddParagraph(body, "- Built APIs");
         AddParagraph(body, "- Led teams");
-        AddParagraph(body, "TECHNICAL SKILLS");
-        AddParagraph(body, "Languages");
+        AddParagraph(body, "CERTIFICATIONS & RELEVANT TRAINING");
+        AddParagraph(body, "**Languages**");
         AddParagraph(body, "C#, TypeScript");
 
         mainPart.Document.Save();

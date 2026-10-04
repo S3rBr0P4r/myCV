@@ -42,7 +42,7 @@ public sealed class CvControllerTests : IClassFixture<CustomWebApplicationFactor
         cv!.Experiences.Should().HaveCount(1);
         var exp = cv.Experiences[0];
         exp.Company.Should().Be("Acme Corp");
-        exp.CompanyUrl.Should().Be("https://acme.com");
+        exp.CompanyUrl.Should().BeEmpty();
         exp.Location.Should().Be("San Francisco, CA");
         exp.WorkMode.Should().Be("Remote");
         exp.Role.Should().Be("Senior Dev");

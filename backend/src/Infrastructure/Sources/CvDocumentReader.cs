@@ -22,7 +22,6 @@ internal static class CvDocumentReader
             .ToDictionary(r => r.Id, r => r.Uri, StringComparer.Ordinal);
 
         var lines = new List<string>();
-        Table? skillsTable = null;
 
         foreach (var element in body.ChildElements)
         {
@@ -34,17 +33,6 @@ internal static class CvDocumentReader
                     lines.Add(text);
                 }
             }
-            else if (element is Table table)
-            {
-                if (!HasSectionHeader(lines))
-                {
-                    CollectTableRows(table, hyperlinkRels, lines);
-                }
-                else
-                {
-                    skillsTable = table;
-                }
-            }
         }
 
         if (lines.Count < 3)
@@ -52,7 +40,7 @@ internal static class CvDocumentReader
             throw new CvSourceClientException();
         }
 
-        return BuildCV(lines, skillsTable, hyperlinkRels);
+        return BuildCV(lines, hyperlinkRels);
     }
 
     private static bool HasSectionHeader(List<string> lines)
@@ -60,24 +48,7 @@ internal static class CvDocumentReader
         return lines.Any(l => SectionHelper.SectionHeaders.Contains(l.ToLowerInvariant().Trim()));
     }
 
-    private static void CollectTableRows(Table table, Dictionary<string, Uri> hyperlinkRels, List<string> lines)
-    {
-        foreach (var row in table.Elements<TableRow>())
-        {
-            foreach (var cell in row.Elements<TableCell>())
-            {
-                var cellText = string.Join(" ", cell.Elements<Paragraph>()
-                    .Select(p => TextFormatter.GetFormattedText(p, hyperlinkRels))
-                    .Where(t => t.Length > 0));
-                if (cellText.Length > 0)
-                {
-                    lines.Add(cellText);
-                }
-            }
-        }
-    }
-
-    private static CV BuildCV(List<string> lines, Table? skillsTable, Dictionary<string, Uri> hyperlinkRels)
+    private static CV BuildCV(List<string> lines, Dictionary<string, Uri> hyperlinkRels)
     {
         var name = lines[0];
         var lastName = SectionHelper.ExtractLastName(name);
@@ -88,9 +59,7 @@ internal static class CvDocumentReader
         var sectionMap = SectionHelper.BuildSectionMap(lines);
         var summary = string.Join("\n", SectionHelper.GetSectionLines(lines, sectionMap, "summary"));
         var experiences = ExperienceParser.ParseExperiences(lines, sectionMap);
-        var skillCategories = skillsTable is not null
-            ? SkillsParser.ParseSkillsFromTable(skillsTable)
-            : SkillsParser.ParseSkills(lines, sectionMap);
+        var skillCategories = SkillsParser.ParseSkills(lines, sectionMap);
 
         return new CV
         {

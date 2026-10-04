@@ -170,6 +170,14 @@
   opacity: 0.5;
 }
 
+.exp-description li.exp-description-sub {
+  padding-left: 32px;
+}
+
+.exp-description li.exp-description-sub::before {
+  left: 16px;
+}
+
 .exp-description li a:link {
   color: #0066cc;
 }
