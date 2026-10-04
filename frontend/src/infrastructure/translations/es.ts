@@ -14,7 +14,7 @@ export const es: Record<string, string> = {
   'exp.next': 'Siguiente',
 
   /* Skills section */
-  'skills.title': 'Capacidades',
+  'skills.title': 'Certificaciones y formación relevante',
 
   /* Contact section */
   'contact.heading': 'Hagamos que las cosas sucedan',
@@ -27,7 +27,7 @@ export const es: Record<string, string> = {
   /* Scroll progress */
   'nav.dotIntro': 'Inicio',
   'nav.dotExperience': 'Trayectoria',
-  'nav.dotSkills': 'Capacidades',
+  'nav.dotSkills': 'Certificaciones y formación relevante',
   'nav.dotContact': 'Contacto',
   'nav.dotAria': 'Navegación rápida',
 

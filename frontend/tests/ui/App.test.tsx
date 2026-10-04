@@ -81,7 +81,7 @@ describe('App', () => {
     render(<App />, { wrapper: Wrapper });
 
     expect(screen.getByText('Career')).toBeInTheDocument();
-    expect(screen.getByText('Capabilities')).toBeInTheDocument();
+    expect(screen.getByText('Certifications & relevant training')).toBeInTheDocument();
     expect(await screen.findByText("Let's make things happen")).toBeInTheDocument();
   });
 

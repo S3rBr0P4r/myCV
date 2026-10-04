@@ -6,7 +6,7 @@ export const en: Record<string, string> = {
   'nav.localeEs': 'Spanish',
 
   /* Intro */
-  'intro.greeting': "Well met. I'm {name}.",
+  'intro.greeting': "Greetings. I'm {name}.",
 
   /* Experience section */
   'experience.title': 'Career',
@@ -14,7 +14,7 @@ export const en: Record<string, string> = {
   'exp.next': 'Next',
 
   /* Skills section */
-  'skills.title': 'Capabilities',
+  'skills.title': 'Certifications & relevant training',
 
   /* Contact section */
   'contact.heading': "Let's make things happen",
@@ -27,7 +27,7 @@ export const en: Record<string, string> = {
   /* Scroll progress */
   'nav.dotIntro': 'Home',
   'nav.dotExperience': 'Career',
-  'nav.dotSkills': 'Capabilities',
+  'nav.dotSkills': 'Certifications & relevant training',
   'nav.dotContact': 'Contact',
   'nav.dotAria': 'Quick navigation',
 
