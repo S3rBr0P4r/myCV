@@ -22,7 +22,7 @@ describe('getCompanyUrl', () => {
     expect(getCompanyUrl('metrohm dropsens')).toBe('https://www.dropsens.com');
   });
 
-  it('matches hemini PLC to hemini.com', () => {
-    expect(getCompanyUrl('Heminí PLC')).toBe('https://www.hemini.com');
+  it('matches it digital to hemini.com', () => {
+    expect(getCompanyUrl('IT Digital')).toBe('https://itdigital.net/');
   });
 });
