@@ -7,6 +7,7 @@ export const es: Record<string, string> = {
 
   /* Intro */
   'intro.greeting': 'Bienvenido. Soy {name}.',
+  'intro.readmeLink': 'Revisa mi stack completo en GitHub',
 
   /* Experience section */
   'experience.title': 'Trayectoria',

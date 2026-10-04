@@ -37,6 +37,16 @@ export function Intro({ name, summary, gitHubUrl }: IntroProps) {
         <div className="intro-content">
           <h1 className="main-title">{renderFormattedText(phraseBroken)}</h1>
           <p className="intro-description">{renderFormattedText(summary)}</p>
+          {gitHubUrl && (
+            <a
+              className="intro-readme-link"
+              href={gitHubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('intro.readmeLink')}
+            </a>
+          )}
         </div>
       </div>
     </section>

@@ -15,4 +15,21 @@ describe('Intro', () => {
     const strong = screen.getByText('world');
     expect(strong.tagName).toBe('STRONG');
   });
+
+  it('renders README link when gitHubUrl provided', () => {
+    render(
+      <TranslationProvider>
+        <Intro name="John" summary="Hello" gitHubUrl="https://github.com/john" />
+      </TranslationProvider>,
+    );
+    const link = screen.getByText('Review my full stack on GitHub');
+    expect(link).toHaveAttribute('href', 'https://github.com/john');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('omits README link when gitHubUrl missing', () => {
+    render(<TranslationProvider><Intro name="John" summary="Hello" /></TranslationProvider>);
+    expect(screen.queryByText('Review my full stack on GitHub')).not.toBeInTheDocument();
+  });
 });

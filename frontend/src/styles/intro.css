@@ -64,6 +64,36 @@
   font-weight: 600;
 }
 
+.intro-readme-link {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0066cc;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.intro-readme-link:hover {
+  color: var(--primary);
+}
+
+.intro-readme-link:active {
+  color: var(--primary-dark);
+}
+
+[data-theme='dark'] .intro-readme-link {
+  color: #e8c860;
+}
+
+[data-theme='dark'] .intro-readme-link:hover {
+  color: #7a8fa8;
+}
+
+[data-theme='dark'] .intro-readme-link:active {
+  color: #5c7088;
+}
+
 /* Polaroid portrait — analog frame above the fold */
 .intro-polaroid {
   position: absolute;
