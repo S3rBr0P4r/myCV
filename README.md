@@ -53,12 +53,12 @@ myCV/
 │   ├── Dockerfile
 │   └── tests/             Domain (5), Application (73), Integration (21)
 │
-└── .github/workflows/     CI (build+test+Docker) + CD (manual SSH deploy)
+└── .github/workflows/     CI (build+test+Docker) + CD (fetch CV from NAS + SSH deploy)
 ```
 
 ## How it works
 
-1. **`.docx` → JSON**: `WordCvSource` parses the CV file into structured data at runtime.
+1. **`.docx` → JSON**: The CV file never enters the repo — CD fetches it from a password-protected QNAP File Station share link, validates it, and installs it at `/opt/mycv/data/cv.docx`. At runtime, `WordCvSource` parses the file into structured data.
 2. **`GET /api/v1/cv`**: Returns the CV as JSON, optionally translated via DeepL based on `Accept-Language`.
 3. **`POST /api/v1/feedback`**: Stores viewer feedback (name, rating, country, comment) and forwards it to a Discord webhook as a green embed.
 4. **Frontend**: Fetches CV on load, re-fetches on locale switch. Resets to a friendly offline page when the backend is unreachable. Feedback FAB opens a modal with star rating, name, and optional comment; submission shows a toast notification.
@@ -71,7 +71,7 @@ myCV/
 - Viewer feedback collection (star rating, auto-detected country, optional comment)
 - Two Discord webhooks: error alerts (1h cooldown) + feedback (no cooldown)
 - Offline fallback with localized Ghibli-inspired error page
-- Dockerized (non-root, GHA cache), CI/CD via GitHub Actions
+- Dockerized (non-root, GHA cache), CI/CD via GitHub Actions (CV fetched from NAS share link at deploy)
 - 0 npm vulns, `TreatWarningsAsErrors`, stable packages only
 
 ## Configuration
@@ -85,6 +85,12 @@ myCV/
 | `Discord__FeedbackWebhookUrl` | Feedback webhook (optional, secret) |
 | `SocialLinks__LinkedIn` | LinkedIn URL (injected into CV response) |
 | `SocialLinks__GitHub` | GitHub URL (injected into CV response) |
+| `CV_SHARE_URL` | File Station shared-folder link containing `cv.docx` (CD secret) |
+| `CV_SHARE_PASSWORD` | Share link access code (CD secret) |
+
+### Updating the CV
+
+Replace `cv.docx` in the NAS shared folder — the share link (`ssid`) stays valid — then trigger CD (push to `main` or manual workflow dispatch). The fetch step validates the download (≤5 MB, OOXML magic bytes, `word/document.xml`) and atomically replaces `/opt/mycv/data/cv.docx` before recreating the backend container; any failure aborts the deploy so the old container keeps serving the previous CV.
 
 ## License
 
