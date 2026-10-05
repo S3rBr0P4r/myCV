@@ -58,6 +58,55 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
 
+      - name: Fetch CV document from share link
+        env:
+          CV_SHARE_URL: ${{ secrets.CV_SHARE_URL }}
+          CV_SHARE_PASSWORD: ${{ secrets.CV_SHARE_PASSWORD }}
+        run: |
+          ENV_B64=$(printf '%s\n' "$CV_SHARE_URL" "$CV_SHARE_PASSWORD" | base64 -w0)
+          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "export CV_FETCH_ENV_B64='$ENV_B64'; bash -s" <<'EOF'
+          set -euo pipefail
+          SHARE_URL=''; SHARE_PW=''
+          { IFS= read -r SHARE_URL; IFS= read -r SHARE_PW; } < <(printf '%s' "$CV_FETCH_ENV_B64" | base64 -d)
+          if [ -z "$SHARE_URL" ] || [ -z "$SHARE_PW" ]; then
+            echo "CV_SHARE_URL / CV_SHARE_PASSWORD secrets are missing or empty" >&2
+            exit 1
+          fi
+          BASE=${SHARE_URL%%\?*}
+          SSID=$(printf '%s' "$SHARE_URL" | sed -n 's/.*ssid=\([0-9a-fA-F]*\).*/\1/p')
+          if [ -z "$SSID" ]; then
+            echo "CV_SHARE_URL does not contain an ssid parameter" >&2
+            exit 1
+          fi
+          EP=$(printf '%s' "$SHARE_PW" | base64 -w0)
+          TMP=/opt/mycv/data/cv.docx.tmp
+          rm -f "$TMP"
+          trap 'rm -f "$TMP"' EXIT
+          CHECK=$(curl -fsSG --data-urlencode "ssid=$SSID" --data-urlencode "func=check_passwd" --data-urlencode "ep=$EP" "$BASE")
+          if ! printf '%s' "$CHECK" | grep -qE '"status": *1([^0-9]|$)'; then
+            echo "Share link password check failed" >&2
+            exit 1
+          fi
+          curl -fsSG -o "$TMP" --data-urlencode "ssid=$SSID" --data-urlencode "openfolder=normal" --data-urlencode "ep=$EP" --data-urlencode "fid=$SSID" --data-urlencode "_dc=$(date +%s%3N)" "$BASE"
+          SIZE=$(wc -c < "$TMP" | tr -d ' ')
+          if [ "$SIZE" -le 0 ] || [ "$SIZE" -gt 5242880 ]; then
+            echo "Invalid CV size: $SIZE" >&2
+            exit 1
+          fi
+          if [ "$(od -An -tx1 -N4 "$TMP" | tr -d ' \n')" != "504b0304" ]; then
+            echo "CV is not an Office document" >&2
+            exit 1
+          fi
+          if ! grep -aq 'word/document.xml' "$TMP"; then
+            echo "CV is not a valid .docx" >&2
+            exit 1
+          fi
+          mv -f "$TMP" /opt/mycv/data/cv.docx
+          echo "CV updated: $SIZE bytes"
+          EOF
+
       - name: Pull and restart API
         env:
           IMAGE: ghcr.io/s3rbr0p4r/mycv/mycv-api
