@@ -143,9 +143,19 @@ jobs:
       - name: Wait and verify API health
         run: |
           sleep 5
-          curl --retry 5 --retry-delay 3 --retry-connrefused \
-            --output /dev/null --write-out "%{http_code}" \
-            https://${{ secrets.API_HOST }}/health
+          for attempt in 1 2 3 4 5; do
+            CODE=$(curl -sS -o /tmp/health-body -w '%{http_code}' \
+              https://${{ secrets.API_HOST }}/health || true)
+            if [ "$CODE" = "200" ]; then
+              echo "API healthy (HTTP 200) on attempt $attempt"
+              exit 0
+            fi
+            echo "Attempt $attempt: HTTP $CODE"
+            sleep 3
+          done
+          echo "API health check failed after 5 attempts, last response body:" >&2
+          cat /tmp/health-body >&2 || true
+          exit 1
 
   deploy-frontend:
     name: Deploy Frontend
