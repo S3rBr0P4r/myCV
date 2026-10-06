@@ -114,9 +114,10 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
+            "docker network inspect npm_network >/dev/null && \
+             echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
              docker pull $IMAGE && \
-             docker rm -f mycv-api || true && \
+             (docker rm -f mycv-api || true) && \
              docker run -d --name mycv-api --restart unless-stopped \
                --network mycv-net --network-alias mycv-api \
                -p ${{ vars.BACKEND_PORT }}:${{ vars.BACKEND_PORT }} \
@@ -132,6 +133,7 @@ jobs:
                -e DeepL__AuthKey=${{ secrets.DEEPL_AUTH_KEY }} \
                -e DeepL__TimeoutSeconds=${{ vars.DEEPL_TIMEOUT_SECONDS }} \
                $IMAGE && \
+             docker network connect npm_network mycv-api && \
              docker logout ghcr.io"
 
   health-check:
@@ -184,9 +186,10 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
+            "docker network inspect npm_network >/dev/null && \
+             echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
              docker pull $IMAGE && \
-             docker rm -f mycv-frontend || true && \
+             (docker rm -f mycv-frontend || true) && \
              docker run -d --name mycv-frontend --restart unless-stopped \
                --network mycv-net \
                -p ${{ vars.FRONTEND_PORT }}:${{ vars.FRONTEND_PORT }} \
@@ -194,4 +197,5 @@ jobs:
                -e FRONTEND_URL=${{ vars.FRONTEND_URL }} \
                -e BACKEND_PORT=${{ vars.BACKEND_PORT }} \
                $IMAGE && \
+             docker network connect npm_network mycv-frontend && \
              docker logout ghcr.io"

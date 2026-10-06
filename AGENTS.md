@@ -228,7 +228,7 @@ Every file change must uphold these invariants:
 - Frontend Docker image: `ghcr.io/s3rbr0p4r/mycv/mycv-frontend` (nginx:alpine, serves built `dist/` on configurable port via `${PORT}` env var).
 - Backend Docker image: `ghcr.io/s3rbr0p4r/mycv/mycv-api` (aspnet:10.0).
 - Run as non-root via `USER $APP_UID`.
-- **Docker networking**: Both containers run on a shared `mycv-net` bridge network. Backend has `--network-alias mycv-api`. Frontend nginx proxies `/api/` requests to `http://mycv-api:${BACKEND_PORT}/api/`. CD workflow creates the network with `docker network create mycv-net 2>/dev/null || true` before starting containers.
+- **Docker networking**: Both containers run on a shared `mycv-net` bridge network. Both are additionally joined to `npm_network` right after `docker run` (`docker network connect` — Docker allows only one `--network` per run); each step pre-checks `docker network inspect npm_network` before recreating its container so a missing network fails the deploy while the old container keeps serving. Backend has `--network-alias mycv-api`. Frontend nginx proxies `/api/` requests to `http://mycv-api:${BACKEND_PORT}/api/`. CD workflow creates the network with `docker network create mycv-net 2>/dev/null || true` before starting containers.
 - **nginx reverse proxy** (`frontend/nginx.conf`): Location block `/api/` proxies to backend, sets `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto`, and `Origin` (from `FRONTEND_URL` env var) so `OriginValidationMiddleware` allows proxied requests.
 - `FRONTEND_URL` env var must be passed to the frontend container (used by nginx template via `envsubst`). Set in CD via `-e FRONTEND_URL=${{ vars.FRONTEND_URL }}`.
 
