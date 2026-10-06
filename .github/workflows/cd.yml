@@ -199,3 +199,25 @@ jobs:
                $IMAGE && \
              docker network connect npm_network mycv-frontend && \
              docker logout ghcr.io"
+
+  health-check-frontend:
+    name: Frontend health check
+    needs: [deploy-frontend]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Verify frontend serves requests
+        run: |
+          sleep 5
+          for attempt in 1 2 3 4 5; do
+            PAGE_CODE=$(curl -sS -o /dev/null -w '%{http_code}' ${{ vars.FRONTEND_URL }}/ || true)
+            API_CODE=$(curl -sS -o /dev/null -w '%{http_code}' ${{ vars.FRONTEND_URL }}/api/v1/cv || true)
+            if [ "$PAGE_CODE" = "200" ] && [ "$API_CODE" = "200" ]; then
+              echo "Frontend OK on attempt $attempt (/, /api/v1/cv = 200)"
+              exit 0
+            fi
+            echo "Attempt $attempt: / = $PAGE_CODE, /api/v1/cv = $API_CODE"
+            sleep 3
+          done
+          echo "Frontend public checks failed" >&2
+          exit 1

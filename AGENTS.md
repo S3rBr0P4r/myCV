@@ -148,7 +148,7 @@ Triggers on push to `main` (or manual `workflow_dispatch`). Concurrency group `c
 - **Docker API:** Builds and pushes API image to GHCR (only on `main`).
 - **Docker Frontend:** Builds and pushes frontend image to GHCR (only on `main`). Uses `build-args` for `VITE_API_URL` and `VITE_CSP_*` vars.
 
-**CD:** Manual `workflow_dispatch` or automatic after CI succeeds on `main` (via `workflow_run`). Four sequential jobs: `ensure-network` (5m) → `deploy-api` (10m) → `health-check` (5m) → `deploy-frontend` (10m). Each SSH job sets up its own keys. `deploy-frontend` only runs if `health-check` passes.
+**CD:** Manual `workflow_dispatch` or automatic after CI succeeds on `main` (via `workflow_run`). Five sequential jobs: `ensure-network` (5m) → `deploy-api` (10m) → `health-check` (5m) → `deploy-frontend` (10m) → `health-check-frontend` (5m). Each SSH job sets up its own keys. `deploy-frontend` only runs if `health-check` passes. `health-check-frontend` mirrors `health-check`: probes the public `${{ vars.FRONTEND_URL }}` `/` and `/api/v1/cv` for HTTP 200 (sleep 5 + 5×3s retries) — a failing frontend deploy fails the whole run.
 
 **CV fetch (in `deploy-api`, before container recreation):** The `cv.docx` file never enters the repo. A fetch step downloads it from a password-protected share link of a File Station shared folder over the existing SSH hop (secrets `CV_SHARE_URL` + `CV_SHARE_PASSWORD`, transported base64-over-stdin, never in `ssh` argv). Flow: `ep = base64(UTF-8 password)` → `share.cgi?func=check_passwd` must return `"status": 1` (any other status = wrong password/link) → `share.cgi?openfolder=normal&fid=<ssid>` serves raw file bytes (no session cookie; `ep` is passed as a query param). Validated before install: >0 and ≤5 MB (`MaxFileSize`), ZIP magic `504b0304`, `word/document.xml` present. Installed atomically (`cv.docx.tmp` → `mv` to `/opt/mycv/data/cv.docx`). Any failure exits before `docker rm`, so the old container keeps serving. Replacing the file in the shared folder keeps the same `ssid` link valid.
 **Runners:** All jobs pinned to `ubuntu-24.04` (not `ubuntu-latest`) so image migrations (e.g. the Ubuntu 26 rollout) never change the build environment unexpectedly.
@@ -224,7 +224,7 @@ Every file change must uphold these invariants:
 
 ### Docker
 - `Dockerfile` must set `ASPNETCORE_URLS` explicitly to match `EXPOSE` (backend only).
-- `Dockerfile` must have a `HEALTHCHECK` instruction.
+- No `HEALTHCHECK` instruction in Dockerfiles — health verification lives exclusively in the CD pipeline (`health-check` probes the public `/health`, `health-check-frontend` probes `/` and `/api/v1/cv`), keeping a single check path that fails the deployment run.
 - `Dockerfile` should use targeted `COPY` paths (not `COPY . .`).
 - Frontend Docker image: `ghcr.io/s3rbr0p4r/mycv/mycv-frontend` (nginx:alpine, serves built `dist/` on configurable port via `${PORT}` env var).
 - Backend Docker image: `ghcr.io/s3rbr0p4r/mycv/mycv-api` (aspnet:10.0).
