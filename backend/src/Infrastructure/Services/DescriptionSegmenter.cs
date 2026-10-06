@@ -6,12 +6,23 @@ public static class DescriptionSegmenter
 {
     private static readonly string[] ProtectedMarkers = ["Tech Stack", "Core", "Tooling"];
 
-    public static IEnumerable<string> CollectTranslatable(string description)
+    public sealed record TranslatableSegment(string Text, bool IsLabel);
+
+    public static IEnumerable<TranslatableSegment> CollectTranslatable(string description)
     {
-        return SplitLines(description)
-            .SelectMany(line => line)
-            .Where(segment => !segment.IsProtected && segment.Text.Length > 0)
-            .Select(segment => segment.Text);
+        var collected = new List<TranslatableSegment>();
+        foreach (var line in description.Split('\n'))
+        {
+            var isLabel = FindPayloadStart(line) >= 0;
+            foreach (var segment in SplitLine(line))
+            {
+                if (!segment.IsProtected && segment.Text.Length > 0)
+                {
+                    collected.Add(new TranslatableSegment(segment.Text, isLabel));
+                }
+            }
+        }
+        return collected;
     }
 
     public static string Rebuild(string description, Func<string, string> translate)

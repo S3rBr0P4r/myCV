@@ -65,7 +65,36 @@ public sealed class TranslatedCVBuilderTests
         items.Should().Equal("a2", "b2", "c2");
     }
 
-    private static CV CreateSource(IReadOnlyList<string> items)
+    [Fact]
+    public void Build_TranslatedLabelFundamental_ShouldBecomeNucleo()
+    {
+        var source = CreateSource(["One"], "**Core**: C#");
+        var translatedTexts = new[]
+        {
+            "Summary2", "Title2", "2024-2", "Rol", "Empresa", "Fundamental", "Cat2", "Sub2", "One2", "Two2"
+        };
+
+        var result = BuildResult(source, translatedTexts);
+
+        result.Experiences[0].Description.Should().Be("**Núcleo**: C#");
+    }
+
+    [Fact]
+    public void Build_FundamentalInsideNarrative_IsNotOverridden()
+    {
+        var source = CreateSource(["One"], "Established a fundamental baseline.");
+        var translatedTexts = new[]
+        {
+            "Summary2", "Title2", "2024-2", "Rol", "Empresa",
+            "Se estableció una base fundamental.", "Cat2", "Sub2", "One2", "Two2"
+        };
+
+        var result = BuildResult(source, translatedTexts);
+
+        result.Experiences[0].Description.Should().Be("Se estableció una base fundamental.");
+    }
+
+    private static CV CreateSource(IReadOnlyList<string> items, string description = "Desc")
     {
         return new CV
         {
@@ -80,7 +109,7 @@ public sealed class TranslatedCVBuilderTests
                     Period = "2024",
                     Role = "Dev",
                     Company = "Acme",
-                    Description = "Desc"
+                    Description = description
                 }
             ],
             SkillCategories =

@@ -13,7 +13,11 @@ public sealed class DescriptionSegmenterTests
 
         var texts = DescriptionSegmenter.CollectTranslatable(description);
 
-        texts.Should().Equal("Line one.", "Tech Stack:", "Core", "Tooling");
+        texts.Should().Equal(
+            Seg("Line one.", false),
+            Seg("Tech Stack:", true),
+            Seg("Core", true),
+            Seg("Tooling", true));
     }
 
     [Fact]
@@ -23,7 +27,7 @@ public sealed class DescriptionSegmenterTests
 
         var texts = DescriptionSegmenter.CollectTranslatable(description);
 
-        texts.Should().Equal("Built the platform.", "Tech Stack");
+        texts.Should().Equal(Seg("Built the platform.", false), Seg("Tech Stack", true));
     }
 
     [Fact]
@@ -33,7 +37,7 @@ public sealed class DescriptionSegmenterTests
 
         var texts = DescriptionSegmenter.CollectTranslatable(description);
 
-        texts.Should().Equal(description);
+        texts.Should().Equal(Seg(description, false));
     }
 
     [Fact]
@@ -43,7 +47,7 @@ public sealed class DescriptionSegmenterTests
 
         var texts = DescriptionSegmenter.CollectTranslatable(description);
 
-        texts.Should().Equal("First.", "Second.");
+        texts.Should().Equal(Seg("First.", false), Seg("Second.", false));
     }
 
     [Fact]
@@ -80,5 +84,10 @@ public sealed class DescriptionSegmenterTests
         var result = DescriptionSegmenter.Rebuild("First.\n\nSecond.", text => $"[{text}]");
 
         result.Should().Be("[First.]\n\n[Second.]");
+    }
+
+    private static DescriptionSegmenter.TranslatableSegment Seg(string text, bool isLabel)
+    {
+        return new DescriptionSegmenter.TranslatableSegment(text, isLabel);
     }
 }

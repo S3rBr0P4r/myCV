@@ -93,7 +93,7 @@ public sealed class DeepLTranslationService : ITranslationService
         var descriptions = source.Experiences.Select(e => e.Description).ToList();
         var descriptionTexts = descriptions
             .SelectMany(DescriptionSegmenter.CollectTranslatable)
-            .Where(t => !string.IsNullOrEmpty(t))
+            .Where(t => !string.IsNullOrEmpty(t.Text))
             .ToList();
         var categoryNames = source.SkillCategories.Select(c => c.Name).ToList();
         var subCategoryNames = source.SkillCategories
@@ -118,7 +118,7 @@ public sealed class DeepLTranslationService : ITranslationService
         allTexts.AddRange(companies.Where(t => !string.IsNullOrEmpty(t)));
         allTexts.AddRange(locations.Where(t => !string.IsNullOrEmpty(t)));
         allTexts.AddRange(workModes.Where(t => !string.IsNullOrEmpty(t)));
-        allTexts.AddRange(descriptionTexts);
+        allTexts.AddRange(descriptionTexts.Select(AddFirstPersonSubject));
         allTexts.AddRange(categoryNames.Where(t => !string.IsNullOrEmpty(t)));
         allTexts.AddRange(subCategoryNames.Where(t => !string.IsNullOrEmpty(t)));
         allTexts.AddRange(skillItems.Where(t => !string.IsNullOrEmpty(t)));
@@ -134,6 +134,11 @@ public sealed class DeepLTranslationService : ITranslationService
 
         return TranslatedCVBuilder.Build(source, summary, title, periods, roles, companies,
             locations, workModes, descriptions, categoryNames, subCategoryNames, skillItems, translatedTexts);
+    }
+
+    private static string AddFirstPersonSubject(DescriptionSegmenter.TranslatableSegment segment)
+    {
+        return segment.IsLabel ? segment.Text : "I " + segment.Text;
     }
 
     private async Task<string[]?> CallDeepLApiAsync(List<string> allTexts, string lang, CancellationToken timeoutToken)

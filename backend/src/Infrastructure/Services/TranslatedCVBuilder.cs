@@ -65,7 +65,9 @@ public static class TranslatedCVBuilder
         var result = translated
             .Replace("Pila tecnológica", "Stack tecnológico", StringComparison.OrdinalIgnoreCase)
             .Replace("A distancia", "Remoto", StringComparison.OrdinalIgnoreCase);
-        return result;
+        return string.Equals(result.Trim(), "Fundamental", StringComparison.OrdinalIgnoreCase)
+            ? "Núcleo"
+            : result;
     }
 
     private static List<SkillCategory> RebuildSkillCategories(

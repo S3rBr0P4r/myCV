@@ -226,8 +226,9 @@ public sealed class DeepLTranslationServiceTests
             .Be("Narración traducida\nStack tecnológico: C#, .NET");
         capturedRequest.Should().NotBeNull();
         var requestBody = await capturedRequest!.Content!.ReadAsStringAsync();
-        requestBody.Should().Contain("Built the platform.");
+        requestBody.Should().Contain("I Built the platform.");
         requestBody.Should().Contain("Tech Stack");
+        requestBody.Should().NotContain("I Tech Stack");
         requestBody.Should().NotContain("C#, .NET");
     }
 }
