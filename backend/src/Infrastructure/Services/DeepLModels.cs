@@ -10,6 +10,10 @@ internal sealed class DeepLRequest
     [JsonPropertyName("target_lang")]
     public string TargetLang { get; init; } = string.Empty;
 
+    [JsonPropertyName("source_lang")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? SourceLang { get; init; }
+
     [JsonPropertyName("context")]
     public string Context { get; init; } = string.Empty;
 }

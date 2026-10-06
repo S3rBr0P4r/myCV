@@ -58,6 +58,24 @@ internal static class DeepLTestFixture
         return (mock, new HttpClient(mock.Object));
     }
 
+    internal static (Mock<HttpMessageHandler> Handler, HttpClient Client) CreateSequencedHandler(
+        Func<int, HttpResponseMessage> respond, Action<HttpRequestMessage>? capture = null)
+    {
+        var call = 0;
+        var mock = new Mock<HttpMessageHandler>(MockBehavior.Loose);
+        mock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync((HttpRequestMessage request, CancellationToken _) =>
+            {
+                capture?.Invoke(request);
+                return respond(call++);
+            });
+        return (mock, new HttpClient(mock.Object));
+    }
+
     internal static DeepLTranslationService CreateSut(HttpClient client)
     {
         var cache = new MemoryCache(new MemoryCacheOptions());

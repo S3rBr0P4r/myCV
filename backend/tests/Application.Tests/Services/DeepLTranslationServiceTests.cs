@@ -231,4 +231,95 @@ public sealed class DeepLTranslationServiceTests
         requestBody.Should().NotContain("I Tech Stack");
         requestBody.Should().NotContain("C#, .NET");
     }
+
+    [Fact]
+    public async Task TranslateAsync_TextDetectedAsTargetLanguage_ShouldRetryWithForcedEnglishSource()
+    {
+        var requests = new List<HttpRequestMessage>();
+        var (_, client) = DeepLTestFixture.CreateSequencedHandler(
+            i => Ok(i == 0 ? StuckPassThroughResponse : SingleRetryResponse),
+            r => requests.Add(r));
+        var sut = DeepLTestFixture.CreateSut(client);
+
+        var result = await sut.TranslateAsync(CVTestDataFactory.CreateSampleCV(), "ES");
+
+        result.Should().NotBeNull();
+        result!.SkillCategories[0].SubCategories[0].Items.Should()
+            .Equal("C# (traducido)", ".NET ES");
+        requests.Should().HaveCount(2, "the stuck text should be retried with forced source");
+        var firstBody = await requests[0].Content!.ReadAsStringAsync();
+        var secondBody = await requests[1].Content!.ReadAsStringAsync();
+        firstBody.Should().NotContain("source_lang");
+        secondBody.Should().Contain("\"source_lang\":\"EN\"");
+        secondBody.Should().Contain("C#");
+    }
+
+    [Fact]
+    public async Task TranslateAsync_AllTextsTranslated_ShouldNotSendForcedSource()
+    {
+        var requests = new List<HttpRequestMessage>();
+        var (_, client) = DeepLTestFixture.CreateHandlerPair(
+            DeepLTestFixture.DefaultResponseJson, r => requests.Add(r));
+        var sut = DeepLTestFixture.CreateSut(client);
+
+        var result = await sut.TranslateAsync(CVTestDataFactory.CreateSampleCV(), "ES");
+
+        result.Should().NotBeNull();
+        result!.SkillCategories[0].SubCategories[0].Items.Should().Equal("C# ES", ".NET ES");
+        requests.Should().HaveCount(1);
+        var requestBody = await requests[0].Content!.ReadAsStringAsync();
+        requestBody.Should().NotContain("source_lang");
+    }
+
+    [Fact]
+    public async Task TranslateAsync_RetryThrows_ShouldKeepInitialTranslations()
+    {
+        var (_, client) = DeepLTestFixture.CreateSequencedHandler(
+            i => i == 0 ? Ok(StuckPassThroughResponse) : throw new HttpRequestException("boom"));
+        var sut = DeepLTestFixture.CreateSut(client);
+
+        var result = await sut.TranslateAsync(CVTestDataFactory.CreateSampleCV(), "ES");
+
+        result.Should().NotBeNull();
+        result!.SkillCategories[0].SubCategories[0].Items.Should().Equal("C#", ".NET ES");
+        result.Title.Should().Be("Título");
+    }
+
+    [Fact]
+    public async Task TranslateAsync_RetryReturnsWrongCount_ShouldKeepInitialTranslations()
+    {
+        var emptyResponse = """{"translations":[]}""";
+        var (_, client) = DeepLTestFixture.CreateSequencedHandler(
+            i => Ok(i == 0 ? StuckPassThroughResponse : emptyResponse));
+        var sut = DeepLTestFixture.CreateSut(client);
+
+        var result = await sut.TranslateAsync(CVTestDataFactory.CreateSampleCV(), "ES");
+
+        result.Should().NotBeNull();
+        result!.SkillCategories[0].SubCategories[0].Items.Should().Equal("C#", ".NET ES");
+        result.Title.Should().Be("Título");
+    }
+
+    private static HttpResponseMessage Ok(string json)
+    {
+        return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json) };
+    }
+
+    private const string StuckPassThroughResponse =
+        """
+        {"translations":[
+            {"detected_source_language":"EN","text":"Resumen"},
+            {"detected_source_language":"EN","text":"Título"},
+            {"detected_source_language":"EN","text":"Periodo 1"},
+            {"detected_source_language":"EN","text":"Rol 1"},
+            {"detected_source_language":"EN","text":"Empresa 1"},
+            {"detected_source_language":"EN","text":"Descripción 1"},
+            {"detected_source_language":"EN","text":"Lenguajes"},
+            {"detected_source_language":"EN","text":"PuntoNET"},
+            {"detected_source_language":"ES","text":"C#"},
+            {"detected_source_language":"EN","text":".NET ES"}]}
+        """;
+
+    private const string SingleRetryResponse =
+        """{"translations":[{"detected_source_language":"EN","text":"C# (traducido)"}]}""";
 }

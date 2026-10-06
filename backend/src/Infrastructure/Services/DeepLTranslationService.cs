@@ -10,6 +10,8 @@ public sealed class DeepLTranslationService : ITranslationService
 {
     private const string DeepLApiUrl = "https://api-free.deepl.com/v2/translate";
     private const int MaxFieldLength = 10_000;
+    private const string TranslationContext =
+        "The software engineer works in a remote position. The technology stack includes various programming languages and frameworks. Software development, IT skills, engineering.";
 
     private readonly HttpClient _httpClient;
     private readonly DeepLOptions _options;
@@ -143,25 +145,95 @@ public sealed class DeepLTranslationService : ITranslationService
 
     private async Task<string[]?> CallDeepLApiAsync(List<string> allTexts, string lang, CancellationToken timeoutToken)
     {
+        var initial = await SendTranslationsAsync(allTexts, lang, sourceLang: null, timeoutToken);
+        if (initial is null)
+        {
+            return null;
+        }
+
+        var stuckIndexes = FindUntranslatedIndexes(allTexts, initial, lang);
+        if (stuckIndexes.Count > 0)
+        {
+            await RetryStuckTranslationsAsync(allTexts, initial, stuckIndexes, lang, timeoutToken);
+        }
+
+        return initial
+            .Select(t => t.Text.Length > MaxFieldLength ? t.Text[..MaxFieldLength] : t.Text)
+            .ToArray();
+    }
+
+    private async Task<DeepLTranslation[]?> SendTranslationsAsync(
+        List<string> texts, string lang, string? sourceLang, CancellationToken timeoutToken)
+    {
         var request = new DeepLRequest
         {
-            Text = allTexts.ToArray(),
+            Text = texts.ToArray(),
             TargetLang = lang,
-            Context = "The software engineer works in a remote position. The technology stack includes various programming languages and frameworks. Software development, IT skills, engineering."
+            SourceLang = sourceLang,
+            Context = TranslationContext
         };
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, DeepLApiUrl) { Content = JsonContent.Create(request) };
         httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("DeepL-Auth-Key", _options.AuthKey);
         var response = await _httpClient.SendAsync(httpRequest, timeoutToken);
         response.EnsureSuccessStatusCode();
         var result = await response.Content.ReadFromJsonAsync<DeepLResponse>(cancellationToken: timeoutToken);
-        if (result?.Translations is null || result.Translations.Length != allTexts.Count)
+        if (result?.Translations is null || result.Translations.Length != texts.Count)
         {
             _logger.LogWarning("DeepL returned {Count} translations but expected {Expected}",
-                result?.Translations?.Length ?? 0, allTexts.Count);
+                result?.Translations?.Length ?? 0, texts.Count);
             return null;
         }
-        return result.Translations
-            .Select(t => t.Text.Length > MaxFieldLength ? t.Text[..MaxFieldLength] : t.Text)
-            .ToArray();
+        return result.Translations;
+    }
+
+    private static List<int> FindUntranslatedIndexes(
+        List<string> sourceTexts, DeepLTranslation[] translations, string lang)
+    {
+        var indexes = new List<int>();
+        for (var i = 0; i < translations.Length; i++)
+        {
+            if (IsPassthrough(sourceTexts[i], translations[i], lang))
+            {
+                indexes.Add(i);
+            }
+        }
+        return indexes;
+    }
+
+    private static bool IsPassthrough(string sourceText, DeepLTranslation translation, string targetLang)
+    {
+        return string.Equals(translation.Text, sourceText, StringComparison.Ordinal)
+            && string.Equals(translation.DetectedSourceLanguage, targetLang, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task RetryStuckTranslationsAsync(
+        List<string> allTexts,
+        DeepLTranslation[] translations,
+        List<int> stuckIndexes,
+        string lang,
+        CancellationToken timeoutToken)
+    {
+        var retryTexts = stuckIndexes.Select(i => allTexts[i]).ToList();
+        DeepLTranslation[]? retried;
+        try
+        {
+            retried = await SendTranslationsAsync(retryTexts, lang, "EN", timeoutToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "DeepL forced-source retry failed, keeping initial translations");
+            return;
+        }
+
+        if (retried is null)
+        {
+            _logger.LogWarning("DeepL forced-source retry returned unexpected count, keeping initial translations");
+            return;
+        }
+
+        for (var i = 0; i < stuckIndexes.Count; i++)
+        {
+            translations[stuckIndexes[i]] = retried[i];
+        }
     }
 }
