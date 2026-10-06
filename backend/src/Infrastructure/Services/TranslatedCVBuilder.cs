@@ -30,7 +30,7 @@ public static class TranslatedCVBuilder
         var translatedLocations = locations.Select(l => !string.IsNullOrEmpty(l) ? ApplyOverride(translatedTexts[idx++]) : l).ToList();
         var translatedWorkModes = workModes.Select(w => !string.IsNullOrEmpty(w) ? ApplyOverride(translatedTexts[idx++]) : w).ToList();
         var translatedDescriptions = descriptions
-            .Select(d => DescriptionSegmenter.Rebuild(d, _ => ApplyOverride(translatedTexts[idx++])))
+            .Select(d => DescriptionSegmenter.Rebuild(d, _ => ApplyOverride(translatedTexts[idx++]).Trim()))
             .ToList();
         var translatedCategoryNames = categoryNames.Select(c => !string.IsNullOrEmpty(c) ? ApplyOverride(translatedTexts[idx++]) : c).ToList();
         var translatedSubCategoryNames = subCategoryNames.Select(s => !string.IsNullOrEmpty(s) ? ApplyOverride(translatedTexts[idx++]) : s).ToList();

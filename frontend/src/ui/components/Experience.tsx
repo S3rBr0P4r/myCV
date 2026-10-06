@@ -32,6 +32,7 @@ function initialsLogo(company: string): string {
 }
 
 function ExpCard({ exp }: { exp: Experience }) {
+  const { t } = useTranslation();
   const bgRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLImageElement>(null);
   const effectiveUrl = exp.companyUrl || getCompanyUrl(exp.company) || '';
@@ -113,8 +114,8 @@ function ExpCard({ exp }: { exp: Experience }) {
           <ul className="exp-description">
             {bullets.map((b, i) => {
               const trimmed = b.trim();
-              // Check if it's a sub-category: starts with ** and contains **...**: (bold text followed by colon space)
-              const isSubCategory = trimmed.startsWith('**') && trimmed.includes('**:') && !trimmed.startsWith('**Tech Stack');
+              const isTechStackLine = trimmed.includes(`**${t('exp.techStackLabel')}`);
+              const isSubCategory = trimmed.startsWith('**') && trimmed.includes('**:') && !isTechStackLine;
               return (
                 <li key={i} className={isSubCategory ? 'exp-description-sub' : ''}>
                   {renderFormattedText(b)}

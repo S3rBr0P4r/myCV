@@ -59,7 +59,7 @@ myCV/
 ## How it works
 
 1. **`.docx` → JSON**: The CV file never enters the repo — CD fetches it from a password-protected QNAP File Station share link, validates it, and installs it at `/opt/mycv/data/cv.docx`. At runtime, `WordCvSource` parses the file into structured data.
-2. **`GET /api/v1/cv`**: Returns the CV as JSON, optionally translated via DeepL based on `Accept-Language`. Experience narratives and the certifications & relevant training section are translated; tech-stack lists (everything after a `Tech Stack:`, `Core:` or `Tooling:` marker) stay in English.
+2. **`GET /api/v1/cv`**: Returns the CV as JSON, optionally translated via DeepL based on `Accept-Language`. Experience narratives and the certifications & relevant training section are translated. Marker labels (`Tech Stack`, `Core`, `Tooling`) are translated too, but the payloads after them stay in English and the `**bold**`/`:` decoration is preserved byte-for-byte, so list indentation renders identically in both languages.
 3. **`POST /api/v1/feedback`**: Stores viewer feedback (name, rating, country, comment) and forwards it to a Discord webhook as a green embed.
 4. **Frontend**: Fetches CV on load, re-fetches on locale switch. Resets to a friendly offline page when the backend is unreachable. Feedback FAB opens a modal with star rating, name, and optional comment; submission shows a toast notification.
 5. **Alerts**: Errors (DOCX parse failure, DeepL failures, path traversal) send a red embed to a separate Discord webhook with a 1-hour cooldown.

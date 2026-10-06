@@ -13,6 +13,7 @@ export const en: Record<string, string> = {
   'experience.title': 'Career',
   'exp.prev': 'Previous',
   'exp.next': 'Next',
+  'exp.techStackLabel': 'Tech Stack',
 
   /* Skills section */
   'skills.title': 'Certifications & relevant training',

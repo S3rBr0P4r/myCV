@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Experience } from '../../src/ui/components/Experience';
 import { TranslationProvider } from '../../src/ui/contexts/TranslationContext';
 import type { ReactNode } from 'react';
@@ -91,7 +91,45 @@ describe('Experience', () => {
   });
 
   it('disables next on last page', () => {
-    render(<Experience experiences={fiveExps} />, { wrapper: Wrapper });
-    expect(getNextBtn()).not.toBeDisabled();
+    const { container } = render(<Experience experiences={fiveExps} />, { wrapper: Wrapper });
+    const track = container.querySelector('.exp-carousel-track');
+    fireEvent.scroll(track!, { target: { scrollLeft: 1e7 } });
+    expect(getNextBtn()).toBeDisabled();
+  });
+
+  const techDescription: ExpType = {
+    period: '2024',
+    role: 'Dev',
+    company: 'Acme',
+    description: 'Narrative line.\n**Tech Stack:**\n**Core**: C#, ASP.NET\n**Tech Stack**: WinForms',
+  };
+
+  const techDescriptionEs: ExpType = {
+    period: '2024',
+    role: 'Dev',
+    company: 'Acme',
+    description:
+      'Narrativa.\n**Stack tecnológico:**\n**Fundamental**: C#, ASP.NET\n**Stack tecnológico**: WinForms',
+  };
+
+  function descriptionSubFlags(container: Element): boolean[] {
+    return Array.from(container.querySelectorAll('.exp-description li')).map(li =>
+      li.classList.contains('exp-description-sub'),
+    );
+  }
+
+  it('indents only core and tooling lines in English', () => {
+    const { container } = render(<Experience experiences={[techDescription]} />, { wrapper: Wrapper });
+    expect(descriptionSubFlags(container)).toEqual([false, false, true, false]);
+  });
+
+  it('indents only core and tooling lines in Spanish', () => {
+    localStorage.setItem('cv-locale', 'es');
+    try {
+      const { container } = render(<Experience experiences={[techDescriptionEs]} />, { wrapper: Wrapper });
+      expect(descriptionSubFlags(container)).toEqual([false, false, true, false]);
+    } finally {
+      localStorage.removeItem('cv-locale');
+    }
   });
 });

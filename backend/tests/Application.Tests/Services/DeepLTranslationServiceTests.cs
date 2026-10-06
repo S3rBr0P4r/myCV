@@ -208,7 +208,7 @@ public sealed class DeepLTranslationServiceTests
                 new { detected_source_language = "EN", text = "Rol 1" },
                 new { detected_source_language = "EN", text = "Empresa 1" },
                 new { detected_source_language = "EN", text = "Narración traducida" },
-                new { detected_source_language = "EN", text = "Pila tecnológica:" },
+                new { detected_source_language = "EN", text = "Pila tecnológica" },
                 new { detected_source_language = "EN", text = "Lenguajes" },
                 new { detected_source_language = "EN", text = "PuntoNET" },
                 new { detected_source_language = "EN", text = "C# ES" },
@@ -227,7 +227,7 @@ public sealed class DeepLTranslationServiceTests
         capturedRequest.Should().NotBeNull();
         var requestBody = await capturedRequest!.Content!.ReadAsStringAsync();
         requestBody.Should().Contain("Built the platform.");
-        requestBody.Should().Contain("Tech Stack:");
+        requestBody.Should().Contain("Tech Stack");
         requestBody.Should().NotContain("C#, .NET");
     }
 }

@@ -39,12 +39,43 @@ public static class DescriptionSegmenter
     private static List<(bool IsProtected, string Text)> SplitLine(string line)
     {
         var payloadStart = FindPayloadStart(line);
-        if (payloadStart < 0 || payloadStart >= line.Length)
+        if (payloadStart < 0)
         {
             return [(false, line)];
         }
 
-        return [(false, line[..payloadStart]), (true, line[payloadStart..])];
+        var segments = SplitMarker(line[..payloadStart]);
+        if (payloadStart < line.Length)
+        {
+            segments.Add((true, line[payloadStart..]));
+        }
+
+        return segments;
+    }
+
+    private static List<(bool IsProtected, string Text)> SplitMarker(string markerText)
+    {
+        if (markerText.StartsWith("**", StringComparison.Ordinal))
+        {
+            var closeIdx = markerText.LastIndexOf("**", StringComparison.Ordinal);
+            if (closeIdx >= 2)
+            {
+                return
+                [
+                    (true, "**"),
+                    (false, markerText[2..closeIdx]),
+                    (true, "**" + markerText[(closeIdx + 2)..])
+                ];
+            }
+        }
+
+        var colonIdx = markerText.IndexOf(':');
+        if (colonIdx > 0)
+        {
+            return [(false, markerText[..colonIdx]), (true, markerText[colonIdx..])];
+        }
+
+        return [(false, markerText)];
     }
 
     private static int FindPayloadStart(string line)

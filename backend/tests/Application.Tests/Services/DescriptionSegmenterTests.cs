@@ -13,7 +13,7 @@ public sealed class DescriptionSegmenterTests
 
         var texts = DescriptionSegmenter.CollectTranslatable(description);
 
-        texts.Should().Equal("Line one.", "**Tech Stack:**", "**Core**:", "**Tooling**:");
+        texts.Should().Equal("Line one.", "Tech Stack:", "Core", "Tooling");
     }
 
     [Fact]
@@ -23,7 +23,7 @@ public sealed class DescriptionSegmenterTests
 
         var texts = DescriptionSegmenter.CollectTranslatable(description);
 
-        texts.Should().Equal("Built the platform.", "Tech Stack:");
+        texts.Should().Equal("Built the platform.", "Tech Stack");
     }
 
     [Fact]
@@ -53,7 +53,7 @@ public sealed class DescriptionSegmenterTests
 
         var result = DescriptionSegmenter.Rebuild(description, text => $"[{text}]");
 
-        result.Should().Be("[Line one.]\n[**Tech Stack:**]\n[**Core**:] C#, ASP.NET\n[**Tooling**:] Docker");
+        result.Should().Be("[Line one.]\n**[Tech Stack:]**\n**[Core]**: C#, ASP.NET\n**[Tooling]**: Docker");
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public sealed class DescriptionSegmenterTests
 
         var result = DescriptionSegmenter.Rebuild(description, text => $"[{text}]");
 
-        result.Should().Be("[Built the platform.]\n[Tech Stack:] C#, WinForms");
+        result.Should().Be("[Built the platform.]\n[Tech Stack]: C#, WinForms");
     }
 
     [Fact]
