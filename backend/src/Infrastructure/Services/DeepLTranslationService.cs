@@ -91,10 +91,18 @@ public sealed class DeepLTranslationService : ITranslationService
         var locations = source.Experiences.Select(e => e.Location).ToList();
         var workModes = source.Experiences.Select(e => e.WorkMode).ToList();
         var descriptions = source.Experiences.Select(e => e.Description).ToList();
+        var descriptionTexts = descriptions
+            .SelectMany(DescriptionSegmenter.CollectTranslatable)
+            .Where(t => !string.IsNullOrEmpty(t))
+            .ToList();
         var categoryNames = source.SkillCategories.Select(c => c.Name).ToList();
         var subCategoryNames = source.SkillCategories
             .SelectMany(c => c.SubCategories)
             .Select(s => s.Name)
+            .ToList();
+        var skillItems = source.SkillCategories
+            .SelectMany(c => c.SubCategories)
+            .SelectMany(s => s.Items)
             .ToList();
         var allTexts = new List<string>();
         if (!string.IsNullOrEmpty(summary))
@@ -110,9 +118,10 @@ public sealed class DeepLTranslationService : ITranslationService
         allTexts.AddRange(companies.Where(t => !string.IsNullOrEmpty(t)));
         allTexts.AddRange(locations.Where(t => !string.IsNullOrEmpty(t)));
         allTexts.AddRange(workModes.Where(t => !string.IsNullOrEmpty(t)));
-        allTexts.AddRange(descriptions.Where(t => !string.IsNullOrEmpty(t)));
+        allTexts.AddRange(descriptionTexts);
         allTexts.AddRange(categoryNames.Where(t => !string.IsNullOrEmpty(t)));
         allTexts.AddRange(subCategoryNames.Where(t => !string.IsNullOrEmpty(t)));
+        allTexts.AddRange(skillItems.Where(t => !string.IsNullOrEmpty(t)));
         if (allTexts.Count == 0)
         {
             return source;
@@ -123,8 +132,8 @@ public sealed class DeepLTranslationService : ITranslationService
             return null;
         }
 
-        return BuildTranslatedCV(source, summary, title, periods, roles, companies,
-            locations, workModes, descriptions, categoryNames, subCategoryNames, translatedTexts);
+        return TranslatedCVBuilder.Build(source, summary, title, periods, roles, companies,
+            locations, workModes, descriptions, categoryNames, subCategoryNames, skillItems, translatedTexts);
     }
 
     private async Task<string[]?> CallDeepLApiAsync(List<string> allTexts, string lang, CancellationToken timeoutToken)
@@ -149,96 +158,5 @@ public sealed class DeepLTranslationService : ITranslationService
         return result.Translations
             .Select(t => t.Text.Length > MaxFieldLength ? t.Text[..MaxFieldLength] : t.Text)
             .ToArray();
-    }
-    private static CV BuildTranslatedCV(CV source,
-        string? summary, string? title,
-        List<string> periods, List<string> roles, List<string> companies,
-        List<string> locations, List<string> workModes, List<string> descriptions,
-        List<string> categoryNames, List<string> subCategoryNames, string[] translatedTexts)
-    {
-        int idx = 0;
-        string? translatedSummary = !string.IsNullOrEmpty(summary) ? ApplyOverride(translatedTexts[idx++]) : null;
-        string? translatedTitle = !string.IsNullOrEmpty(title) ? ApplyOverride(translatedTexts[idx++]) : null;
-
-        var translatedPeriods = periods.Select(p => !string.IsNullOrEmpty(p) ? ApplyOverride(translatedTexts[idx++]) : p).ToList();
-        var translatedRoles = roles.Select(r => !string.IsNullOrEmpty(r) ? ApplyOverride(translatedTexts[idx++]) : r).ToList();
-        var translatedCompanies = companies.Select(c =>
-        {
-            if (string.IsNullOrEmpty(c))
-            {
-                return c;
-            }
-            var translated = translatedTexts[idx++];
-            return c.Contains('(') ? ApplyOverride(translated) : c;
-        }).ToList();
-        var translatedLocations = locations.Select(l => !string.IsNullOrEmpty(l) ? ApplyOverride(translatedTexts[idx++]) : l).ToList();
-        var translatedWorkModes = workModes.Select(w => !string.IsNullOrEmpty(w) ? ApplyOverride(translatedTexts[idx++]) : w).ToList();
-        var translatedDescriptions = descriptions.Select(d => !string.IsNullOrEmpty(d) ? ApplyOverride(translatedTexts[idx++]) : d).ToList();
-        var translatedCategoryNames = categoryNames.Select(c => !string.IsNullOrEmpty(c) ? ApplyOverride(translatedTexts[idx++]) : c).ToList();
-        var translatedSubCategoryNames = subCategoryNames.Select(s => !string.IsNullOrEmpty(s) ? ApplyOverride(translatedTexts[idx++]) : s).ToList();
-
-        var translatedExperiences = source.Experiences.Select((e, i) => new Experience
-        {
-            Period = translatedPeriods[i],
-            Role = translatedRoles[i],
-            Company = translatedCompanies[i],
-            Location = translatedLocations[i],
-            WorkMode = translatedWorkModes[i],
-            Description = translatedDescriptions[i],
-            Background = e.Background
-        }).ToList();
-        var translatedCategories = RebuildSkillCategories(
-            source.SkillCategories, translatedCategoryNames, translatedSubCategoryNames);
-        return new CV
-        {
-            Name = source.Name,
-            LastName = source.LastName,
-            Title = translatedTitle ?? source.Title,
-            Summary = translatedSummary ?? source.Summary,
-            ContactInfo = source.ContactInfo,
-            Experiences = translatedExperiences.AsReadOnly(),
-            SkillCategories = translatedCategories.AsReadOnly()
-        };
-    }
-    private static string ApplyOverride(string translated)
-    {
-        var result = translated
-            .Replace("Pila tecnológica", "Stack tecnológico", StringComparison.OrdinalIgnoreCase)
-            .Replace("A distancia", "Remoto", StringComparison.OrdinalIgnoreCase);
-        return result;
-    }
-    private static List<SkillCategory> RebuildSkillCategories(
-        IReadOnlyList<SkillCategory> sourceCategories,
-        List<string> translatedCategoryNames, List<string> translatedSubCategoryNames)
-    {
-        int catIdx = 0;
-        int subIdx = 0;
-        var result = new List<SkillCategory>();
-        foreach (var category in sourceCategories)
-        {
-            var translatedCatName = !string.IsNullOrEmpty(category.Name) && catIdx < translatedCategoryNames.Count
-                ? translatedCategoryNames[catIdx++]
-                : category.Name;
-            var subCategories = new List<SkillSubCategory>();
-            foreach (var sub in category.SubCategories)
-            {
-                var translatedSubName = !string.IsNullOrEmpty(sub.Name) && subIdx < translatedSubCategoryNames.Count
-                    ? translatedSubCategoryNames[subIdx++]
-                    : sub.Name;
-                subCategories.Add(new SkillSubCategory
-                {
-                    Name = translatedSubName,
-                    Items = sub.Items
-                });
-            }
-
-            result.Add(new SkillCategory
-            {
-                Name = translatedCatName,
-                SubCategories = subCategories.AsReadOnly()
-            });
-        }
-
-        return result;
     }
 }

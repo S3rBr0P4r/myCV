@@ -108,7 +108,7 @@ public sealed class DeepLTranslationServiceTests
         result.SkillCategories[0].SubCategories.Should().HaveCount(1);
         result.SkillCategories[0].SubCategories[0].Name.Should().Be("Translated dotnet");
         result.SkillCategories[0].SubCategories[0].Items.Should()
-            .BeEquivalentTo(["C#", ".NET"]);
+            .Equal("C# ES", ".NET ES");
     }
 
     [Fact]
@@ -160,7 +160,9 @@ public sealed class DeepLTranslationServiceTests
                 new { detected_source_language = "EN", text = "Empresa 1" },
                 new { detected_source_language = "EN", text = "Descripción 1" },
                 new { detected_source_language = "EN", text = "Lenguajes" },
-                new { detected_source_language = "EN", text = "PuntoNET" }
+                new { detected_source_language = "EN", text = "PuntoNET" },
+                new { detected_source_language = "EN", text = "C# ES" },
+                new { detected_source_language = "EN", text = ".NET ES" }
             }
         });
 
@@ -190,5 +192,42 @@ public sealed class DeepLTranslationServiceTests
         capturedRequest.Should().NotBeNull();
         capturedRequest!.Headers.Authorization.Should().NotBeNull();
         capturedRequest.Headers.Authorization!.Parameter.Should().Be("test-key-12345");
+    }
+
+    [Fact]
+    public async Task TranslateAsync_TechStackInDescription_ShouldNotTranslatePayload()
+    {
+        HttpRequestMessage? capturedRequest = null;
+        var responseJson = JsonSerializer.Serialize(new
+        {
+            translations = new[]
+            {
+                new { detected_source_language = "EN", text = "Resumen" },
+                new { detected_source_language = "EN", text = "Título" },
+                new { detected_source_language = "EN", text = "Periodo 1" },
+                new { detected_source_language = "EN", text = "Rol 1" },
+                new { detected_source_language = "EN", text = "Empresa 1" },
+                new { detected_source_language = "EN", text = "Narración traducida" },
+                new { detected_source_language = "EN", text = "Pila tecnológica:" },
+                new { detected_source_language = "EN", text = "Lenguajes" },
+                new { detected_source_language = "EN", text = "PuntoNET" },
+                new { detected_source_language = "EN", text = "C# ES" },
+                new { detected_source_language = "EN", text = ".NET ES" }
+            }
+        });
+
+        var (_, client) = DeepLTestFixture.CreateHandlerPair(responseJson, req => capturedRequest = req);
+        var sut = DeepLTestFixture.CreateSut(client);
+
+        var result = await sut.TranslateAsync(CVTestDataFactory.CreateCvWithTechStackDescription(), "ES");
+
+        result.Should().NotBeNull();
+        result!.Experiences[0].Description.Should()
+            .Be("Narración traducida\nStack tecnológico: C#, .NET");
+        capturedRequest.Should().NotBeNull();
+        var requestBody = await capturedRequest!.Content!.ReadAsStringAsync();
+        requestBody.Should().Contain("Built the platform.");
+        requestBody.Should().Contain("Tech Stack:");
+        requestBody.Should().NotContain("C#, .NET");
     }
 }

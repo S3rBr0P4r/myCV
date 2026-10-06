@@ -7,6 +7,10 @@ const languageFlagMap: Record<string, string> = {
   german: 'de',
   spanish: 'es',
   catalan: 'es-ct',
+  inglés: 'gb',
+  alemán: 'de',
+  español: 'es',
+  catalán: 'es-ct',
 };
 
 function LanguageFlag({ language }: { language: string }) {

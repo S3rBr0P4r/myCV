@@ -11,7 +11,7 @@ namespace Backend.Tests.Helpers;
 
 internal static class DeepLTestFixture
 {
-    internal const string DefaultResponseJson = """{"translations":[{"detected_source_language":"EN","text":"Translated summary"},{"detected_source_language":"EN","text":"Translated title"},{"detected_source_language":"EN","text":"Translated period 1"},{"detected_source_language":"EN","text":"Translated role 1"},{"detected_source_language":"EN","text":"Translated company 1"},{"detected_source_language":"EN","text":"Translated desc 1"},{"detected_source_language":"EN","text":"Translated languages"},{"detected_source_language":"EN","text":"Translated dotnet"}]}""";
+    internal const string DefaultResponseJson = """{"translations":[{"detected_source_language":"EN","text":"Translated summary"},{"detected_source_language":"EN","text":"Translated title"},{"detected_source_language":"EN","text":"Translated period 1"},{"detected_source_language":"EN","text":"Translated role 1"},{"detected_source_language":"EN","text":"Translated company 1"},{"detected_source_language":"EN","text":"Translated desc 1"},{"detected_source_language":"EN","text":"Translated languages"},{"detected_source_language":"EN","text":"Translated dotnet"},{"detected_source_language":"EN","text":"C# ES"},{"detected_source_language":"EN","text":".NET ES"}]}""";
 
     internal static (Mock<HttpMessageHandler> Handler, HttpClient Client) CreateHandlerPair(
         string responseJson, Action<HttpRequestMessage>? capture = null)

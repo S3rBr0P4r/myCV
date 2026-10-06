@@ -38,6 +38,23 @@ const languageCategories: SkillCategory[] = [
   },
 ];
 
+const languageCategoriesEs: SkillCategory[] = [
+  {
+    name: 'Lenguajes',
+    subCategories: [
+      {
+        name: 'General',
+        items: [
+          'Inglés: C1 - Avanzado',
+          'Alemán: A2 - Elemental',
+          'Español: Nativo',
+          'Catalán: Nativo',
+        ],
+      },
+    ],
+  },
+];
+
 describe('Skills', () => {
   it('renders skills section', () => {
     render(<Skills skillCategories={categories} />);
@@ -77,6 +94,17 @@ describe('Skills', () => {
     expect(screen.getByText('English: C1 - Advanced')).toBeInTheDocument();
     expect(screen.getByText('Spanish: Native')).toBeInTheDocument();
     expect(screen.getByText('Catalan: Native')).toBeInTheDocument();
+  });
+
+  it('renders language flags for translated language items', () => {
+    render(<Skills skillCategories={languageCategoriesEs} />);
+    const flags = screen.getAllByTestId('language-flag');
+    expect(flags).toHaveLength(4);
+    expect((flags[0] as HTMLImageElement).src).toContain('/flags/gb.svg');
+    expect((flags[1] as HTMLImageElement).src).toContain('/flags/de.svg');
+    expect((flags[2] as HTMLImageElement).src).toContain('/flags/es.svg');
+    expect((flags[3] as HTMLImageElement).src).toContain('/flags/es-ct.svg');
+    expect(screen.getByText('Inglés: C1 - Avanzado')).toBeInTheDocument();
   });
 
   it('returns null for empty categories', () => {
