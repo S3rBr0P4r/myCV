@@ -219,5 +219,5 @@ jobs:
             echo "Attempt $attempt: / = $PAGE_CODE, /api/v1/cv = $API_CODE"
             sleep 3
           done
-          echo "Frontend public checks failed" >&2
+          echo "Frontend health check failed after 5 attempts" >&2
           exit 1
