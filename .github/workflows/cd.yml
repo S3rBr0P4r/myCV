@@ -120,6 +120,7 @@ jobs:
              (docker rm -f mycv-api || true) && \
              docker run -d --name mycv-api --restart unless-stopped \
                --network mycv-net --network-alias mycv-api \
+               --ip ${{ secrets.API_CONTAINER_IP }} \
                -p ${{ vars.BACKEND_PORT }}:${{ vars.BACKEND_PORT }} \
                -v /opt/mycv/data:/app/Infrastructure/Data \
                -e CvSource__FilePath=Infrastructure/Data/cv.docx \
@@ -133,7 +134,7 @@ jobs:
                -e DeepL__AuthKey=${{ secrets.DEEPL_AUTH_KEY }} \
                -e DeepL__TimeoutSeconds=${{ vars.DEEPL_TIMEOUT_SECONDS }} \
                $IMAGE && \
-             docker network connect npm_network mycv-api && \
+             docker network connect --ip ${{ secrets.API_CONTAINER_NETWORK_LINK_IP }} npm_network mycv-api && \
              docker logout ghcr.io"
 
   health-check:
