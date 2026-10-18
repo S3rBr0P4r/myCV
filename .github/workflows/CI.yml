@@ -14,6 +14,45 @@ permissions:
   packages: write
 
 jobs:
+  version:
+    name: Version
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+      - name: Bump version and push tag
+        id: bump
+        if: github.event_name == 'push'
+        uses: mathieudutour/github-tag-action@af99e60ce8132224b8e6ebab5023449fe256ed46 # v7
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          default_bump: patch
+          tag_prefix: v
+      - name: Create GitHub release
+        if: github.event_name == 'push' && steps.bump.outputs.new_tag != ''
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: ${{ steps.bump.outputs.new_tag }}
+          name: Release ${{ steps.bump.outputs.new_tag }}
+          body: ${{ steps.bump.outputs.changelog }}
+          prerelease: ${{ steps.bump.outputs.prerelease == 'true' }}
+      - name: Resolve version
+        id: resolve
+        run: |
+          if [ -n "${{ steps.bump.outputs.new_version }}" ]; then
+            echo "version=${{ steps.bump.outputs.new_version }}" >> "$GITHUB_OUTPUT"
+          elif TAG=$(git describe --tags --exact-match 2>/dev/null); then
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+
   frontend:
     name: Frontend
     runs-on: ubuntu-24.04
@@ -65,7 +104,7 @@ jobs:
 
   docker-api:
     name: Docker API
-    needs: [backend]
+    needs: [backend, version]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -82,7 +121,7 @@ jobs:
           images: ghcr.io/s3rbr0p4r/mycv/mycv-api
           tags: |
             type=sha,prefix=
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ needs.version.outputs.version }}
       - uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: backend
@@ -93,7 +132,7 @@ jobs:
 
   docker-frontend:
     name: Docker Frontend
-    needs: [frontend]
+    needs: [frontend, version]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -110,7 +149,7 @@ jobs:
           images: ghcr.io/s3rbr0p4r/mycv/mycv-frontend
           tags: |
             type=sha,prefix=
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ needs.version.outputs.version }}
       - uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: frontend

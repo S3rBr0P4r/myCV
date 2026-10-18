@@ -72,6 +72,7 @@ myCV/
 - Two Discord webhooks: error alerts (1h cooldown) + feedback (no cooldown)
 - Offline fallback with localized Ghibli-inspired error page
 - Dockerized (non-root, GHA cache), CI/CD via GitHub Actions (CV fetched from NAS share link at deploy)
+- Semantic versioning: every merge to `main` auto-bumps a Conventional-Commit-driven semver (`feat:`→minor, `BREAKING CHANGE:`→major, else patch), tags the image, and cuts a GitHub Release with the changelog
 - 0 npm vulns, `TreatWarningsAsErrors`, stable packages only
 
 ## Configuration
@@ -91,6 +92,10 @@ myCV/
 ### Updating the CV
 
 Replace `cv.docx` in the NAS shared folder — the share link (`ssid`) stays valid — then trigger CD (push to `main` or manual workflow dispatch). The fetch step validates the download (≤5 MB, OOXML magic bytes, `word/document.xml`) and atomically replaces `/opt/mycv/data/cv.docx` before recreating the backend container; any failure aborts the deploy so the old container keeps serving the previous CV.
+
+### Versioning & releases
+
+Every push to `main` runs a `version` job that bumps the SemVer version from Conventional Commit messages (`feat:` → minor, `feat!:` / `BREAKING CHANGE:` → major, otherwise patch), pushes a `v*` git tag, and creates a matching GitHub Release with the generated changelog. Both Docker images are published to GHCR tagged with that version and the commit SHA (the floating `latest` tag is no longer used), and CD deploys the exact version CI built. To roll back or redeploy a specific version, run the CD workflow manually and set the optional `image_version` input (e.g. `1.4.0`).
 
 ## License
 

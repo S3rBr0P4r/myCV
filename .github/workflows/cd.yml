@@ -6,6 +6,11 @@ on:
     types: [completed]
     branches: [main]
   workflow_dispatch:
+    inputs:
+      image_version:
+        description: 'Image version to deploy (e.g. 1.4.0). Leave empty to auto-resolve the version built by CI.'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -45,6 +50,20 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+      - name: Resolve image version
+        id: ver
+        run: |
+          if [ -n "${{ inputs.image_version }}" ]; then
+            echo "version=${{ inputs.image_version }}" >> "$GITHUB_OUTPUT"
+          elif TAG=$(git describe --tags --exact-match 2>/dev/null); then
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Unable to resolve an image version" >&2
+            exit 1
+          fi
       - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
@@ -110,13 +129,14 @@ jobs:
       - name: Pull and restart API
         env:
           IMAGE: ghcr.io/s3rbr0p4r/mycv/mycv-api
+          VERSION: ${{ steps.ver.outputs.version }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "docker network inspect npm_network >/dev/null && \
              echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
-             docker pull $IMAGE && \
+             docker pull $IMAGE:$VERSION && \
              (docker rm -f mycv-api || true) && \
              docker run -d --name mycv-api --restart unless-stopped \
                --network mycv-net --network-alias mycv-api \
@@ -133,7 +153,7 @@ jobs:
                -e Discord__FeedbackWebhookUrl=${{ secrets.DISCORD_FEEDBACK_WEBHOOK_URL }} \
                -e DeepL__AuthKey=${{ secrets.DEEPL_AUTH_KEY }} \
                -e DeepL__TimeoutSeconds=${{ vars.DEEPL_TIMEOUT_SECONDS }} \
-               $IMAGE && \
+               $IMAGE:$VERSION && \
              docker network connect --ip ${{ secrets.API_CONTAINER_NETWORK_LINK_IP }} npm_network mycv-api && \
              docker logout ghcr.io"
 
@@ -177,6 +197,20 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+      - name: Resolve image version
+        id: ver
+        run: |
+          if [ -n "${{ inputs.image_version }}" ]; then
+            echo "version=${{ inputs.image_version }}" >> "$GITHUB_OUTPUT"
+          elif TAG=$(git describe --tags --exact-match 2>/dev/null); then
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Unable to resolve an image version" >&2
+            exit 1
+          fi
       - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
           registry: ghcr.io
@@ -193,13 +227,14 @@ jobs:
       - name: Pull and restart frontend
         env:
           IMAGE: ghcr.io/s3rbr0p4r/mycv/mycv-frontend
+          VERSION: ${{ steps.ver.outputs.version }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "docker network inspect npm_network >/dev/null && \
              echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
-             docker pull $IMAGE && \
+             docker pull $IMAGE:$VERSION && \
              (docker rm -f mycv-frontend || true) && \
              docker run -d --name mycv-frontend --restart unless-stopped \
                --network mycv-net \
@@ -208,7 +243,7 @@ jobs:
                -e PORT=${{ vars.FRONTEND_PORT }} \
                -e FRONTEND_URL=${{ vars.FRONTEND_URL }} \
                -e BACKEND_PORT=${{ vars.BACKEND_PORT }} \
-               $IMAGE && \
+               $IMAGE:$VERSION && \
              docker network connect --ip ${{ secrets.FRONTEND_CONTAINER_NETWORK_LINK_IP }} npm_network mycv-frontend && \
              docker logout ghcr.io"
 
