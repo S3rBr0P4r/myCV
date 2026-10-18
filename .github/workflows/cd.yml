@@ -203,12 +203,13 @@ jobs:
              (docker rm -f mycv-frontend || true) && \
              docker run -d --name mycv-frontend --restart unless-stopped \
                --network mycv-net \
+               --ip ${{ secrets.FRONTEND_CONTAINER_IP }} \
                -p ${{ vars.FRONTEND_PORT }}:${{ vars.FRONTEND_PORT }} \
                -e PORT=${{ vars.FRONTEND_PORT }} \
                -e FRONTEND_URL=${{ vars.FRONTEND_URL }} \
                -e BACKEND_PORT=${{ vars.BACKEND_PORT }} \
                $IMAGE && \
-             docker network connect npm_network mycv-frontend && \
+             docker network connect --ip ${{ secrets.FRONTEND_CONTAINER_NETWORK_LINK_IP }} npm_network mycv-frontend && \
              docker logout ghcr.io"
 
   health-check-frontend:
