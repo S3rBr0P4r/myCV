@@ -153,6 +153,7 @@ jobs:
                -e Discord__FeedbackWebhookUrl=${{ secrets.DISCORD_FEEDBACK_WEBHOOK_URL }} \
                -e DeepL__AuthKey=${{ secrets.DEEPL_AUTH_KEY }} \
                -e DeepL__TimeoutSeconds=${{ vars.DEEPL_TIMEOUT_SECONDS }} \
+               -l "wud.watch=false" \
                $IMAGE:$VERSION && \
              docker network connect --ip ${{ secrets.API_CONTAINER_NETWORK_LINK_IP }} npm_network mycv-api && \
              docker logout ghcr.io"
@@ -243,6 +244,7 @@ jobs:
                -e PORT=${{ vars.FRONTEND_PORT }} \
                -e FRONTEND_URL=${{ vars.FRONTEND_URL }} \
                -e BACKEND_PORT=${{ vars.BACKEND_PORT }} \
+               -l "wud.watch=false" \
                $IMAGE:$VERSION && \
              docker network connect --ip ${{ secrets.FRONTEND_CONTAINER_NETWORK_LINK_IP }} npm_network mycv-frontend && \
              docker logout ghcr.io"
