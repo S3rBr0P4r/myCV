@@ -143,7 +143,7 @@ Infrastructure/Sources/
 ## CI (`.github/workflows/ci.yml`) + CD (`.github/workflows/cd.yml`)
 
 Triggers on push to `main` (or manual `workflow_dispatch`). Concurrency group `ci-${{ github.ref }}` with `cancel-in-progress: true` prevents Docker tag races. Five jobs (version 5m, frontend 10m, backend 10m, docker-api 15m, docker-frontend 15m timeouts):
-- **Version:** Conventional-commit semver. `mathieudutour/github-tag-action` reads the latest `v*` tag, analyzes commits since (`feat:`→minor, `feat!:`/`BREAKING CHANGE:`→major, else patch), pushes the new git tag, and a `softprops/action-gh-release` step creates a matching GitHub Release (body = generated changelog). Outputs `version` (e.g. `1.4.0`). Bump+release gated on `push` (skipped on re-runs/`workflow_dispatch`, which fall back to `git describe`). Needs job-level `contents: write`. Seed baseline: `v1.0.0`.
+- **Version:** Conventional-commit semver. `mathieudutour/github-tag-action` reads the latest `v*` tag, analyzes commits since (`feat:`→minor, `feat!:`/`BREAKING CHANGE:`→major, else patch), pushes the new git tag, and a `softprops/action-gh-release` step creates a matching GitHub Release whose body is the full `git log --oneline` commit list since the previous tag (no auto compare-link). Outputs `version` (e.g. `1.4.0`). Bump+release gated on `push` (skipped on re-runs/`workflow_dispatch`, which fall back to `git describe`). Needs job-level `contents: write`. Seed baseline: `v1.0.0`.
 - **Frontend:** `npm ci` → `npm run build` → `npm run test`
 - **Backend:** `dotnet restore` → `dotnet build` → `dotnet test`
 - **Docker API:** Builds and pushes API image to GHCR tagged `<version>` + `<sha>` (`latest` removed).

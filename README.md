@@ -95,7 +95,7 @@ Replace `cv.docx` in the NAS shared folder — the share link (`ssid`) stays val
 
 ### Versioning & releases
 
-Every push to `main` runs a `version` job that bumps the SemVer version from Conventional Commit messages (`feat:` → minor, `feat!:` / `BREAKING CHANGE:` → major, otherwise patch), pushes a `v*` git tag, and creates a matching GitHub Release with the generated changelog. Both Docker images are published to GHCR tagged with that version and the commit SHA (the floating `latest` tag is no longer used), and CD deploys the exact version CI built. To roll back or redeploy a specific version, run the CD workflow manually and set the optional `image_version` input (e.g. `1.4.0`).
+Every push to `main` runs a `version` job that bumps the SemVer version from Conventional Commit messages (`feat:` → minor, `feat!:` / `BREAKING CHANGE:` → major, otherwise patch), pushes a `v*` git tag, and creates a matching GitHub Release whose body lists every commit included in that version. Both Docker images are published to GHCR tagged with that version and the commit SHA (the floating `latest` tag is no longer used), and CD deploys the exact version CI built. To roll back or redeploy a specific version, run the CD workflow manually and set the optional `image_version` input (e.g. `1.4.0`).
 
 ## License
 
