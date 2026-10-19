@@ -17,37 +17,13 @@ permissions:
   packages: read
 
 jobs:
-  ensure-network:
+  prepare:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
-    name: Ensure Docker network
+    name: Prepare
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
-
-      - name: Create Docker network
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "docker network create mycv-net 2>/dev/null || true"
-
-  deploy-api:
-    name: Deploy API
-    needs: [ensure-network]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
@@ -64,12 +40,34 @@ jobs:
             echo "Unable to resolve an image version" >&2
             exit 1
           fi
-      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+      - name: Create Docker network
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "docker network create mycv-net 2>/dev/null || true"
+
+      - name: Log in to GHCR on server
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin"
+
+  deploy-api:
+    name: Deploy API
+    needs: [prepare]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
@@ -129,13 +127,11 @@ jobs:
       - name: Pull and restart API
         env:
           IMAGE: ghcr.io/s3rbr0p4r/mycv/mycv-api
-          VERSION: ${{ steps.ver.outputs.version }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.prepare.outputs.version }}
         run: |
           ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "docker network inspect npm_network >/dev/null && \
-             echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
              docker pull $IMAGE:$VERSION && \
              (docker rm -f mycv-api || true) && \
              docker run -d --name mycv-api --restart unless-stopped \
@@ -155,8 +151,7 @@ jobs:
                -e DeepL__TimeoutSeconds=${{ vars.DEEPL_TIMEOUT_SECONDS }} \
                -l "wud.watch=false" \
                $IMAGE:$VERSION && \
-             docker network connect --ip ${{ secrets.API_CONTAINER_NETWORK_LINK_IP }} npm_network mycv-api && \
-             docker logout ghcr.io"
+             docker network connect --ip ${{ secrets.API_CONTAINER_NETWORK_LINK_IP }} npm_network mycv-api"
 
   health-check:
     name: Health check
@@ -193,31 +188,10 @@ jobs:
 
   deploy-frontend:
     name: Deploy Frontend
-    needs: [health-check]
+    needs: [prepare, health-check]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-          fetch-depth: 0
-      - name: Resolve image version
-        id: ver
-        run: |
-          if [ -n "${{ inputs.image_version }}" ]; then
-            echo "version=${{ inputs.image_version }}" >> "$GITHUB_OUTPUT"
-          elif TAG=$(git describe --tags --exact-match 2>/dev/null); then
-            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
-          else
-            echo "Unable to resolve an image version" >&2
-            exit 1
-          fi
-      - uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
@@ -228,13 +202,11 @@ jobs:
       - name: Pull and restart frontend
         env:
           IMAGE: ghcr.io/s3rbr0p4r/mycv/mycv-frontend
-          VERSION: ${{ steps.ver.outputs.version }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.prepare.outputs.version }}
         run: |
           ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SSH_PORT }} \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
             "docker network inspect npm_network >/dev/null && \
-             echo $GHCR_TOKEN | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
              docker pull $IMAGE:$VERSION && \
              (docker rm -f mycv-frontend || true) && \
              docker run -d --name mycv-frontend --restart unless-stopped \
@@ -246,8 +218,7 @@ jobs:
                -e BACKEND_PORT=${{ vars.BACKEND_PORT }} \
                -l "wud.watch=false" \
                $IMAGE:$VERSION && \
-             docker network connect --ip ${{ secrets.FRONTEND_CONTAINER_NETWORK_LINK_IP }} npm_network mycv-frontend && \
-             docker logout ghcr.io"
+             docker network connect --ip ${{ secrets.FRONTEND_CONTAINER_NETWORK_LINK_IP }} npm_network mycv-frontend"
 
   health-check-frontend:
     name: Frontend health check
