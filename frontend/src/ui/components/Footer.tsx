@@ -39,7 +39,7 @@ export function Footer({ name, contactInfo }: FooterProps) {
           })()} &bull;{' '}
           <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">{t('footer.sourceLink')}</a>
         </p>
-        <button type="button" className="footer-cookie-settings" onClick={reopenCookieNotice}>
+        <button type="button" className="footer-notice-link" onClick={reopenCookieNotice}>
           {t('cookie.settingsLink')}
         </button>
       </footer>

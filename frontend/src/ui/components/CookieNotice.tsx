@@ -43,17 +43,17 @@ export function CookieNotice() {
   if (!visible) return null;
 
   return (
-    <div className="cookie-notice" role="region" aria-label={t('cookie.ariaLabel')} ref={barRef}>
-      <div className="cookie-notice-inner">
-        <div className="cookie-notice-text">
-          <p className="cookie-notice-title">{t('cookie.title')}</p>
-          <p className="cookie-notice-message">{t('cookie.message')}</p>
-          <details className="cookie-notice-details">
+    <div className="site-note" role="region" aria-label={t('cookie.ariaLabel')} ref={barRef}>
+      <div className="site-note-inner">
+        <div className="site-note-text">
+          <p className="site-note-title">{t('cookie.title')}</p>
+          <p className="site-note-message">{t('cookie.message')}</p>
+          <details className="site-note-details">
             <summary>{t('cookie.detailsSummary')}</summary>
-            <p className="cookie-notice-details-body">{t('cookie.detailsBody')}</p>
+            <p className="site-note-details-body">{t('cookie.detailsBody')}</p>
           </details>
         </div>
-        <button type="button" className="cookie-notice-dismiss" onClick={dismiss}>
+        <button type="button" className="site-note-dismiss" onClick={dismiss}>
           {t('cookie.dismiss')}
         </button>
       </div>
