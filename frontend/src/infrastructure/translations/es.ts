@@ -50,4 +50,15 @@ export const es: Record<string, string> = {
   'feedback.error': 'Algo salió mal. Inténtalo de nuevo.',
   'feedback.requiredName': 'Por favor, introduce tu nombre.',
   'feedback.requiredRating': 'Por favor, selecciona una valoración.',
+
+  /* Cookie notice */
+  'cookie.title': 'Sobre las cookies',
+  'cookie.message':
+    'Este sitio no utiliza cookies de analítica ni publicidad. Solo guardamos tus preferencias de tema e idioma en tu navegador, además de las cookies estrictamente necesarias de seguridad que establece nuestro CDN.',
+  'cookie.detailsSummary': 'Ver detalles',
+  'cookie.detailsBody':
+    '• Preferencias de tema e idioma — guardadas localmente en tu navegador, solo cuando las cambias.\n• Cookies de seguridad (Cloudflare) — estrictamente necesarias para proteger el sitio.\n• No se utilizan cookies de analítica, publicidad o seguimiento.',
+  'cookie.dismiss': 'Entendido',
+  'cookie.settingsLink': 'Configuración de cookies',
+  'cookie.ariaLabel': 'Aviso de cookies',
 };

@@ -1,6 +1,7 @@
 import type { ContactInfo } from '../../domain/entities/CV';
 import { useTranslation } from '../hooks/useTranslation';
 import { renderFormattedText } from '../format';
+import { clearConsent, COOKIE_NOTICE_REOPEN_EVENT } from '../consent';
 
 const GITHUB_REPO = 'https://github.com/s3rbr0p4r/mycv';
 
@@ -11,6 +12,11 @@ interface FooterProps {
 
 export function Footer({ name, contactInfo }: FooterProps) {
   const { t } = useTranslation();
+
+  const reopenCookieNotice = () => {
+    clearConsent();
+    window.dispatchEvent(new CustomEvent(COOKIE_NOTICE_REOPEN_EVENT));
+  };
 
   return (
     <>
@@ -33,6 +39,9 @@ export function Footer({ name, contactInfo }: FooterProps) {
           })()} &bull;{' '}
           <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">{t('footer.sourceLink')}</a>
         </p>
+        <button type="button" className="footer-cookie-settings" onClick={reopenCookieNotice}>
+          {t('cookie.settingsLink')}
+        </button>
       </footer>
     </>
   );

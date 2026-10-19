@@ -1,6 +1,6 @@
 .feedback-fab {
   position: fixed;
-  bottom: 28px;
+  bottom: calc(28px + var(--cookie-h, 0px));
   right: 28px;
   z-index: 900;
   width: 56px;
@@ -131,11 +131,13 @@
   box-sizing: border-box;
 }
 
-.feedback-field input:focus {
+.feedback-field input:focus,
+.feedback-textarea:focus {
   border-color: var(--primary);
 }
 
-.feedback-field input::placeholder {
+.feedback-field input::placeholder,
+.feedback-textarea::placeholder {
   color: var(--text-tertiary);
 }
 
@@ -154,14 +156,6 @@
   resize: vertical;
   min-height: 60px;
   line-height: 1.45;
-}
-
-.feedback-textarea:focus {
-  border-color: var(--primary);
-}
-
-.feedback-textarea::placeholder {
-  color: var(--text-tertiary);
 }
 
 .feedback-stars {
@@ -221,7 +215,7 @@
 
 .feedback-toast {
   position: fixed;
-  bottom: 96px;
+  bottom: calc(96px + var(--cookie-h, 0px));
   right: 28px;
   z-index: 950;
   display: flex;

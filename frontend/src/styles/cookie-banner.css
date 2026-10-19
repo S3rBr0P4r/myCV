@@ -1,0 +1,111 @@
+.cookie-notice {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 920;
+  background: var(--bg-surface);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  padding: 16px 5%;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  animation: cookie-notice-in var(--transition) ease-out;
+}
+
+@keyframes cookie-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cookie-notice-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+}
+
+.cookie-notice-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.cookie-notice-title {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.cookie-notice-message {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.cookie-notice-details {
+  margin-top: 8px;
+  font-size: 0.8rem;
+}
+
+.cookie-notice-details summary {
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: color var(--transition);
+}
+
+.cookie-notice-details summary:hover,
+.cookie-notice-details summary:focus-visible {
+  color: var(--text);
+}
+
+.cookie-notice-details-body {
+  margin: 8px 0 0;
+  line-height: 1.7;
+  color: var(--text-tertiary);
+  white-space: pre-line;
+}
+
+.cookie-notice-dismiss {
+  flex-shrink: 0;
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  color: var(--bg);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.cookie-notice-dismiss:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.cookie-notice-dismiss:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+  .cookie-notice-inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cookie-notice-dismiss {
+    width: 100%;
+  }
+}

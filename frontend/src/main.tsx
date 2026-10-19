@@ -7,6 +7,7 @@ import { CVProvider } from './ui/contexts/CVContext';
 import { useTranslation } from './ui/hooks/useTranslation';
 import { App } from './ui/App';
 import { ErrorBoundary } from './ui/components/ErrorBoundary';
+import { CookieNotice } from './ui/components/CookieNotice';
 
 const repository = new ApiCVRepository();
 const getCVUseCase = new GetCVUseCase(repository);
@@ -25,6 +26,7 @@ ReactDOM.createRoot(document.getElementById('app')!).render(
     <TranslationProvider>
       <ErrorBoundary>
         <Root />
+        <CookieNotice />
       </ErrorBoundary>
     </TranslationProvider>
   </ThemeProvider>,

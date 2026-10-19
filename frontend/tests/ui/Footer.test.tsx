@@ -1,9 +1,18 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Footer } from '../../src/ui/components/Footer';
 import { TranslationProvider } from '../../src/ui/contexts/TranslationContext';
+import {
+  CONSENT_STORAGE_KEY,
+  COOKIE_NOTICE_REOPEN_EVENT,
+  setConsent,
+} from '../../src/ui/consent';
 
 describe('Footer', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it('renders heading', () => {
     render(<TranslationProvider><Footer name="John" /></TranslationProvider>);
     expect(screen.getByText("Let's make things happen")).toBeInTheDocument();
@@ -29,5 +38,17 @@ describe('Footer', () => {
   it('renders footer with name', () => {
     render(<TranslationProvider><Footer name="John" /></TranslationProvider>);
     expect(screen.getByText(/John/)).toBeInTheDocument();
+  });
+
+  it('clears the consent record and dispatches reopen on cookie settings click', () => {
+    setConsent('acknowledged');
+    let reopened = false;
+    window.addEventListener(COOKIE_NOTICE_REOPEN_EVENT, () => { reopened = true; }, { once: true });
+
+    render(<TranslationProvider><Footer name="John" /></TranslationProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Cookie settings' }));
+
+    expect(reopened).toBe(true);
+    expect(localStorage.getItem(CONSENT_STORAGE_KEY)).toBeNull();
   });
 });

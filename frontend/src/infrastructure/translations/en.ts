@@ -50,4 +50,15 @@ export const en: Record<string, string> = {
   'feedback.error': 'Something went wrong. Please try again.',
   'feedback.requiredName': 'Please enter your name.',
   'feedback.requiredRating': 'Please select a rating.',
+
+  /* Cookie notice */
+  'cookie.title': 'About cookies',
+  'cookie.message':
+    'This site does not use analytics or advertising cookies. We only store your theme and language preferences in your browser, plus strictly necessary security cookies set by our CDN.',
+  'cookie.detailsSummary': 'See details',
+  'cookie.detailsBody':
+    '• Theme and language preferences — saved locally in your browser, only when you change them.\n• Security cookies (Cloudflare) — strictly necessary to protect the site.\n• No analytics, advertising or tracking cookies are used.',
+  'cookie.dismiss': 'Got it',
+  'cookie.settingsLink': 'Cookie settings',
+  'cookie.ariaLabel': 'Cookie notice',
 };
