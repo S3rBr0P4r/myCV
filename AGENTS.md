@@ -177,6 +177,8 @@ Triggers on push to `main` (or manual `workflow_dispatch`). Concurrency group `c
 
 - **SOLID — Single Responsibility enforced:** Every production file (frontend CSS/TS, backend C#) must stay ≤ 250 lines. Large classes are split into focused helpers. This applies to both frontend and backend code.
 
+- **Never commit or push.** All version-control operations are the maintainer's responsibility. Agents may create, edit and delete files, stage changes if explicitly asked, and report exactly what changed — but they must NOT run `git commit`, `git push`, `git tag`, `git merge`, `git rebase`, `git reset --hard` or any other operation that writes to history or to the remote. Leave the working tree ready for the maintainer to review and commit.
+
 ## Cleanup Hygiene
 
 Before marking any feature/refactor PR as complete, verify these common dead-code sources are not reintroduced:
