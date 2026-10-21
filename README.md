@@ -1,6 +1,6 @@
 # myCV
 
-Personal bilingual CV website. Backend parses a `.docx` file, translates via DeepL on demand, collects viewer feedback. Frontend renders it with dark mode, pagination, career cards, a feedback FAB, and a cookie notice.
+Personal bilingual CV website. Backend parses a `.docx` file, translates via DeepL on demand, collects viewer feedback. Frontend renders it with dark mode, pagination, career cards, a themed loading sprite, a feedback FAB, and a cookie notice.
 
 Built with [opencode](https://opencode.ai) under human supervision.
 
@@ -38,12 +38,15 @@ myCV/
 │   ├── ui/                Components, hooks, contexts, App
 │   │   └── components/
 │   │       ├── Feedback.tsx   FAB → modal → toast flow
-│   │       └── CookieNotice.tsx   Bottom cookie notice bar
-│   ├── styles/            Design system (18 CSS files)
+│   │       ├── CookieNotice.tsx   Bottom cookie notice bar
+│   │       └── LoadingState.tsx   Theme/locale loading sprite
+│   ├── styles/            Design system (19 CSS files)
 │   │   ├── feedback.css   FAB, overlay, modal, stars, toast
+│   │   ├── loading.css   Loading sprite layout + float animation
 │   │   └── cookie-banner.css   Cookie notice + FAB/toast offset
 │   └── public/
-│       └── errors/        backend_not_responding.webp
+│       ├── errors/        backend_not_responding.webp
+│       └── loading/       en-{light,dark}.webp, es-{light,dark}.webp
 │
 ├── backend/               .NET 10 (single project, folder layers)
 │   ├── src/
@@ -63,12 +66,13 @@ myCV/
 1. **`.docx` → JSON**: The CV file never enters the repo — CD fetches it from a password-protected QNAP File Station share link, validates it, and installs it at `/opt/mycv/data/cv.docx`. At runtime, `WordCvSource` parses the file into structured data.
 2. **`GET /api/v1/cv`**: Returns the CV as JSON, optionally translated via DeepL based on `Accept-Language`. Experience narratives and the certifications & relevant training section are translated. Narratives are always rendered in first-person singular (the English source is prefixed with `I ` before sending to DeepL, since English past tense doesn't mark person and DeepL would otherwise flip between *desarrolló* and *desarrollé*). Marker labels (`Tech Stack`, `Core`, `Tooling`) are translated too — `Core` is canonicalized to `Núcleo` — but the payloads after them stay in English and the `**bold**`/`:` decoration is preserved byte-for-byte, so list indentation renders identically in both languages. If DeepL detects a text as already being in the target language and returns it unchanged (e.g. a mixed English/Spanish course title), it is retried once with a forced English source so the English parts still get translated.
 3. **`POST /api/v1/feedback`**: Stores viewer feedback (name, rating, country, comment) and forwards it to a Discord webhook as a green embed.
-4. **Frontend**: Fetches CV on load, re-fetches on locale switch. Resets to a friendly offline page when the backend is unreachable. Feedback FAB opens a modal with star rating, name, and optional comment; submission shows a toast notification. A cookie notice bar appears until acknowledged and can be reopened from the footer.
+4. **Frontend**: Fetches CV on load, re-fetches on locale switch. While the request is in flight it shows a loading sprite picked by locale and theme (`public/loading/{en,es}-{light,dark}.webp`) — a single illustration with the word baked in, so the word is also exposed to screen readers through a visually hidden `role="status"` element. Resets to a friendly offline page when the backend is unreachable. Feedback FAB opens a modal with star rating, name, and optional comment; submission shows a toast notification. A cookie notice bar appears until acknowledged and can be reopened from the footer.
 5. **Alerts**: Errors (DOCX parse failure, DeepL failures, path traversal) send a red embed to a separate Discord webhook with a 1-hour cooldown.
 
 ## Key features
 
 - Bilingual (EN/ES, no auto-detect), dark mode, reduced-motion support
+- Themed loading sprite: one illustration, four variants (light/dark × en/es) with the word set in the site's own Figtree Bold; transparent background so it floats over the page
 - API versioning, Swagger, health endpoint, Serilog logging
 - Viewer feedback collection (star rating, auto-detected country, optional comment)
 - Two Discord webhooks: error alerts (1h cooldown) + feedback (no cooldown)

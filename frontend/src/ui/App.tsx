@@ -11,6 +11,7 @@ import { AnimatedBackground } from './components/AnimatedBackground';
 import { Skills } from './components/Skills';
 import { Footer } from './components/Footer';
 import { Feedback } from './components/Feedback';
+import { LoadingState } from './components/LoadingState';
 
 function useSectionTracker(cv: CV | null) {
   useEffect(() => {
@@ -89,9 +90,7 @@ export function App() {
         <Header />
         <AnimatedBackground />
         <div className="painted-bg" id="bg" />
-        <section className="intro-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <p style={{ opacity: 0.5 }}>{t('loading.message')}</p>
-        </section>
+        <LoadingState />
         <Feedback />
       </>
     );

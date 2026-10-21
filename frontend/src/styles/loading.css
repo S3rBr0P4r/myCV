@@ -1,0 +1,32 @@
+.loading-state {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 55vh;
+  padding: 120px 5% 60px;
+}
+
+.loading-state-sprite {
+  display: block;
+  width: min(80vw, 400px);
+  height: auto;
+  animation: loading-float 3.4s ease-in-out infinite;
+}
+
+@keyframes loading-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@media (max-width: 768px) {
+  .loading-state {
+    min-height: 50vh;
+    padding: 100px 6% 48px;
+  }
+
+  .loading-state-sprite {
+    width: min(90vw, 320px);
+  }
+}

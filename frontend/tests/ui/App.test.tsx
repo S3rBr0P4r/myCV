@@ -59,8 +59,12 @@ describe('App', () => {
   });
 
   it('shows loading state', () => {
-    render(<App />, { wrapper: TestWrapper });
-    expect(screen.getByText('Loading\u2026')).toBeInTheDocument();
+    const { container } = render(<App />, { wrapper: TestWrapper });
+    expect(screen.getByRole('status')).toHaveTextContent('Loading…');
+    expect(container.querySelector('.loading-state-sprite')).toHaveAttribute(
+      'src',
+      '/loading/en-light.webp',
+    );
   });
 
   it('shows offline page on error', () => {
