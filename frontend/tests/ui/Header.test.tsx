@@ -31,7 +31,7 @@ const emptyCV: CV = {
 function createWrapper(cv: CV | null) {
   return function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <CVContext.Provider value={{ cv, loading: false, error: null, refetch: () => {} }}>
+      <CVContext.Provider value={{ cv, loading: false, refreshing: false, error: null, refetch: () => {} }}>
         <TranslationProvider>
           <ThemeProvider>
             {children}
@@ -42,6 +42,15 @@ function createWrapper(cv: CV | null) {
   };
 }
 
+class FakeImage {
+  src = '';
+  constructor() {
+    preloadedImages.push(this);
+  }
+}
+
+const preloadedImages: FakeImage[] = [];
+
 describe('Header', () => {
   afterEach(() => {
     document.body.innerHTML = '';
@@ -49,6 +58,8 @@ describe('Header', () => {
     localStorage.removeItem('cv-theme');
     document.documentElement.removeAttribute('data-theme');
     document.documentElement.removeAttribute('data-locale');
+    vi.unstubAllGlobals();
+    preloadedImages.length = 0;
   });
 
   it('renders LinkedIn link when CV has URL', () => {
@@ -102,5 +113,40 @@ describe('Header', () => {
     const Wrapper = createWrapper(fullCV);
     render(<Header />, { wrapper: Wrapper });
     expect(screen.getByLabelText('Switch theme')).toBeInTheDocument();
+  });
+
+  it('preloads the sibling locale sprite when the language trigger is hovered', () => {
+    vi.stubGlobal('Image', FakeImage);
+    const Wrapper = createWrapper(fullCV);
+    render(<Header />, { wrapper: Wrapper });
+    fireEvent.mouseEnter(screen.getByLabelText('Switch language'));
+    expect(preloadedImages.map((i) => i.src)).toContain('/loading/es-light.webp');
+  });
+
+  it('preloads the sibling locale sprite when the language trigger is focused', () => {
+    localStorage.setItem('cv-theme', 'dark');
+    vi.stubGlobal('Image', FakeImage);
+    const Wrapper = createWrapper(fullCV);
+    render(<Header />, { wrapper: Wrapper });
+    fireEvent.focusIn(screen.getByLabelText('Switch language'));
+    expect(preloadedImages.map((i) => i.src)).toContain('/loading/es-dark.webp');
+  });
+
+  it('preloads the sibling locale sprite when the language trigger is clicked', () => {
+    localStorage.setItem('cv-locale', 'es');
+    vi.stubGlobal('Image', FakeImage);
+    const Wrapper = createWrapper(fullCV);
+    render(<Header />, { wrapper: Wrapper });
+    fireEvent.click(screen.getByLabelText('Cambiar idioma'));
+    expect(preloadedImages.map((i) => i.src)).toContain('/loading/en-light.webp');
+  });
+
+  it('preloads the sibling locale sprite for the next theme when the theme is toggled', () => {
+    localStorage.setItem('cv-locale', 'es');
+    vi.stubGlobal('Image', FakeImage);
+    const Wrapper = createWrapper(fullCV);
+    render(<Header />, { wrapper: Wrapper });
+    fireEvent.click(screen.getByLabelText('Cambiar tema'));
+    expect(preloadedImages.map((i) => i.src)).toContain('/loading/en-dark.webp');
   });
 });

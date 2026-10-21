@@ -66,4 +66,20 @@ describe('LoadingState', () => {
     renderLoadingState();
     expect(screen.getByRole('status')).toHaveTextContent('Cargando…');
   });
+
+  it('renders the page variant by default', () => {
+    const { container } = renderLoadingState();
+    expect(container.querySelector('.loading-state')).toHaveClass('loading-state--page');
+  });
+
+  it('renders the overlay variant when requested', () => {
+    const { container } = render(
+      <ThemeProvider>
+        <TranslationProvider>
+          <LoadingState variant="overlay" />
+        </TranslationProvider>
+      </ThemeProvider>,
+    );
+    expect(container.querySelector('.loading-state')).toHaveClass('loading-state--overlay');
+  });
 });

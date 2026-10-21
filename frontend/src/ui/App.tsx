@@ -3,6 +3,7 @@ import { useCV } from './hooks/useCV';
 import { useTranslation } from './hooks/useTranslation';
 import { useScrollReveal } from './hooks/useScrollReveal';
 import { useParallax } from './hooks/useParallax';
+import { useMinimumVisible } from './hooks/useMinimumVisible';
 import type { CV } from '../domain/entities/CV';
 import { Header } from './components/Header';
 import { Intro } from './components/Intro';
@@ -12,7 +13,6 @@ import { Skills } from './components/Skills';
 import { Footer } from './components/Footer';
 import { Feedback } from './components/Feedback';
 import { LoadingState } from './components/LoadingState';
-import { RefreshProgress } from './components/RefreshProgress';
 
 function useSectionTracker(cv: CV | null) {
   useEffect(() => {
@@ -85,6 +85,8 @@ export function App() {
   useSectionTracker(cv);
   useLocaleDropdown();
 
+  const showOverlay = useMinimumVisible(refreshing);
+
   if (loading) {
     return (
       <>
@@ -146,7 +148,7 @@ export function App() {
         ))}
       </nav>
       <Feedback />
-      {refreshing && <RefreshProgress />}
+      {showOverlay && <LoadingState variant="overlay" />}
     </>
   );
 }

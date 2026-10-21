@@ -97,12 +97,15 @@ describe('App', () => {
     expect(nav).toBeInTheDocument();
   });
 
-  it('keeps the CV on screen and shows a progress bar while refreshing', () => {
+  it('keeps the CV on screen and shows the sprite overlay while refreshing', () => {
     const Wrapper = createWrapper(mockCV, false, null, true);
     const { container } = render(<App />, { wrapper: Wrapper });
 
     expect(screen.getByText('Career')).toBeInTheDocument();
-    expect(container.querySelector('.loading-state-sprite')).not.toBeInTheDocument();
-    expect(container.querySelector('.loading-progress')).toBeInTheDocument();
+    expect(container.querySelector('.loading-state--overlay')).toBeInTheDocument();
+    expect(container.querySelector('.loading-state-sprite')).toHaveAttribute(
+      'src',
+      '/loading/en-light.webp',
+    );
   });
 });

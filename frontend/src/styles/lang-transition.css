@@ -41,8 +41,11 @@ html.lang-entering::after {
   100% { opacity: 0; }
 }
 
-/* Brief content pulse (new text is already showing, just a subtle blink) */
-html.lang-transitioning section,
+/* Brief content pulse (new text is already showing, just a subtle blink).
+   The loading overlay is excluded: it is a new element fading in, not content
+   being replaced — pulsing it would scale the full-viewport panel to 99% and
+   leave an unblurred strip along its edges. */
+html.lang-transitioning section:not(.loading-state),
 html.lang-transitioning footer,
 html.lang-transitioning .feedback-fab,
 html.lang-transitioning .feedback-overlay,
@@ -52,7 +55,7 @@ html.lang-transitioning .feedback-modal {
   transform: scale(0.99);
 }
 
-html.lang-entering section,
+html.lang-entering section:not(.loading-state),
 html.lang-entering footer,
 html.lang-entering .feedback-fab {
   transition: opacity 0.2s ease, transform 0.2s ease;

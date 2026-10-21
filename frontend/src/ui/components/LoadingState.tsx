@@ -1,18 +1,21 @@
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from '../hooks/useTranslation';
+import { loadingSpritePath } from '../loadingSprite';
 
 const SPRITE_WIDTH = 603;
 const SPRITE_HEIGHT = 726;
 
-export function LoadingState() {
+export type LoadingVariant = 'page' | 'overlay';
+
+export function LoadingState({ variant = 'page' }: { variant?: LoadingVariant }) {
   const { theme } = useTheme();
   const { locale, t } = useTranslation();
 
   return (
-    <section className="loading-state">
+    <section className={`loading-state loading-state--${variant}`}>
       <img
         className="loading-state-sprite"
-        src={`/loading/${locale}-${theme}.webp`}
+        src={loadingSpritePath(locale, theme)}
         alt=""
         width={SPRITE_WIDTH}
         height={SPRITE_HEIGHT}
