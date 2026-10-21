@@ -25,10 +25,11 @@ function deferredCV() {
 }
 
 function TestConsumer() {
-  const { cv, loading, error, refetch } = useContext(CVContext);
+  const { cv, loading, refreshing, error, refetch } = useContext(CVContext);
   return (
     <div>
       <span data-testid="loading">{String(loading)}</span>
+      <span data-testid="refreshing">{String(refreshing)}</span>
       <span data-testid="error">{error ?? ''}</span>
       <span data-testid="name">{cv?.name ?? ''}</span>
       <span data-testid="refetch">{typeof refetch}</span>
@@ -112,5 +113,36 @@ describe('CVContext', () => {
     );
 
     expect(screen.getByTestId('refetch').textContent).toBe('function');
+  });
+
+  it('keeps the previous CV visible while refreshing', async () => {
+    const first = deferredCV();
+    const useCase = { execute: () => first.promise } as GetCVUseCase;
+
+    const { rerender } = render(
+      <CVProvider getCVUseCase={useCase} locale="en">
+        <TestConsumer />
+      </CVProvider>,
+    );
+
+    first.resolve(mockCV);
+    await waitFor(() => {
+      expect(screen.getByTestId('name').textContent).toBe('John');
+    });
+
+    // switch locale: the new request never settles, so the refresh stays pending
+    const pending = deferredCV();
+    (useCase as { execute: () => Promise<CV> }).execute = () => pending.promise;
+    rerender(
+      <CVProvider getCVUseCase={useCase} locale="es">
+        <TestConsumer />
+      </CVProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('refreshing').textContent).toBe('true');
+    });
+    expect(screen.getByTestId('name').textContent).toBe('John');
+    expect(screen.getByTestId('loading').textContent).toBe('false');
   });
 });

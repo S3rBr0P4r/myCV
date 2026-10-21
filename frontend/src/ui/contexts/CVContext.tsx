@@ -1,10 +1,11 @@
-import { createContext, useCallback, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { CV } from '../../domain/entities/CV';
 import type { GetCVUseCase } from '../../application/use-cases/GetCVUseCase';
 
 interface CVContextValue {
   cv: CV | null;
   loading: boolean;
+  refreshing: boolean;
   error: string | null;
   refetch: () => void;
 }
@@ -12,6 +13,7 @@ interface CVContextValue {
 export const CVContext = createContext<CVContextValue>({
   cv: null,
   loading: true,
+  refreshing: false,
   error: null,
   refetch: () => {},
 });
@@ -26,7 +28,7 @@ export function CVProvider({
   children: ReactNode;
 }) {
   const [cv, setCV] = useState<CV | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [pending, setPending] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refetchKey, setRefetchKey] = useState(0);
 
@@ -36,24 +38,32 @@ export function CVProvider({
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    setPending(true);
     setError(null);
 
     getCVUseCase.execute(locale).then(data => {
       if (cancelled) return;
       setCV(data);
-      setLoading(false);
+      setPending(false);
     }).catch(err => {
       if (cancelled) return;
       setError(err instanceof Error ? err.message : 'Failed to load CV');
-      setLoading(false);
+      setPending(false);
     });
 
     return () => { cancelled = true; };
   }, [getCVUseCase, locale, refetchKey]);
 
+  const value = useMemo<CVContextValue>(() => ({
+    cv,
+    loading: pending && cv === null,
+    refreshing: pending && cv !== null,
+    error,
+    refetch,
+  }), [cv, pending, error, refetch]);
+
   return (
-    <CVContext.Provider value={{ cv, loading, error, refetch }}>
+    <CVContext.Provider value={value}>
       {children}
     </CVContext.Provider>
   );

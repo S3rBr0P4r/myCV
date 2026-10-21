@@ -29,7 +29,7 @@ const mockCV: CV = {
 
 function TestWrapper({ children }: { children: ReactNode }) {
   return (
-    <CVContext.Provider value={{ cv: null, loading: true, error: null, refetch: () => {} }}>
+    <CVContext.Provider value={{ cv: null, loading: true, refreshing: false, error: null, refetch: () => {} }}>
       <TranslationProvider>
         <ThemeProvider>
           {children}
@@ -39,10 +39,10 @@ function TestWrapper({ children }: { children: ReactNode }) {
   );
 }
 
-function createWrapper(cv: CV | null, loading: boolean, error: string | null) {
+function createWrapper(cv: CV | null, loading: boolean, error: string | null, refreshing = false) {
   return function Wrapped({ children }: { children: ReactNode }) {
     return (
-      <CVContext.Provider value={{ cv, loading, error, refetch: () => {} }}>
+      <CVContext.Provider value={{ cv, loading, refreshing, error, refetch: () => {} }}>
         <TranslationProvider>
           <ThemeProvider>
             {children}
@@ -95,5 +95,14 @@ describe('App', () => {
 
     const nav = container.querySelector('.scroll-progress');
     expect(nav).toBeInTheDocument();
+  });
+
+  it('keeps the CV on screen and shows a progress bar while refreshing', () => {
+    const Wrapper = createWrapper(mockCV, false, null, true);
+    const { container } = render(<App />, { wrapper: Wrapper });
+
+    expect(screen.getByText('Career')).toBeInTheDocument();
+    expect(container.querySelector('.loading-state-sprite')).not.toBeInTheDocument();
+    expect(container.querySelector('.loading-progress')).toBeInTheDocument();
   });
 });

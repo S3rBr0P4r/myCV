@@ -12,6 +12,7 @@ import { Skills } from './components/Skills';
 import { Footer } from './components/Footer';
 import { Feedback } from './components/Feedback';
 import { LoadingState } from './components/LoadingState';
+import { RefreshProgress } from './components/RefreshProgress';
 
 function useSectionTracker(cv: CV | null) {
   useEffect(() => {
@@ -75,7 +76,7 @@ function buildSections(cv: { skillCategories: unknown[] }, t: (k: string) => str
 }
 
 export function App() {
-  const { cv, loading, error } = useCV();
+  const { cv, loading, refreshing, error } = useCV();
   const { t } = useTranslation();
 
   useScrollReveal('.reveal', 'active', 0.15, [cv]);
@@ -145,6 +146,7 @@ export function App() {
         ))}
       </nav>
       <Feedback />
+      {refreshing && <RefreshProgress />}
     </>
   );
 }
